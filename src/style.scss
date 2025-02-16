@@ -1,0 +1,20 @@
+/*! purgecss ignore */
+* {
+    box-sizing: border-box;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+}
+
+svg {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+:root {
+    --appear-duration: 750ms;
+    --white-bgcolor: #E2E3E7;
+    --black-bgcolor: #35363A;
+    --bgcolor: var(--white-bgcolor);
+}
