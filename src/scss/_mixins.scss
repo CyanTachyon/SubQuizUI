@@ -1,44 +1,47 @@
 @use './variables' as *;
-//// up and down shadow ////
 
-@mixin neumorphism-up-shadow {
-    box-shadow:  
-
-    // 外层阴影 
-    5px 5px 12px #b5b5b9,
-    -5px -5px 12px #ffffff,
-
-    // 内层阴影
-    inset 1px 1px 1px #b0b1b4,
-    inset -1px -1px 1px #f0f1f5,
-    ;
-    
-    border: 2px solid $border-color;
+// 新增：定义 theme-styles 混合器，根据主题设置 CSS 变量
+@mixin theme-styles($theme) {
+    @if $theme == light {
+        --bgcolor: #{$light-bgcolor};
+        --color: #{$light-color};
+        --up-shadow: #{$light-up-shadow};
+        --down-shadow: #{$light-down-shadow};
+        --border-color: #{$light-border-color};
+    } @else if $theme == dark {
+        --bgcolor: #{$dark-bgcolor};
+        --color: #{$dark-color};
+        --up-shadow: #{$dark-up-shadow};
+        --down-shadow: #{$dark-down-shadow};
+        --border-color: #{$dark-border-color};
+    }
 }
 
+@mixin neumorphism-up-shadow {
+    box-shadow: 5px 5px 12px var(--up-shadow),
+    -5px -5px 12px var(--down-shadow),
+    inset 1px 1px 1px var(--up-shadow),
+    inset -1px -1px 1px var(--down-shadow);
+    border: 2px solid var(--border-color);
+    transition: box-shadow 0.5s ease, border 0.5s ease;
+}
 
 @mixin neumorphism-up {
-    color: $color;
+    color: var(--color);
     @include neumorphism-up-shadow;
 }
 
 @mixin neumorphism-down-shadow {
-    box-shadow:
-
-    // 外层阴影 
-    1px 1px 1px #b5b5b9,
-    -1px -1px 1px #ebecf0,
-    
-    // 内层阴影
-    inset 4px 4px 6px #b0b1b4,
-    inset -4px -4px 6px #f0f1f5,
-    ;
-
-    border: 2px solid $border-color;
+    box-shadow: 1px 1px 1px var(--up-shadow),
+    -1px -1px 1px var(--down-shadow),
+    inset 4px 4px 6px var(--up-shadow),
+    inset -4px -4px 6px var(--down-shadow);
+    border: 2px solid var(--border-color);
+    transition: box-shadow 0.5s ease, border 0.5s ease;
 }
 
 @mixin neumorphism-down {
-    color: $color;
+    color: var(--color);
     @include neumorphism-down-shadow;
 }
 
@@ -48,7 +51,6 @@
     0% {
         @include neumorphism-down-shadow;
         animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0);
-        
     }
     100% {
         @include neumorphism-up-shadow;
@@ -56,7 +58,7 @@
 }
 
 @mixin neumorphism-up-to-down {
-    color: $color;
+    color: var(--color);
     @include neumorphism-up-shadow;
     animation: neumorphism-up-to-down 0.4s forwards;
 }
@@ -72,15 +74,14 @@
 }
 
 @mixin neumorphism-down-to-up {
-    color: $color;    
+    color: var(--color);
     @include neumorphism-down-shadow;
     animation: neumorphism-down-to-up 0.4s forwards;
 }
 
 //// appear / disappear animation ////
 
-@mixin appear($name, $direction, $appear)
-{
+@mixin appear($name, $direction, $appear) {
     & {
         @if $appear == true {
             animation: #{$name} $appear-duration ease-in forwards;
@@ -89,14 +90,14 @@
         }
     }
 
-    @keyframes #{$name} 
+    @keyframes #{$name}
     {
         $x: 0%;
         $y: 100%;
-        
+
         @if $appear {
-          $x: 100%;
-          $y: 0%;
+            $x: 100%;
+            $y: 0%;
         }
         #{$x} {
             @if $direction == down {
@@ -104,7 +105,90 @@
             } @else {
                 @include neumorphism-up-shadow;
             }
-            color: $color;
+            color: var(--color);
+        }
+        50% {
+            @if $direction == down {
+                @include neumorphism-down-shadow;
+            } @else {
+                @include neumorphism-up-shadow;
+            }
+            color: transparent;
+        }
+        #{$y} {
+            box-shadow: none;
+            border: 2px solid transparent;
+            color: transparent;
+        }
+    }
+}
+
+// 在根选择器中生成主题样式
+:root {
+    @include theme-styles(light);
+}
+
+[data-theme='dark'] {
+    @include theme-styles(dark);
+}
+
+@keyframes neumorphism-down-to-up {
+    0% {
+        @include neumorphism-down-shadow;
+        animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0);
+    }
+    100% {
+        @include neumorphism-up-shadow;
+    }
+}
+
+@keyframes neumorphism-up-to-down {
+    0% {
+        @include neumorphism-up-shadow;
+        animation-timing-function: cubic-bezier(0.5, 0, 0.75, 0);
+    }
+    100% {
+        @include neumorphism-down-shadow;
+    }
+}
+
+@mixin neumorphism-up-to-down {
+    color: var(--color);
+    @include neumorphism-up-shadow;
+    animation: neumorphism-up-to-down 0.4s forwards;
+}
+
+@mixin neumorphism-down-to-up {
+    color: var(--color);
+    @include neumorphism-down-shadow;
+    animation: neumorphism-down-to-up 0.4s forwards;
+}
+
+@mixin appear($name, $direction, $appear) {
+    & {
+        @if $appear == true {
+            animation: #{$name} $appear-duration ease-in forwards;
+        } @else {
+            animation: #{$name} $appear-duration ease-out forwards;
+        }
+    }
+
+    @keyframes #{$name}
+    {
+        $x: 0%;
+        $y: 100%;
+
+        @if $appear {
+            $x: 100%;
+            $y: 0%;
+        }
+        #{$x} {
+            @if $direction == down {
+                @include neumorphism-down-shadow;
+            } @else {
+                @include neumorphism-up-shadow;
+            }
+            color: var(--color);
         }
         50% {
             @if $direction == down {

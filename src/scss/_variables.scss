@@ -1,6 +1,15 @@
 $appear-duration: 750ms;
-$white-bgcolor: #E2E3E7;
-$black-bgcolor: #35363A;
-$bgcolor: $white-bgcolor;
-$color: black;
-$border-color: #CFD1D3;
+
+// 亮色主题变量
+$light-bgcolor: #E2E3E7;
+$light-color: black;
+$light-up-shadow: #b5b5b9;
+$light-down-shadow: #ffffff;
+$light-border-color: #CFD1D3;
+
+// 暗色主题变量
+$dark-bgcolor: #35363A;
+$dark-color: white;
+$dark-up-shadow: #2a2b2e;
+$dark-down-shadow: #404146;
+$dark-border-color: #4A4B4F;

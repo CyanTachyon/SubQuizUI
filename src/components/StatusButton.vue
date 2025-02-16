@@ -86,11 +86,11 @@ function click()
 }
 
 .up-button {
-    @include neumorphism-up;
+    @include neumorphism-up-shadow;
 }
 
 .down-button {
-    @include neumorphism-down;
+    @include neumorphism-down-shadow;
 }
 
 .disappear-button {

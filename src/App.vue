@@ -25,6 +25,7 @@ import {isNavigationFailure, useRouter} from "vue-router";
 import {$appearDuration, useTransitionStore} from "./stores/transition.ts";
 import {useUser} from "./stores/user.ts";
 import {useNotificationStore} from "./stores/notification.ts";
+import {useThemeStore} from './stores/theme'
 
 const router = useRouter()
 const store = useTransitionStore();
@@ -59,14 +60,37 @@ let user = useUser();
 user.reload();
 
 const notificationStore = useNotificationStore();
+const themeStore = useThemeStore()
+themeStore.initialize()
 </script>
-<style scoped lang="scss">
+<style lang="scss">
+:root {
+    --bgcolor: #{$light-bgcolor};
+    --color: #{$light-color};
+    --up-shadow: #{$light-up-shadow};
+    --down-shadow: #{$light-down-shadow};
+    --border-color: #{$light-border-color};
+}
+
+[data-theme='dark'] {
+    --bgcolor: #{$dark-bgcolor};
+    --color: #{$dark-color};
+    --up-shadow: #{$dark-up-shadow};
+    --down-shadow: #{$dark-down-shadow};
+    --border-color: #{$dark-border-color};
+}
+
+body {
+    background-color: var(--bgcolor);
+    color: var(--color);
+    transition: background-color 0.5s ease, color 0.5s ease;
+}
+
 main {
     justify-content: center;
     align-items: center;
     height: 100vh;
     width: 100vw;
-    background-color: var(--bgcolor);
 }
 
 .notification-container {
@@ -138,6 +162,7 @@ main {
 .notification-enter-active {
     transition: all 0.3s ease;
 }
+
 .notification-leave-active {
     transition: all 0.3s ease;
 }
@@ -146,6 +171,7 @@ main {
     opacity: 0;
     transform: translateY(-30px);
 }
+
 .notification-leave-to {
     opacity: 0;
     transform: translateY(30px);

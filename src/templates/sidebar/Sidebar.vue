@@ -19,12 +19,15 @@ import {tryLogin} from "../../utils/utils.ts";
 import {useRouter} from "vue-router";
 import Text from "../../components/Text.vue";
 import SidebarItem from "./SidebarItem.vue";
-import { Permission } from "../../dataClasses/Permission.ts";
+import {Permission} from "../../dataClasses/Permission.ts";
+import ThemeIcon from "vue-material-design-icons/ThemeLightDark.vue";
+import {useThemeStore} from "../../stores/theme";
 
 let open = ref(localStorage.getItem('sidebar-open') !== 'false');
 let sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');
 let controller = createAnimationsController();
 const router = useRouter();
+const themeStore = useThemeStore();
 
 function changeSidebarState()
 {
@@ -75,8 +78,15 @@ function gotoSSO()
 
             <SidebarItem @click="goto('/admin/subject/list')" :icon="BookshelfIcon" title="学科列表"/>
             <SidebarItem @click="goto('/history')" :icon="HistoryIcon" title="答题记录"/>
-            <SidebarItem v-if="user.hasAdmin()" @click="goto('/admin/admins')" :icon="ShieldCrownOutlineIcon" title="全局管理员"/>
-            <SidebarItem v-if="user.user?.permission === Permission.ROOT" @click="goto('/terminal')" :icon="ConsoleIcon" title="控制台"/>
+            <SidebarItem v-if="user.hasAdmin()" @click="goto('/admin/admins')" :icon="ShieldCrownOutlineIcon"
+                         title="全局管理员"/>
+            <SidebarItem v-if="user.user?.permission === Permission.ROOT" @click="goto('/terminal')" :icon="ConsoleIcon"
+                         title="控制台"/>
+            <SidebarItem
+                    @click="themeStore.toggleTheme"
+                    :icon="ThemeIcon"
+                    title="切换主题"
+            />
             <Text class="spacer"/>
             <div class="box user-box">
                 <Image class="avatar" :src="user.avatar()" @click="gotoSSO" :disappear="false"/>

@@ -97,10 +97,11 @@ watch(() => transitionStore.state, onTransitionChange, {immediate: true});
     border-radius: calc(var(--size) * 0.25);
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), var(--bgcolor));
     border: calc(var(--size) / 100) solid var(--bgcolor);
-    box-shadow: calc(var(--size) * 0.075) calc(var(--size) * 0.075) calc(var(--size) * 0.1) rgba(0, 0, 0, 0.1),
-    calc(var(--size) * -0.075) calc(var(--size) * -0.075) calc(var(--size) * 0.1) #fff,
-    inset calc(var(--size) / -40) calc(var(--size) / -40) calc(var(--size) / 40) rgba(255, 255, 255, 0.5),
-    inset calc(var(--size) / 40) calc(var(--size) / 40) calc(var(--size) / 40) rgba(0, 0, 0, 0.05);
+    box-shadow: calc(var(--size) * 0.075) calc(var(--size) * 0.075) calc(var(--size) * 0.1) var(--up-shadow),
+    calc(var(--size) * -0.075) calc(var(--size) * -0.075) calc(var(--size) * 0.1) var(--down-shadow),
+    inset calc(var(--size) / -40) calc(var(--size) / -40) calc(var(--size) / 40) var(--down-shadow),
+    inset calc(var(--size) / 40) calc(var(--size) / 40) calc(var(--size) / 40) var(--up-shadow);
+    transition: box-shadow 0.5s ease, border 0.5s ease, background 0.5s ease;
 }
 
 .loader div::before {
@@ -112,8 +113,11 @@ watch(() => transitionStore.state, onTransitionChange, {immediate: true});
     height: calc(var(--size) * 0.18);
     z-index: 100;
     border-radius: 50%;
-    box-shadow: inset calc(var(--size) / -40) calc(var(--size) / -40) calc(var(--size) / 40) rgba(0, 0, 0, 0.1),
-    0 calc(var(--size) * 2.1) 0 calc(var(--size) * 2) #2196f3;
+    box-shadow: inset calc(var(--size) / -40) calc(var(--size) / -40) calc(var(--size) / 40) var(--up-shadow),
+    inset calc(var(--size) / 40) calc(var(--size) / 40) calc(var(--size) / 40) var(--down-shadow),
+    0 calc(var(--size) * 2.1) 0 calc(var(--size) * 2) #2196f3,;
+
+    transition: box-shadow 0.5s ease, border 0.5s ease;
     animation: animate 2.5s ease-in-out infinite;
     animation-delay: calc(var(--x) * -0.3s);
     transform: translateY(calc(var(--size) * 0.8));
@@ -163,9 +167,11 @@ watch(() => transitionStore.state, onTransitionChange, {immediate: true});
 .disappear {
     animation: disappear var(--appear-duration) ease-out forwards;
 }
+
 .appear {
     animation: appear var(--appear-duration) ease-in forwards;
 }
+
 .disappeared {
     display: none;
 }

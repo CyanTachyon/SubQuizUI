@@ -13,6 +13,7 @@ import type {Subject} from "../../dataClasses/Subject.ts";
 import StatusButton from "../../components/StatusButton.vue";
 import {useUser} from "../../stores/user.ts";
 import Text from "../../components/Text.vue";
+
 const route = useRoute();
 const router = useRouter();
 const page = ref(Number(route.query.page) || 1);
@@ -65,7 +66,7 @@ const user = useUser();
         <template v-else>
             <div class="subjects-container">
                 <StatusButton
-                    v-if="user.hasAdmin()"
+                        v-if="user.hasAdmin()"
                         class="create-subject"
                         @click="createSubject"
                 >
@@ -111,7 +112,7 @@ const user = useUser();
     }
 
     .create-subject {
-        margin: 20px 0 0 20px ;
+        margin: 20px 0 0 20px;
     }
 }
 
