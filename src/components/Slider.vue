@@ -40,15 +40,22 @@ if (value.value > maxValue)
 }
 
 let className = ref(disappear ? 'disappear-input' : 'up-input');
+let thumbClassName = ref(disappear ? 'disappear-thumb' : 'appear-thumb');
 let controller = createAnimationsController();
 
 function onDisappearChange(value: boolean, oldValue: boolean)
 {
     if (value === oldValue) return;
     controller.push([
-        () => className.value = value ? 'up-disappear' : 'up-appear',
+        () => {
+            className.value = value ? 'up-disappear' : 'up-appear';
+            thumbClassName.value = value ? 'thumb-disappear' : 'thumb-appear';
+        },
         () => sleep($appearDuration),
-        () => className.value = value ? 'disappear-input' : 'up-input',
+        () => {
+            className.value = value ? 'disappear-input' : 'up-input';
+            thumbClassName.value = value ? 'disappear-thumb' : 'appear-thumb';
+        },
     ])
 }
 
@@ -166,6 +173,7 @@ watch(value, (newVal, oldValue) =>
 
                 <div
                         class="slider-thumb"
+                        :class="thumbClassName"
                         :style="{ left: progressPercentage + '%' }"
                         @mousedown="startThumbDrag"
                         @touchstart.passive="startThumbDrag"
@@ -189,6 +197,14 @@ watch(value, (newVal, oldValue) =>
     border-radius: 2rem;
     overflow: hidden;
     margin: 10px;
+}
+
+@mixin thumb-shadow {
+    box-shadow: 1px 1px 1px var(--outer-up-shadow),
+        -1px -1px 1px var(--outer-down-shadow),
+        inset 1px 1px 1px var(--inner-up-shadow),
+        inset -1px -1px 1px var(--inner-down-shadow);
+    border: 3px solid var(--border-color);
 }
 
 .slider-container {
@@ -220,15 +236,10 @@ watch(value, (newVal, oldValue) =>
             position: absolute;
             width: 16px;
             height: 16px;
-            border: 3px solid var(--border-color);
             border-radius: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
             cursor: grab;
-            box-shadow: 1px 1px 1px var(--up-shadow),
-            -1px -1px 1px var(--down-shadow),
-            inset 1px 1px 1px var(--up-shadow),
-            inset -1px -1px 1px var(--down-shadow);
             transition: box-shadow 0.5s ease, border 0.5s ease;
         }
     }
@@ -290,5 +301,50 @@ watch(value, (newVal, oldValue) =>
 
 .down-appear {
     @include appear('down-appear', down, true);
+}
+
+.thumb-appear {
+    @keyframes thumb-appear {
+        0% {
+            box-shadow: none;
+            border: 3px solid transparent;
+        }
+        50% {
+            @include thumb-shadow;
+        }
+        100% {
+            @include thumb-shadow;
+        }
+    }
+    & {
+        animation: thumb-appear $appear-duration ease-in forwards;
+    }
+}
+
+.thumb-disappear {
+    @keyframes thumb-disappear {
+        0% {
+            @include thumb-shadow;
+        }
+        50% {
+            @include thumb-shadow;
+        }
+        100% {
+            box-shadow: none;
+            border: 3px solid transparent;
+        }
+    }
+    & {
+        animation: thumb-disappear $appear-duration ease-out forwards;
+    }
+}
+
+.disappear-thumb {
+    box-shadow: none;
+    border: 3px solid transparent;
+}
+
+.appear-thumb {
+    @include thumb-shadow;
 }
 </style>

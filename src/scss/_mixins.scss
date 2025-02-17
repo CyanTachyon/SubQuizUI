@@ -8,20 +8,28 @@
         --up-shadow: #{$light-up-shadow};
         --down-shadow: #{$light-down-shadow};
         --border-color: #{$light-border-color};
+        --inner-up-shadow: #{$light-inner-up-shadow};
+        --inner-down-shadow: #{$light-inner-down-shadow};
+        --outer-up-shadow: #{$light-outer-up-shadow};
+        --outer-down-shadow: #{$light-outer-down-shadow};
     } @else if $theme == dark {
         --bgcolor: #{$dark-bgcolor};
         --color: #{$dark-color};
         --up-shadow: #{$dark-up-shadow};
         --down-shadow: #{$dark-down-shadow};
         --border-color: #{$dark-border-color};
+        --inner-up-shadow: #{$dark-inner-up-shadow};
+        --inner-down-shadow: #{$dark-inner-down-shadow};
+        --outer-up-shadow: #{$dark-outer-up-shadow};
+        --outer-down-shadow: #{$dark-outer-down-shadow};
     }
 }
 
 @mixin neumorphism-up-shadow {
     box-shadow: 5px 5px 12px var(--up-shadow),
-    -5px -5px 12px var(--down-shadow),
-    inset 1px 1px 1px var(--up-shadow),
-    inset -1px -1px 1px var(--down-shadow);
+               -5px -5px 12px var(--down-shadow),
+               inset 1px 1px 1px var(--inner-up-shadow),
+               inset -1px -1px 1px var(--inner-down-shadow);
     border: 2px solid var(--border-color);
     transition: box-shadow 0.5s ease, border 0.5s ease;
 }
@@ -32,10 +40,10 @@
 }
 
 @mixin neumorphism-down-shadow {
-    box-shadow: 1px 1px 1px var(--up-shadow),
-    -1px -1px 1px var(--down-shadow),
-    inset 4px 4px 6px var(--up-shadow),
-    inset -4px -4px 6px var(--down-shadow);
+    box-shadow: 1px 1px 1px var(--outer-up-shadow),
+               -1px -1px 1px var(--outer-down-shadow),
+                   inset 4px 4px 6px var(--up-shadow),
+                   inset -4px -4px 6px var(--down-shadow);
     border: 2px solid var(--border-color);
     transition: box-shadow 0.5s ease, border 0.5s ease;
 }

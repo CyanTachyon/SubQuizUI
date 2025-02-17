@@ -144,9 +144,9 @@ watch(() => transitionStore.state, onTransitionChange, {immediate: true});
     0% {
         opacity: 1;
     }
-    /*50% {
+    50% {
         opacity: 1;
-    }*/
+    }
     100% {
         opacity: 0;
     }
@@ -156,9 +156,9 @@ watch(() => transitionStore.state, onTransitionChange, {immediate: true});
     0% {
         opacity: 0;
     }
-    /*50% {
+    50% {
         opacity: 1;
-    }*/
+    }
     100% {
         opacity: 1;
     }

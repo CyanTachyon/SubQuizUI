@@ -172,7 +172,7 @@ function saveSection()
             <div class="button-box">
                 <CommonButton @click="addQuestion" class="add-button"><PlusIcon/></CommonButton>
                 <CommonButton @click="deleteQuestion" class="add-button"><MinusIcon/></CommonButton>
-                <CommonButton @click="saveSection" class="add-button"><ContentSaveIcon/></CommonButton>
+                <StatusButton @click="saveSection" class="add-button"><ContentSaveIcon/></StatusButton>
             </div>
         </Card>
     </Sidebar>

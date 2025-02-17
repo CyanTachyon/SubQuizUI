@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { createAnimationsController } from '../utils/AnimationsController';
-import { sleep } from '../utils/sleep';
-import { $appearDuration, State, useTransitionStore } from '../stores/transition';
+import {ref, watch} from 'vue';
+import {createAnimationsController} from '../utils/AnimationsController';
+import {sleep} from '../utils/sleep';
+import {$appearDuration, State, useTransitionStore} from '../stores/transition';
 
 const model = defineModel<string | number>({required: false});
 const {placeholder, type, disappear, area, onBlur} = defineProps({
@@ -29,6 +29,7 @@ const {placeholder, type, disappear, area, onBlur} = defineProps({
 });
 
 let className = ref(disappear ? 'disappear-input' : 'up-input');
+let placeholderClassName = ref(disappear ? 'placeholder-disappear' : 'placeholder-appear');
 let controller = createAnimationsController();
 let isFocused = ref(false);
 
@@ -65,8 +66,7 @@ function handleInput(event: Event)
     const value = (event.target as HTMLInputElement).value;
     if (type === 'number')
     {
-        const number = Number(value);
-        model.value = number;
+        model.value = Number(value);
     }
     else
     {
@@ -79,9 +79,17 @@ function onDisappearChange(value: boolean, oldValue: boolean)
 {
     if (value === oldValue) return;
     controller.push([
-        () => className.value = isFocused.value ? (value ? 'down-disappear' : 'down-appear') : (value ? 'up-disappear' : 'up-appear'),
-        () => sleep($appearDuration),
-        () => className.value = value ? 'disappear-input' : (isFocused.value ? 'down-input' : 'up-input'),
+        () => {
+            className.value = isFocused.value ? (value ? 'down-disappear' : 'down-appear') : (value ? 'up-disappear' : 'up-appear');
+            placeholderClassName.value = value ? 'placeholder-disappear' : 'disappeared-placeholder';
+        },
+        () => sleep($appearDuration/2),
+        () => placeholderClassName.value = value ? 'disappeared-placeholder' : 'placeholder-appear',
+        () => sleep($appearDuration/2),
+        () => {
+            className.value = value ? 'disappear-input' : (isFocused.value ? 'down-input' : 'up-input');
+            placeholderClassName.value = value ? 'disappeared-placeholder' : 'appeared-placeholder';
+        }
     ])
 }
 
@@ -108,7 +116,7 @@ const element = area ? 'textarea' : 'input';
             :placeholder="placeholder"
             :type="type"
             :inputmode="type === 'number' ? 'numeric' : undefined"
-            :class="className"
+            :class="[className, placeholderClassName]"
             :disabled="disappear"
             @input="handleInput"
             @focus="handleFocus"
@@ -187,6 +195,7 @@ textarea {
 .disappear-input {
     color: transparent;
     box-shadow: none;
+    border: 2px solid transparent;
 }
 
 .down {
@@ -211,5 +220,25 @@ textarea {
 
 .down-appear {
     @include appear('down-appear', down, true);
+}
+
+//// placeholder ////
+
+.disappeared-placeholder::placeholder {
+    opacity: 0;
+}
+
+.appeared-placeholder::placeholder {
+    opacity: 1;
+}
+
+.placeholder-disappear::placeholder {
+    opacity: 0;
+    transition: opacity calc($appear-duration / 2) ease-in-out;
+}
+
+.placeholder-appear::placeholder {
+    opacity: 1;
+    transition: opacity calc($appear-duration / 2) ease-in-out;
 }
 </style>

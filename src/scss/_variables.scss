@@ -7,9 +7,19 @@ $light-up-shadow: #b5b5b9;
 $light-down-shadow: #ffffff;
 $light-border-color: #CFD1D3;
 
+$light-inner-up-shadow: #b0b1b4;
+$light-inner-down-shadow: #f0f1f5;
+$light-outer-up-shadow: #b0b1b4;
+$light-outer-down-shadow: #f0f1f5;
+
 // 暗色主题变量
 $dark-bgcolor: #35363A;
 $dark-color: white;
-$dark-up-shadow: #2a2b2e;
-$dark-down-shadow: #404146;
+$dark-up-shadow: #202023;
+$dark-down-shadow: #45464C;
 $dark-border-color: #4A4B4F;
+
+$dark-inner-up-shadow: #2a2b2e;
+$dark-inner-down-shadow: #404146;
+$dark-outer-up-shadow: #2a2b2e;
+$dark-outer-down-shadow: #3d3f43;
