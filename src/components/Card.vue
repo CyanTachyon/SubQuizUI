@@ -12,7 +12,7 @@ const {disappear} = defineProps({
 });
 
 let controller = createAnimationsController();
-let className = ref(disappear ? 'disappear-card' : 'card');
+let className = ref(disappear ? 'disappeared-card' : 'appeared-card');
 
 function onDisappearChange(value: boolean, oldValue: boolean)
 {
@@ -20,7 +20,7 @@ function onDisappearChange(value: boolean, oldValue: boolean)
     controller.push([
         () => className.value = value ? 'disappear' : 'appear',
         () => sleep($appearDuration),
-        () => className.value = value ? 'disappear-card' : 'card',
+        () => className.value = value ? 'disappeared-card' : 'appeared-card',
     ])
 }
 
@@ -38,24 +38,24 @@ watch(() => transitionStore.state, onTransitionChange, {immediate: true});
 </script>
 
 <template>
-    <div :class="className">
-        <slot></slot>
+    <div class="card" :class="className">
+        <slot/>
     </div>
 </template>
 
 <style scoped lang="scss">
 
-div {
+.card {
     padding: 0.25rem 0.5rem;
     border-radius: 0.5rem;
     margin: 13px;
 }
 
-.card {
+.appeared-card {
     @include neumorphism-up;
 }
 
-.disappear-card {
+.disappeared-card {
     @include neumorphism-down;
 }
 
