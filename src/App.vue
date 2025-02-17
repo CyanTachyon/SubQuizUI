@@ -81,6 +81,8 @@ themeStore.initialize()
 }
 
 body {
+    -webkit-user-select: none;
+    user-select: none;
     background-color: var(--bgcolor);
     color: var(--color);
     transition: background-color 0.5s ease, color 0.5s ease;
