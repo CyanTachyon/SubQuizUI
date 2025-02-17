@@ -24,8 +24,7 @@ if (count === 0) throw new Error('count is 0');
 
 const containerRef = ref<HTMLElement>();
 const visiblePages = ref(5);
-const buttonWidth = 50;
-const containerPadding = 16;
+const buttonWidth = 60;
 const currentStart = ref(0);
 const currentEnd = ref(0);
 
@@ -41,36 +40,44 @@ const pages = computed(() =>
         currentEnd.value = totalPages;
         return Array.from({length: totalPages}, (_, i) => i + 1);
     }
+    
+    const rightPages = totalPages - currentPage;
+    const leftPages = currentPage - 1;
+    const leftMax = Math.max(maxVisible - 1 - rightPages, Math.floor((maxVisible - 1) /2));
+    let leftCount = Math.min(leftPages, leftMax);
+    if (leftCount < leftPages && leftCount < 3) leftCount = 3;
+    let rightCount = maxVisible - leftCount - 1;
+    if (rightCount < rightPages && rightCount < 3) rightCount = 3;
+    const pages = [];
 
-    const hasLeftEllipsis = currentPage - Math.floor((maxVisible - 2) / 2) > 2;
-    const hasRightEllipsis = currentPage + Math.floor((maxVisible - 2) / 2) < totalPages - 1;
-    const availableSlots = maxVisible - 2 - (hasLeftEllipsis ? 1 : 0) - (hasRightEllipsis ? 1 : 0);
-
-    let start = Math.max(2, currentPage - Math.floor(availableSlots / 2));
-    let end = Math.min(totalPages - 1, currentPage + Math.floor(availableSlots / 2));
-
-    if (end - start + 1 < availableSlots)
+    if (leftPages > leftCount) 
     {
-        if (start === 2)
-            end = Math.min(totalPages - 1, start + availableSlots - 1);
-        else if (end === totalPages - 1)
-            start = Math.max(2, end - availableSlots + 1);
+        pages.push(1);
+        pages.push(-1);
+        const leftStart = leftPages - leftCount + 3;
+        const leftEnd = leftPages;
+        for (let i = leftStart; i <= leftEnd; i++) pages.push(i);
+        currentStart.value = leftStart;
+    }
+    else
+    {
+        for (let i = 1; i <= leftPages; i++) pages.push(i);
     }
 
-    currentStart.value = start;
-    currentEnd.value = end;
+    pages.push(currentPage);
 
-    const pages = [1];
-    if (hasLeftEllipsis) pages.push(-1);
-    for (let i = start; i <= end; i++) pages.push(i);
-    if (hasRightEllipsis) pages.push(-2);
-    pages.push(totalPages);
-
-    if (pages.length > maxVisible)
+    if (rightPages > rightCount)
     {
-        const currentIndex = pages.indexOf(currentPage);
-        const half = Math.floor(maxVisible / 2);
-        return pages.slice(Math.max(0, currentIndex - half), Math.min(pages.length, currentIndex + half + 1));
+        const rightStart = currentPage + 1;
+        const rightEnd = currentPage + rightCount - 2;
+        for (let i = rightStart; i <= rightEnd; i++) pages.push(i);
+        pages.push(-2);
+        pages.push(totalPages);
+        currentEnd.value = rightEnd;
+    }
+    else
+    {
+        for (let i = currentPage + 1; i <= totalPages; i++) pages.push(i);
     }
 
     return pages;
@@ -79,8 +86,7 @@ const pages = computed(() =>
 const updateVisiblePages = debounce(() =>
 {
     if (!containerRef.value) return;
-    const containerWidth = containerRef.value.offsetWidth - containerPadding * 2;
-    visiblePages.value = Math.max(1, Math.floor(containerWidth / buttonWidth));
+    visiblePages.value = Math.max(1, Math.floor(containerRef.value.offsetWidth / buttonWidth));
 }, 100);
 
 function handlePageClick(page: number)
@@ -94,11 +100,11 @@ function handleEllipsisClick(direction: number)
     let jump;
     if (direction === -1)
     {
-        jump = currentStart.value - 5;
+        jump = Math.max(2, currentStart.value - 5);
     }
     else
     {
-        jump = currentEnd.value + 5;
+        jump = Math.min(count - 1, currentEnd.value + 5);
     }
     jump = Math.max(1, Math.min(count, jump));
     onChangePage(jump);
@@ -111,10 +117,11 @@ onMounted(() =>
     onBeforeUnmount(() => observer.disconnect());
 });
 
-watch(() => ({count, current}), () =>
+watch(() => ({count, current}), (newVal, oldVal) =>
 {
-    if (current > count) onChangePage(count);
-    else if (current < 1) onChangePage(1);
+    if (newVal.count !== oldVal?.count) updateVisiblePages();
+    if (newVal.current > newVal.count) onChangePage(newVal.count);
+    else if (newVal.current < 1) onChangePage(1);
 }, {immediate: true})
 </script>
 
