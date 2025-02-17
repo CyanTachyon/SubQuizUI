@@ -18,3 +18,22 @@ export async function getUserInfo(uid?: number): Promise<UserInfo | BasicUserInf
         return defaultOnFail(res);
     });
 }
+
+const authorInfoUrl = '/user/author'
+export interface Author
+{
+    name: string,
+    email: string,
+    website: string,
+    github: string,
+}
+
+export async function getAuthorInfo(): Promise<Author>
+{
+    return checkResponse(sendRequest({
+        target: Target.BACKEND,
+        url: authorInfoUrl,
+        method: "GET",
+        withToken: false,
+    }))
+}

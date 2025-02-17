@@ -3,7 +3,19 @@ import Card from "../components/Card.vue";
 import StatusButton from "../components/StatusButton.vue";
 import ChevronLeftIcon from "vue-material-design-icons/ChevronLeft.vue";
 import {useRouter} from "vue-router";
+import {safeRedirect} from "../utils/redirect.ts";
+import {type Author, getAuthorInfo} from "../networks/backend/user.ts";
+import {ref} from "vue";
 let router = useRouter();
+
+const author = ref({
+    name: 'unknown',
+    email: 'unknown',
+    website: 'unknown',
+    github: 'unknown',
+} as Author);
+
+getAuthorInfo().then(info => author.value = info);
 
 document.title = '关于 - SubQuiz';
 
@@ -12,6 +24,13 @@ function goBack()
     router.back();
 }
 const version = environment.version
+
+function goto(url: string)
+{
+    safeRedirect(url, true)
+}
+
+
 </script>
 
 <template>
@@ -22,13 +41,10 @@ const version = environment.version
         <Card class="card">
             <h1>SubQuiz</h1>
             <p>Version: {{ version }}</p>
-            <p>Author: <a href="https://subit.org.cn/" target="_blank" rel="noopener noreferrer">SubIT Team</a></p>
-            <p>Website: <a href="https://subit.org.cn/" target="_blank"
-                           rel="noopener noreferrer">https://subit.org.cn/</a></p>
-            <p>Github: <a href="https://github.com/subitlab" target="_blank" rel="noopener noreferrer">https://github.com/subitlab</a>
-            </p>
-            <p>Email: <a href="mailto:subit@i.pkuschool.edu.cn" target="_blank" rel="noopener noreferrer">
-                subit@i.pkuschool.edu.cn</a></p>
+            <p class="clickable" @click="goto(author.website)"> Author: {{ author.name }} </p>
+            <p class="clickable" @click="goto(author.website)"> Website: {{ author.website }} </p>
+            <p class="clickable" @click="goto(author.github)"> Github: {{ author.github }} </p>
+            <p class="clickable" @click="goto('mailto:' + author.email)"> Email: {{author.email}} </p>
         </Card>
     </div>
 </template>
@@ -44,15 +60,21 @@ const version = environment.version
 
 .back {
     display: flex;
+    margin-left: 15px;
 }
 
 .card {
     height: fit-content;
     padding: 10px 30px;
+    margin-left: 15px;
 }
 
 h1 {
     font-size: 2em;
     margin-bottom: 20px;
+}
+
+.clickable {
+    cursor: pointer;
 }
 </style>
