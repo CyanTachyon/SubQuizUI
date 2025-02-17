@@ -2,16 +2,19 @@
 import {connectUrl, Target} from "../networks/utils/sendRequest.ts";
 import {getToken} from "../utils/utils.ts";
 import {useRouter} from "vue-router";
-import {onBeforeUnmount, onMounted, ref} from "vue";
+import {onBeforeUnmount, onMounted, ref, watch} from "vue";
 import {AnsiUp} from "ansi_up/ansi_up";
 import Sidebar from "../templates/sidebar/Sidebar.vue";
+import Input from "../components/Input.vue";
+import { createAnimationsController } from "../utils/AnimationsController.ts";
+import { sleep } from "../utils/sleep.ts";
+import { $appearDuration, State, useTransitionStore } from "../stores/transition.ts";
 
 document.title = '控制台 - SubQuiz';
 
 const router = useRouter();
 const ansi_up = new AnsiUp();
-const messageInput = ref<HTMLInputElement | null>(null);
-const container = ref<HTMLLabelElement | null>(null);
+const inputCommand = ref('');
 const messages = ref<HTMLDivElement | null>(null);
 const url = connectUrl(Target.BACKEND, '/terminal/api').replace('https://', 'wss://').replace('http://', 'ws://');
 let timer: number | null = null;
@@ -21,14 +24,14 @@ let select = undefined;
 
 function setLastWord(word: string)
 {
-    let message = messageInput.value.value
+    let message = inputCommand.value
     let index = message.lastIndexOf(' ')
     if (index === -1)
     {
-        messageInput.value.value = word
+        inputCommand.value = word
         return
     }
-    messageInput.value.value = message.substring(0, index) + ' ' + word
+    inputCommand.value = message.substring(0, index) + ' ' + word
 }
 
 function socketListener(event: MessageEvent)
@@ -52,12 +55,14 @@ function socketListener(event: MessageEvent)
     if (data.type === 'CLEAR')
     {
         messages.value.innerHTML = '';
-        messageInput.value.value = '';
+        inputCommand.value = '';
         return;
     }
     data.data.split('\n').forEach((line: string) =>
     {
-        const messageDiv = document.createElement('div');
+        const messageDiv = document.createElement('pre');
+        messageDiv.style.margin = '0';
+        messageDiv.style.lineHeight = '1.3';
         messageDiv.innerHTML = ansi_up.ansi_to_html(line);
         messages.value.appendChild(messageDiv);
     });
@@ -71,8 +76,8 @@ let socket: WebSocket | null = null;
 function submit(event: Event)
 {
     event.preventDefault();
-    const message = messageInput.value.value;
-    messageInput.value.value = '';
+    const message = inputCommand.value;
+    inputCommand.value = '';
     if (message === '') return;
     history.push(message);
     historyIndex = history.length;
@@ -123,12 +128,12 @@ function historyListener(event: KeyboardEvent)
         if (historyIndex > 0)
         {
             historyIndex--;
-            messageInput.value.value = history[historyIndex];
+            inputCommand.value = history[historyIndex];
         }
         else if (historyIndex === 0)
         {
             historyIndex--;
-            messageInput.value.value = '';
+            inputCommand.value = '';
         }
         return;
     }
@@ -137,12 +142,12 @@ function historyListener(event: KeyboardEvent)
         if (historyIndex < history.length - 1)
         {
             historyIndex++;
-            messageInput.value.value = history[historyIndex];
+            inputCommand.value = history[historyIndex];
         }
         else if (historyIndex === history.length - 1)
         {
             historyIndex++;
-            messageInput.value.value = '';
+            inputCommand.value = '';
         }
         return;
     }
@@ -150,7 +155,7 @@ function historyListener(event: KeyboardEvent)
 
 function tabListener(event: KeyboardEvent)
 {
-    const message = messageInput.value.value;
+    const message = inputCommand.value;
     if (event.key !== 'Tab')
     {
         select = undefined;
@@ -176,11 +181,15 @@ function tabListener(event: KeyboardEvent)
     );
 }
 
+function keyDownListener(event: KeyboardEvent)
+{
+    tabListener(event);
+    historyListener(event);
+}
+
 onMounted(() =>
 {
     socket = openSocket();
-    messageInput.value.addEventListener('keydown', historyListener);
-    messageInput.value.addEventListener('keydown', tabListener);
 });
 
 onBeforeUnmount(() =>
@@ -193,22 +202,49 @@ onBeforeUnmount(() =>
     if (timer) clearTimeout(timer);
 });
 
+let className = ref('appeared-messages');
+let controller = createAnimationsController();
+function onDisappearChange(value: boolean, oldValue: boolean)
+{
+    if (value === oldValue) return;
+    controller.push([
+        () => className.value = value ? 'messages-disappear' : 'messages-appear',
+        () => sleep($appearDuration),
+        () => className.value = value ? 'disappeared-messages' : 'appeared-messages'
+    ])
+}
+function onTransitionChange(value: State, oldValue: State | undefined)
+{
+    if (value === oldValue || value === State.NONE) return;
+    if (value === State.ENTER) onDisappearChange(false, true);
+    else onDisappearChange(true, false);
+}
+let transitionStore = useTransitionStore();
+watch(() => transitionStore.state, onTransitionChange, {immediate: true});
+
 </script>
 
 <template>
     <Sidebar>
         <div class="main">
-            <div id="messages" ref="messages"/>
+            <div id="messages" ref="messages" :class="className"/>
             <form @submit="submit">
-                <label for="messageInput"/>
-                <input type="text" id="messageInput" name="messageInput" ref="messageInput" placeholder="输入命令..."/>
+                <Input 
+                    class="messageInput"
+                    :area="false" 
+                    placeholder="输入命令..." 
+                    @keydown="keyDownListener" 
+                    v-model="inputCommand"
+                    align="left"
+                />
             </form>
-            <div id="container" ref="container">
-                <template v-if="tabs.length === 0"> empty </template>
-                <template v-else v-for="(tab, index) in tabs" :key="index" :class="{selected: index === select}">
-                    {{tab + (index === tabs.length - 1 ? '' : ' ')}}
-                </template>
-            </div>
+            <Input 
+                align="left" 
+                :area="true" 
+                :value="tabs.map((tab, index) => tab + (index === tabs.length - 1 ? '' : ' ')).join(' ')" 
+                class="tips"
+                disabled
+            />
         </div>
     </Sidebar>
 </template>
@@ -228,44 +264,79 @@ h1 {
     margin-bottom: 20px;
 }
 
-#container {
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    width: 100%;
-    max-width: 100%;
-    height: fit-content;
-    display: flex;
-    margin-right: 5px;
-    background: transparent;
-    color: #333;
-    font-weight: bold;
-    font-size: 15px;
-    font-family: monaco, "Courier New", Courier, monospace;
-}
-
 #messages {
+    height: calc(100% - 100px);
+    overflow-y: auto;
+    flex-grow: 1;
     border: 1px solid #ccc;
     border-radius: 4px;
     padding: 10px;
-    overflow-y: scroll;
+    overflow-y: auto;
     margin-bottom: 10px;
     width: 100%;
     height: calc(100vh - 250px);
     background: black;
     color: white;
+    ::-webkit-scrollbar {
+        display: none;
+    }
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    
+    -webkit-user-select: text;
+    user-select: text;
 }
 
-#messageInput {
+.appeared-messages {
+    opacity: 1;
+}
+
+.disappeared-messages {
+    opacity: 0;
+}
+
+.messages-disappear {
+    @keyframes messages-disappear {
+        0% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0;
+        }
+        100% {
+            opacity: 0;
+        }
+    }
+    & {
+        animation: messages-disappear 1s ease-in-out;
+    }
+}
+
+.messages-appear {
+    @keyframes messages-appear {
+        0% {
+            opacity: 0;
+        }
+        50% {
+            opacity: 0;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
+    & {
+        animation: messages-appear 1s ease-in-out;
+    }
+}
+
+.messageInput {
     width: calc(100% - 22px);
-    height: 35px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    margin-right: 5px;
-    background: black;
-    color: white;
-    font-size: 17px;
+}
+
+.tips {
+    margin-top: 0px;
+    height: 40px;
+    resize: none;
 }
 
 .message {
@@ -285,25 +356,13 @@ h1 {
     text-align: right;
 }
 
-pre {
-    margin: 0;
-    font-family: monaco, "Courier New", Courier, monospace;
-    line-height: 1.3;
-    background: black;
-    color: white;
-}
-
 .main {
     height: 100%;
     width: 100%;
     display: flex;
     flex-direction: column;
 }
-#messages {
-    height: calc(100% - 100px);
-    overflow-y: auto;
-    flex-grow: 1;
-}
+
 .selected {
     background-color: #f0f0f0;
 }

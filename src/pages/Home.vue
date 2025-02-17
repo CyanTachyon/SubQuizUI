@@ -55,7 +55,7 @@ function startQuiz()
     <NotFound v-if="notFound"/>
     <Sidebar v-else>
         <Loading v-if="subject && subjectName === ''"/>
-        <div class="container" v-else>
+        <div v-else class="container">
             <Card class="main-card">
                 <p class="main-title">开始新的测试</p>
                 <p class="title">学科</p>
