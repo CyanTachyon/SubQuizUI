@@ -5,7 +5,7 @@ import {sleep} from '../utils/sleep';
 import {$appearDuration, State, useTransitionStore} from '../stores/transition';
 
 const model = defineModel<string | number>({required: false});
-const {placeholder, type, disappear, area, onBlur} = defineProps({
+const {placeholder, type, disappear, area, onBlur, align} = defineProps({
     placeholder: {
         type: String,
         default: ''
@@ -25,8 +25,20 @@ const {placeholder, type, disappear, area, onBlur} = defineProps({
     area: {
         type: Boolean,
         default: false
+    },
+    align: {
+        type: String,
+        required: false
     }
 });
+
+function getAlign()
+{
+    if (!align) return area ? 'start' : 'center';
+    if (align === 'left') return 'start';
+    if (align === 'right') return 'end';
+    return 'center';
+}
 
 let className = ref(disappear ? 'disappear-input' : 'up-input');
 let placeholderClassName = ref(disappear ? 'placeholder-disappear' : 'placeholder-appear');
@@ -116,7 +128,7 @@ const element = area ? 'textarea' : 'input';
             :placeholder="placeholder"
             :type="type"
             :inputmode="type === 'number' ? 'numeric' : undefined"
-            :class="[className, placeholderClassName]"
+            :class="[className, placeholderClassName, `align-${getAlign()}`]"
             :disabled="disappear"
             @input="handleInput"
             @focus="handleFocus"
@@ -170,18 +182,29 @@ textarea:focus {
 
 input {
     justify-content: start;
-    align-items: center;
-    text-align: center;
     vertical-align: middle;
 }
 
 textarea {
     justify-content: start;
+    overflow: auto;
+    scrollbar-width: none;
+}
+
+.align-start {
     align-items: start;
     text-align: start;
     vertical-align: top;
-    overflow: auto;
-    scrollbar-width: none;
+}
+
+.align-end {
+    align-items: end;
+    text-align: end;
+}
+
+.align-center {   
+    align-items: center;
+    text-align: center;
 }
 
 .up-input {
