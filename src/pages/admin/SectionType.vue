@@ -1,6 +1,5 @@
 <script setup lang="ts">
 
-import Sidebar from "../../templates/sidebar/Sidebar.vue";
 import Loading from "../../components/Loading.vue";
 import {useRoute, useRouter} from "vue-router";
 import {ref} from "vue";
@@ -17,6 +16,7 @@ import { getSectionList, getSectionType } from "../../networks/backend/section.t
 import type { SectionId, SectionTypeId } from "../../dataClasses/Ids.ts";
 import NotFound from "../NotFound.vue";
 import type { Section } from "../../dataClasses/Section.ts";
+import Spacer from "../../components/Spacer.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -83,49 +83,43 @@ function deleteSectionType()
 
 <template>
     <NotFound v-if="subjectInfo === null"/>
-    <Sidebar v-else>
-        <template v-if="data === undefined || subjectInfo === undefined">
-            <Loading class="loading"/>
-        </template>
-        <template v-else>
-            <div class="sections-container">
-                <Text class="main-title">{{ sectionTypeInfo.name }}</Text>
-                <Text class="main-description">{{ sectionTypeInfo.description }}</Text>
-                <div class="sections-container-header">
-                    <StatusButton
-                        class="create-subject"
-                        @click="editSectionType"
-                    >
-                        修改题目类型信息
-                    </StatusButton>
-                    <StatusButton
-                        class="create-subject"
-                        @click="deleteSectionType"
-                    >
-                        删除该题目类型
-                    </StatusButton>
-                    <StatusButton
-                        class="create-subject"
-                        @click="createSection"
-                    >
-                        创建题目
-                    </StatusButton>
-                </div>
-                <Text class="spacer"/>
-                <div class="sections">
-                    <template v-for="q in data.list">
-                        <Card class="section" @click="editSection(q.id)">
-                            <p class="title">ID: {{ q.id }}</p>
-                            <Text class="spacer"/>
-                            <p class="description">{{ q.description }}</p>
-                        </Card>
-                    </template>
-                    <Text v-if="data.list.length === 0" class="no-sections">该题目类型暂无题目</Text>
-                </div>
-                <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" class="pagination"/>
-            </div>
-        </template>
-    </Sidebar>
+    <Loading v-else-if="data === undefined || subjectInfo === undefined" class="loading"/>
+    <div v-else class="sections-container">
+        <Text class="main-title">{{ sectionTypeInfo.name }}</Text>
+        <Text class="main-description">{{ sectionTypeInfo.description }}</Text>
+        <div class="sections-container-header">
+            <StatusButton
+                class="create-subject"
+                @click="editSectionType"
+            >
+                修改题目类型信息
+            </StatusButton>
+            <StatusButton
+                class="create-subject"
+                @click="deleteSectionType"
+            >
+                删除该题目类型
+            </StatusButton>
+            <StatusButton
+                class="create-subject"
+                @click="createSection"
+            >
+                创建题目
+            </StatusButton>
+        </div>
+        <Spacer/>
+        <div class="sections">
+            <template v-for="q in data.list">
+                <Card class="section" @click="editSection(q.id)">
+                    <p class="title">ID: {{ q.id }}</p>
+                    <Spacer/>
+                    <p class="description" :title="q.description">{{ q.description }}</p>
+                </Card>
+            </template>
+            <Text v-if="data.list.length === 0" class="no-sections">该题目类型暂无题目</Text>
+        </div>
+        <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" class="pagination"/>
+    </div>
 </template>
 
 <style scoped lang="scss">
@@ -194,8 +188,11 @@ function deleteSectionType()
 
     .description {
         overflow: hidden;
-        white-space: nowrap;
         text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
     }
 }
 
@@ -203,14 +200,6 @@ function deleteSectionType()
     font-size: 1.25em;
     margin-bottom: 0px;
     font-weight: bold;
-}
-
-.spacer {
-    flex-grow: 1;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-    height: 1px;
-    min-height: 1px;
-    max-height: 1px;
 }
 
 .pagination {

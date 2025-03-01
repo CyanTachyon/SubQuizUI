@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import StatusButton from "../../components/StatusButton.vue";
+import CommonButton from "../../components/CommonButton.vue";
 
 const { onClick, icon, title, iconLocation } = defineProps({
     onClick: {
@@ -25,7 +25,7 @@ const { onClick, icon, title, iconLocation } = defineProps({
 </script>
 
 <template>
-    <StatusButton class="item" @click="onClick()">
+    <CommonButton class="item" @click="onClick()">
         <div class="wrap" :style="{'flex-direction': iconLocation === 'left' ? 'row' : 'row-reverse'}">
             <div class="icon-wrap">
                 <component :is="icon" :size="36"></component>
@@ -34,7 +34,7 @@ const { onClick, icon, title, iconLocation } = defineProps({
                 {{ title }}
             </div>
         </div>
-    </StatusButton>
+    </CommonButton>
 </template>
 
 <style scoped lang="scss">

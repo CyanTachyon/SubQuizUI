@@ -6,6 +6,7 @@ import {useRouter} from "vue-router";
 import {safeRedirect} from "../utils/redirect.ts";
 import {type Author, getAuthorInfo} from "../networks/backend/user.ts";
 import {ref} from "vue";
+import ChevronRightIcon from "vue-material-design-icons/ChevronRight.vue";
 let router = useRouter();
 
 const author = ref({
@@ -23,6 +24,12 @@ function goBack()
 {
     router.back();
 }
+
+function gotoUpdateInfo()
+{
+    router.push('/update-info');
+}
+
 const version = environment.version
 
 function goto(url: string)
@@ -35,9 +42,14 @@ function goto(url: string)
 
 <template>
     <div class="main">
-        <StatusButton class="back" @click="goBack">
-            <ChevronLeftIcon/>Go Back
-        </StatusButton>
+        <div class="button-container">
+            <StatusButton class="btn" @click="goBack">
+                <ChevronLeftIcon/>Go Back
+            </StatusButton>
+            <StatusButton class="btn" @click="gotoUpdateInfo">
+                更新日志<ChevronRightIcon/>
+            </StatusButton>
+        </div>
         <Card class="card">
             <h1>SubQuiz</h1>
             <p>Version: {{ version }}</p>
@@ -58,7 +70,7 @@ function goto(url: string)
     width: 450px;
 }
 
-.back {
+.btn {
     display: flex;
     margin-left: 15px;
 }
@@ -77,4 +89,10 @@ h1 {
 .clickable {
     cursor: pointer;
 }
+
+.button-container {
+    display: flex;
+    justify-content: space-between; 
+}
+
 </style>

@@ -8,6 +8,7 @@ import LoginIcon from "vue-material-design-icons/Login.vue";
 import ConsoleIcon from "vue-material-design-icons/Console.vue";
 import HistoryIcon from "vue-material-design-icons/History.vue";
 import BookshelfIcon from "vue-material-design-icons/Bookshelf.vue";
+import InfoMationOutlineIcon from "vue-material-design-icons/InformationOutline.vue";
 import ShieldCrownOutlineIcon from "vue-material-design-icons/ShieldCrownOutline.vue";
 import {createAnimationsController} from "../../utils/AnimationsController.ts";
 import StatusButton from "../../components/StatusButton.vue";
@@ -17,11 +18,11 @@ import {useUser} from "../../stores/user.ts";
 import {sleep} from "../../utils/sleep.ts";
 import {tryLogin} from "../../utils/utils.ts";
 import {useRouter} from "vue-router";
-import Text from "../../components/Text.vue";
 import SidebarItem from "./SidebarItem.vue";
 import {Permission} from "../../dataClasses/Permission.ts";
 import ThemeIcon from "vue-material-design-icons/ThemeLightDark.vue";
 import {useThemeStore} from "../../stores/theme";
+import Spacer from "../../components/Spacer.vue";
 
 let open = ref(localStorage.getItem('sidebar-open') !== 'false');
 let sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');
@@ -64,12 +65,8 @@ function gotoSSO()
         <Card :class="sidebarClassName" class="sidebar">
             <div class="box menu-title-box">
                 <StatusButton @click="changeSidebarState" class="menu-btn">
-                    <template v-if="open">
-                        <MenuOpenIcon/>
-                    </template>
-                    <template v-else>
-                        <MenuCloseIcon/>
-                    </template>
+                    <MenuOpenIcon v-if="open"/>
+                    <MenuCloseIcon v-else/>
                 </StatusButton>
                 <div class="title" @click="goto('/')">SubQuiz</div>
             </div>
@@ -78,29 +75,21 @@ function gotoSSO()
 
             <SidebarItem @click="goto('/admin/subject/list')" :icon="BookshelfIcon" title="学科列表"/>
             <SidebarItem @click="goto('/history')" :icon="HistoryIcon" title="答题记录"/>
-            <SidebarItem v-if="user.hasAdmin()" @click="goto('/admin/admins')" :icon="ShieldCrownOutlineIcon"
-                         title="全局管理员"/>
-            <SidebarItem v-if="user.user?.permission === Permission.ROOT" @click="goto('/terminal')" :icon="ConsoleIcon"
-                         title="控制台"/>
-            <SidebarItem
-                    @click="themeStore.toggleTheme"
-                    :icon="ThemeIcon"
-                    title="切换主题"
-            />
-            <Text class="spacer"/>
+            <SidebarItem v-if="user.hasAdmin()" @click="goto('/admin/admins')" :icon="ShieldCrownOutlineIcon" title="全局管理"/>
+            <SidebarItem v-if="user.user?.permission === Permission.ROOT" @click="goto('/terminal')" :icon="ConsoleIcon" title="控制台"/>
+            <SidebarItem @click="themeStore.toggleTheme" :icon="ThemeIcon" title="切换主题"/>
+            <SidebarItem @click="goto('/about')" :icon="InfoMationOutlineIcon" title="关于项目"/>
+
+            <Spacer/>
             <div class="box user-box">
-                <Image class="avatar" :src="user.avatar()" @click="gotoSSO" :disappear="false"/>
+                <Image class="avatar" :src="user.avatar()" @click="gotoSSO"/>
                 <div class="username-box">
                     <div class="username">{{ user.userName() }}</div>
                     <div class="user-id">{{ user.userId() ?? 'unknown' }}</div>
                 </div>
                 <div class="logout-button">
-                    <template v-if="user.userId()">
-                        <LogoutIcon class="logout-icon" @click="user.logout()"/>
-                    </template>
-                    <template v-else>
-                        <LoginIcon class="logout-icon" @click="tryLogin"/>
-                    </template>
+                    <LogoutIcon v-if="user.userId()" class="logout-icon" @click="user.logout()"/>
+                    <LoginIcon v-else class="logout-icon" @click="tryLogin"/>
                 </div>
             </div>
         </Card>
@@ -118,7 +107,7 @@ function gotoSSO()
 .sidebar {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 20px);
+    height: calc(100% - 20px);
     --sidebar-close-width: 80px;
     --sidebar-open-width: 200px;
 }
@@ -128,12 +117,14 @@ function gotoSSO()
     height: 100%;
     overflow: auto;
     scrollbar-width: none;
+    --transition: default;
 }
 
 .sidebar-container {
     height: 100%;
     width: 100%;
     display: flex;
+    --transition: static;
 }
 
 @keyframes open-sidebar {
@@ -174,14 +165,6 @@ function gotoSSO()
 }
 
 /*** components ***/
-
-.spacer {
-    flex-grow: 1;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-    height: 1px;
-    min-height: 1px;
-    max-height: 1px;
-}
 
 .box {
     overflow: hidden;

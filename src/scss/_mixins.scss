@@ -31,7 +31,6 @@
                inset 1px 1px 1px var(--inner-up-shadow),
                inset -1px -1px 1px var(--inner-down-shadow);
     border: 2px solid var(--border-color);
-    transition: box-shadow 0.5s ease, border 0.5s ease;
 }
 
 @mixin neumorphism-up {
@@ -45,7 +44,6 @@
                    inset 4px 4px 6px var(--up-shadow),
                    inset -4px -4px 6px var(--down-shadow);
     border: 2px solid var(--border-color);
-    transition: box-shadow 0.5s ease, border 0.5s ease;
 }
 
 @mixin neumorphism-down {

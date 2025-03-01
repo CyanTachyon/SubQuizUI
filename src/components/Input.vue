@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref, watch} from 'vue';
+import {onMounted, ref, watch} from 'vue';
 import {createAnimationsController} from '../utils/AnimationsController';
 import {sleep} from '../utils/sleep';
 import {$appearDuration, State, useTransitionStore} from '../stores/transition';
@@ -114,7 +114,13 @@ function onTransitionChange(value: State, oldValue: State | undefined)
 
 let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
-watch(() => transitionStore.state, onTransitionChange, {immediate: true});
+const input = ref<HTMLInputElement | null>(null);
+onMounted(() => {
+    if (input.value && window.getComputedStyle(input.value).getPropertyValue('--transition') !== 'static')
+    {
+        watch(() => transitionStore.state, onTransitionChange, {immediate: true});
+    }
+})
 
 const element = area ? 'textarea' : 'input';
 
@@ -133,6 +139,7 @@ const element = area ? 'textarea' : 'input';
             @input="handleInput"
             @focus="handleFocus"
             @blur="handleFocusOut"
+            ref="input"
         >
         <slot/>
     </component>

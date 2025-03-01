@@ -1,6 +1,5 @@
 <script setup lang="ts">
 
-import Sidebar from "../../templates/sidebar/Sidebar.vue";
 import Loading from "../../components/Loading.vue";
 import {useRoute, useRouter} from "vue-router";
 import {ref} from "vue";
@@ -13,6 +12,7 @@ import type {Subject} from "../../dataClasses/Subject.ts";
 import StatusButton from "../../components/StatusButton.vue";
 import {useUser} from "../../stores/user.ts";
 import Text from "../../components/Text.vue";
+import Spacer from "../../components/Spacer.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -59,34 +59,28 @@ const user = useUser();
 </script>
 
 <template>
-    <Sidebar>
-        <template v-if="data === null">
-            <Loading class="loading"/>
-        </template>
-        <template v-else>
-            <div class="subjects-container">
-                <StatusButton
-                        v-if="user.hasAdmin()"
-                        class="create-subject"
-                        @click="createSubject"
-                >
-                    创建新科目
-                </StatusButton>
-                <div class="subjects">
-                    <template v-for="q in data.list">
-                        <Card class="subject" @click="gotoSubject(q)">
-                            <p class="title">{{ q.name }}</p>
-                            <Text class="spacer"/>
-                            <p>ID: {{ q.id }}</p>
-                            <p class="description">{{ q.description }}</p>  <!-- 添加class -->
-                        </Card>
-                    </template>
-                    <Text v-if="data.list.length === 0" class="no-subjects">暂无科目</Text>
-                </div>
-                <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" class="pagination"/>
-            </div>
-        </template>
-    </Sidebar>
+    <Loading v-if="data === null" class="loading"/>
+    <div v-else class="subjects-container">
+        <StatusButton
+            v-if="user.hasAdmin()"
+            class="create-subject"
+            @click="createSubject"
+        >
+            创建新科目
+        </StatusButton>
+        <div class="subjects">
+            <template v-for="q in data.list">
+                <Card class="subject" @click="gotoSubject(q)">
+                    <p class="title">{{ q.name }}</p>
+                    <Spacer/>
+                    <p>ID: {{ q.id }}</p>
+                    <p class="description">{{ q.description }}</p>  <!-- 添加class -->
+                </Card>
+            </template>
+            <Text v-if="data.list.length === 0" class="no-subjects">暂无科目</Text>
+        </div>
+        <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" class="pagination"/>
+    </div>
 </template>
 
 <style scoped lang="scss">
@@ -146,14 +140,6 @@ const user = useUser();
     font-size: 1.25em;
     margin-bottom: 0px;
     font-weight: bold;
-}
-
-.spacer {
-    flex-grow: 1;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-    height: 1px;
-    min-height: 1px;
-    max-height: 1px;
 }
 
 .pagination {

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 
-import Sidebar from "../../templates/sidebar/Sidebar.vue";
 import {useRouter} from "vue-router";
 import {ref} from "vue";
 import Card from "../../components/Card.vue";
@@ -68,23 +67,29 @@ function submit()
 
 <template>
     <NotFound v-if="!user.hasAdmin() || notFound"/>
-    <Sidebar v-else>
-        <Loading v-if="subject !== null && subjectInfo === null"/>
-        <div class="container">
-            <Card>
-                <p v-if="subject !== null">ID: {{ subject }}</p>
-                <p class="main-title">{{ subject === null ? '创建新学科' : '编辑学科' }}</p>
-                <p class="title">学科名称</p>
-                <Input :area="false" placeholder="Subject Name" type="text" v-model="subjectName"/>
-                <p class="title">学科描述</p>
-                <Input :area="true" placeholder="Subject Description" type="text" v-model="subjectDescription" class="description"/>
-                <StatusButton @click="submit">{{ subject === null ? '创建学科' : '保存编辑' }}</StatusButton>
-            </Card>
-        </div>
-    </Sidebar>
+    <Loading v-else-if="subject !== null && subjectInfo === null" class="loading"/>
+    <div v-else class="container">
+        <Card>
+            <p v-if="subject !== null">ID: {{ subject }}</p>
+            <p class="main-title">{{ subject === null ? '创建新学科' : '编辑学科' }}</p>
+            <p class="title">学科名称</p>
+            <Input :area="false" placeholder="Subject Name" type="text" v-model="subjectName"/>
+            <p class="title">学科描述</p>
+            <Input :area="true" placeholder="Subject Description" type="text" v-model="subjectDescription" class="description"/>
+            <StatusButton @click="submit">{{ subject === null ? '创建学科' : '保存编辑' }}</StatusButton>
+        </Card>
+    </div>
 </template>
 
 <style scoped lang="scss">
+.loading {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 20%;
+    width: 30%;
+}
 
 .container {
     display: flex;

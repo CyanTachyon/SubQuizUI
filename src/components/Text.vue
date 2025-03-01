@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref, watch} from "vue";
+import {onMounted, ref, watch} from "vue";
 import {sleep} from "../utils/sleep.ts";
 import {$appearDuration, State, useTransitionStore} from "../stores/transition.ts";
 import {createAnimationsController} from "../utils/AnimationsController.ts";
@@ -25,12 +25,18 @@ function onTransitionChange(value: State, oldValue: State | undefined)
 }
 
 let transitionStore = useTransitionStore();
-watch(() => transitionStore.state, onTransitionChange, {immediate: true});
+const text = ref<HTMLDivElement | null>(null);
+onMounted(() => {
+    if (text.value && window.getComputedStyle(text.value).getPropertyValue('--transition') !== 'static')
+    {
+        watch(() => transitionStore.state, onTransitionChange, {immediate: true});
+    }
+})
 
 </script>
 
 <template>
-    <div :class="className">
+    <div :class="className" ref="text">
         <slot/>
     </div>
 </template>
@@ -61,11 +67,11 @@ watch(() => transitionStore.state, onTransitionChange, {immediate: true});
 }
 
 .disappear {
-    animation: disappear var(--appear-duration) ease-in-out forwards;
+    animation: disappear $appear-duration ease-in-out forwards;
 }
 
 .appear {
-    animation: appear var(--appear-duration) ease-in-out forwards;
+    animation: appear $appear-duration ease-in-out forwards;
 }
 
 .disappeared {

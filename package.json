@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/core": "^7.0.1",
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
     "ansi_up": "^6.0.2",
@@ -19,6 +20,7 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.0.1",
     "@types/node": "^22.13.1",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.7.0",

@@ -14,7 +14,6 @@ import type {Slice} from '../../dataClasses/Slice';
 import type {Subject} from '../../dataClasses/Subject';
 import {getSubject} from '../../networks/backend/subject';
 import NotFound from '../NotFound.vue';
-import Sidebar from '../../templates/sidebar/Sidebar.vue';
 import Card from '../../components/Card.vue';
 import Input from '../../components/Input.vue';
 import Slider from '../../components/Slider.vue';
@@ -25,7 +24,8 @@ import debounce from '../../utils/debounce';
 import {useUser} from '../../stores/user';
 import Pagination from '../../components/Pagination.vue';
 import Text from '../../components/Text.vue';
-
+import Loading from '../../components/Loading.vue';
+import Spacer from "../../components/Spacer.vue";
 const user = useUser();
 const route = useRoute();
 const subject = route.query.subject ? Number(route.query.subject) : null;
@@ -44,17 +44,11 @@ async function checkPermission()
 {
     if (!subject)
     {
-        if (!user.hasAdmin())
-        {
-            notFound.value = true;
-        }
+        notFound.value = !user.hasAdmin();
     }
     else
     {
-        if (!user.hasAdmin() && !isAdmin(await getUserPermissionInSubject(subject, id.value)))
-        {
-            notFound.value = true;
-        }
+        notFound.value = !user.hasAdmin() && !isAdmin(await getUserPermissionInSubject(subject, id.value));
     }
 }
 
@@ -91,13 +85,14 @@ async function fetchAdmins()
 async function init()
 {
     await checkPermission();
-    await fetchAdmins();
+    if (!notFound.value) await fetchAdmins();
 }
 
 init().catch(() => admins.value = null);
 
 function save()
 {
+    if (!id.value) return;
     let promise;
     if (subject)
     {
@@ -105,13 +100,12 @@ function save()
     }
     else
     {
-        console.log(id.value, permissionFromNumber(permission.value));
         promise = changeUserPermissionGlobal(id.value, permissionFromNumber(permission.value));
     }
     promise.then(() =>
     {
         notification.addSuccess('用户权限修改成功');
-        fetchAdmins();
+        init();
     }).catch(() => notification.addError('用户权限修改失败'));
 }
 
@@ -119,7 +113,6 @@ function updateUsername()
 {
     if (id.value)
     {
-
         getUserInfo(id.value).then((user) =>
         {
             if (user)
@@ -170,42 +163,45 @@ function handlePageChange(newPage: number)
 
 <template>
     <NotFound v-if="admins === null || notFound"/>
-    <Sidebar v-else>
-        <template v-if="admins === void 0">
-            <Loading class="loading"/>
-        </template>
-        <template v-else>
-            <div class="subjects-container">
-                <Text class="main-title">{{ subjectInfo?.name || '全局' }} 管理员列表</Text>
-                <Card class="admin-card">
-                    <label>用户ID</label>
-                    <Input :area="false" placeholder="用户ID" type="number" v-model="id"/>
-                    <label>用户名</label>
-                    <Input :area="false" placeholder="用户名" type="text" v-model="username" disabled/>
-                    <label>用户权限</label>
-                    <Input placeholder="用户权限" type="text" :value="permissionFromNumber(permission)" @input="" disabled/>
-                    <Slider class="permission-slider" :min-value="0" :max-value="3" :step="1" v-model="permission"/>
-                    <CommonButton @click="save">保存</CommonButton>
-                </Card>
+    <Loading v-else-if="admins === void 0" class="loading"/>
+    <div v-else class="subjects-container">
+        <Text class="main-title">{{ subjectInfo?.name || '全局' }} 管理员列表</Text>
+        <Card class="admin-card">
+            <label>用户ID</label>
+            <Input :area="false" placeholder="用户ID" type="number" v-model="id"/>
+            <label>用户名</label>
+            <Input :area="false" placeholder="用户名" type="text" v-model="username" disabled/>
+            <label>用户权限</label>
+            <Input placeholder="用户权限" type="text" :value="permissionFromNumber(permission)" @input="" disabled/>
+            <Slider class="permission-slider" :min-value="0" :max-value="3" :step="1" v-model="permission"/>
+            <CommonButton @click="save">保存</CommonButton>
+        </Card>
 
-                <div class="subjects">
-                    <template v-for="q in admins.list">
-                        <Card class="subject" @click="setAdmin(q)">
-                            <p class="title">{{ q.user.username }}</p>
-                            <Text class="spacer"/>
-                            <p>ID: {{ q.user.id }}</p>
-                            <p class="description">权限：{{ q.permission }}</p>  <!-- 添加class -->
-                        </Card>
-                    </template>
-                    <Text v-if="admins.list.length === 0" class="no-subjects">暂无管理员</Text>
-                </div>
-                <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" class="pagination"/>
-            </div>
-        </template>
-    </Sidebar>
+        <div class="subjects">
+            <template v-for="q in admins.list">
+                <Card class="subject" @click="setAdmin(q)">
+                    <p class="title">{{ q.user.username }}</p>
+                    <Spacer/>
+                    <p>ID: {{ q.user.id }}</p>
+                    <p class="description">权限：{{ q.permission }}</p>  <!-- 添加class -->
+                </Card>
+            </template>
+            <Text v-if="admins.list.length === 0" class="no-subjects">暂无管理员</Text>
+        </div>
+        <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" class="pagination"/>
+    </div>
 </template>
 
 <style scoped lang="scss">
+
+.loading {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 20%;
+    width: 30%;
+}
 
 .main-title {
     margin-top: 20px;
@@ -285,14 +281,6 @@ function handlePageChange(newPage: number)
   font-size: 1.25em;
   margin-bottom: 0px;
   font-weight: bold;
-}
-
-.spacer {
-  flex-grow: 1;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-  height: 1px;
-  min-height: 1px;
-  max-height: 1px;
 }
 
 .pagination {

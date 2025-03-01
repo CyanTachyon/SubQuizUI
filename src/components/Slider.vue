@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, ref, watch} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import {createAnimationsController} from '../utils/AnimationsController';
 import {sleep} from '../utils/sleep';
 import {$appearDuration, State, useTransitionStore} from '../stores/transition';
@@ -68,7 +68,13 @@ function onTransitionChange(value: State, oldValue: State | undefined)
 
 let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
-watch(() => transitionStore.state, onTransitionChange, {immediate: true});
+const slider = ref<HTMLDivElement | null>(null);
+onMounted(() => {
+    if (slider.value && window.getComputedStyle(slider.value).getPropertyValue('--transition') !== 'static')
+    {
+        watch(() => transitionStore.state, onTransitionChange, {immediate: true});
+    }
+})
 
 const progressPercentage = ref(
     ((value.value - minValue) / (maxValue - minValue)) * 100
@@ -162,7 +168,7 @@ watch(value, (newVal, oldValue) =>
 </script>
 
 <template>
-    <div :class="['slider-wrapper', className]">
+    <div :class="['slider-wrapper', className]" ref="slider">
         <div
                 class="slider-container"
                 @mousedown="startDrag"

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 
-import Sidebar from "../../templates/sidebar/Sidebar.vue";
 import Loading from "../../components/Loading.vue";
 import {useRoute, useRouter} from "vue-router";
 import {ref} from "vue";
@@ -18,7 +17,8 @@ import { getSectionTypeList } from "../../networks/backend/section.ts";
 import type { SectionTypeId, SubjectId } from "../../dataClasses/Ids.ts";
 import NotFound from "../NotFound.vue";
 import { getUserPermissionInSubject } from "../../networks/backend/admin.ts";
-import { isAdmin } from "../../dataClasses/Permission.ts";  
+import { isAdmin } from "../../dataClasses/Permission.ts";
+import Spacer from "../../components/Spacer.vue";
 
 const user = useUser();
 const route = useRoute();
@@ -90,59 +90,53 @@ function gotoAdmins()
 
 <template>
     <NotFound v-if="subjectInfo === null"/>
-    <Sidebar v-else>
-        <template v-if="data === undefined || subjectInfo === undefined">
-            <Loading class="loading"/>
-        </template>
-        <template v-else>
-            <div class="section-types-container">
-                <Text class="main-title">{{ subjectInfo.name }}</Text>
-                <Text class="main-description">{{ subjectInfo.description }}</Text>
-                <div class="section-types-container-header">
-                    <StatusButton
-                        v-if="hasPermission"
-                        class="create-subject"
-                        @click="editSubject"
-                    >
-                        修改该学科信息
-                    </StatusButton>
-                    <StatusButton
-                        v-if="hasPermission"
-                        class="create-subject"
-                        @click="createSectionType"
-                    >
-                        创建新题目类型
-                    </StatusButton>
-                    <StatusButton
-                        v-if="hasPermission"
-                        class="create-subject"
-                        @click="gotoAdmins"
-                    >
-                        查看学科管理员
-                    </StatusButton>
-                    <StatusButton
-                        class="create-subject"
-                        @click="startQuiz"
-                    >
-                        开始一次新测验
-                    </StatusButton>
-                </div>
-                <Text class="spacer"/>
-                <div class="section-types">
-                    <template v-for="q in data.list">
-                        <Card class="section-type" @click="editSectionType(q.id)" :class="{'clickable': hasPermission}">
-                            <p class="title">{{ q.name }}</p>
-                            <Text class="spacer"/>
-                            <p>ID: {{ q.id }}</p>
-                            <p class="description">{{ q.description }}</p>
-                        </Card>
-                    </template>
-                    <Text v-if="data.list.length === 0" class="no-section-types">该学科暂无题目类型</Text>
-                </div>
-                <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" class="pagination"/>
-            </div>
-        </template>
-    </Sidebar>
+    <Loading v-else-if="data === undefined || subjectInfo === undefined" class="loading"/>
+    <div v-else class="section-types-container">
+        <Text class="main-title">{{ subjectInfo.name }}</Text>
+        <Text class="main-description">{{ subjectInfo.description }}</Text>
+        <div class="section-types-container-header">
+            <StatusButton
+                v-if="hasPermission"
+                class="create-subject"
+                @click="editSubject"
+            >
+                修改该学科信息
+            </StatusButton>
+            <StatusButton
+                v-if="hasPermission"
+                class="create-subject"
+                @click="createSectionType"
+            >
+                创建新题目类型
+            </StatusButton>
+            <StatusButton
+                v-if="hasPermission"
+                class="create-subject"
+                @click="gotoAdmins"
+            >
+                查看学科管理员
+            </StatusButton>
+            <StatusButton
+                class="create-subject"
+                @click="startQuiz"
+            >
+                开始一次新测验
+            </StatusButton>
+        </div>
+        <Spacer/>
+        <div class="section-types">
+            <template v-for="q in data.list">
+                <Card class="section-type" @click="editSectionType(q.id)" :class="{'clickable': hasPermission}">
+                    <p class="title">{{ q.name }}</p>
+                    <Spacer/>
+                    <p>ID: {{ q.id }}</p>
+                    <p class="description">{{ q.description }}</p>
+                </Card>
+            </template>
+            <Text v-if="data.list.length === 0" class="no-section-types">该学科暂无题目类型</Text>
+        </div>
+        <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" class="pagination"/>
+    </div>
 </template>
 
 <style scoped lang="scss">
@@ -219,14 +213,6 @@ function gotoAdmins()
     font-size: 1.25em;
     margin-bottom: 0px;
     font-weight: bold;
-}
-
-.spacer {
-    flex-grow: 1;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-    height: 1px;
-    min-height: 1px;
-    max-height: 1px;
 }
 
 .pagination {

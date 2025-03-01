@@ -3,7 +3,6 @@ import {useRoute} from "vue-router";
 import {ref} from "vue";
 import type {Quiz} from "../dataClasses/Quiz.ts";
 import {getQuizAnalysis} from "../networks/backend/quiz.ts";
-import Sidebar from "../templates/sidebar/Sidebar.vue";
 import Loading from "../components/Loading.vue";
 import QuizView from "../templates/QuizView.vue";
 import NotFound from "./NotFound.vue";
@@ -24,14 +23,8 @@ getQuizAnalysis(id).then(quiz => data.value = quiz, () =>
 
 <template>
     <NotFound v-if="notFound"/>
-    <Sidebar v-else>
-        <template v-if="data === null">
-            <Loading class="loading"/>
-        </template>
-        <template v-else>
-            <QuizView :quiz="data" :editable="false"/>
-        </template>
-    </Sidebar>
+    <Loading v-else-if="data === null" class="loading"/>
+    <QuizView v-else :quiz="data" :editable="false"/>
 </template>
 
 <style scoped lang="scss">

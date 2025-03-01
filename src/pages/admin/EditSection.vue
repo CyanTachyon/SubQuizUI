@@ -1,16 +1,14 @@
 <script setup lang="ts">
 import StatusButton from "../../components/StatusButton.vue";
 import Card from "../../components/Card.vue";
-import Text from "../../components/Text.vue";
 import Input from "../../components/Input.vue";
-import NotFound from "../NotFound.vue";
-import Sidebar from "../../templates/sidebar/Sidebar.vue";
+import NotFound from "../NotFound.vue"
 import Loading from "../../components/Loading.vue";
 import type { Section } from "../../dataClasses/Section.ts";
 import { ref } from "vue";
 import { useRoute } from "vue-router";
 import type { SectionId, SubjectId, SectionTypeId } from "../../dataClasses/Ids.ts";
-import { getSection, getSectionType, modifySection, newSection, } from "../../networks/backend/section.ts";
+import { deleteSection, getSection, getSectionType, modifySection, newSection, } from "../../networks/backend/section.ts";
 import { getSubject } from "../../networks/backend/subject.ts";
 import CommonButton from "../../components/CommonButton.vue";
 import PlusIcon from "vue-material-design-icons/Plus.vue";
@@ -18,6 +16,9 @@ import MinusIcon from "vue-material-design-icons/Minus.vue";
 import ContentSaveIcon from "vue-material-design-icons/ContentSave.vue";
 import type { Question } from "../../dataClasses/Question.ts";
 import { useRouter } from "vue-router";
+import Spacer from "../../components/Spacer.vue";
+import TrashCanIcon from "vue-material-design-icons/TrashCan.vue";
+
 function getName(index: number)
 {
     if (!index) return 'A.';
@@ -38,12 +39,14 @@ const section = ref(null as Section<number, null, string> | null);
 const notFound = ref(false);
 const subjectName = ref('');
 const typeName = ref('');
+const isNewSection = ref(false);
 
 document.title = '编辑题目 - SubQuiz';
 
 (async () => {
     if (route.params.id === 'new')
     {
+        isNewSection.value = true;
         const subject = Number(route.query.subject) as SubjectId;
         const type = Number(route.query.type) as SectionTypeId;
         if (!subject || !type)
@@ -61,6 +64,7 @@ document.title = '编辑题目 - SubQuiz';
     }
     else
     {
+        isNewSection.value = false;
         section.value = await getSection(Number(route.params.id) as SectionId);
     }
 
@@ -131,54 +135,81 @@ function saveSection()
     });
 }
 
+function deleteSection_()
+{
+    (async () => {
+        await deleteSection(section.value.id);
+        router.push(`/admin/section/type/${section.value.type}`);
+    })().catch(() => {
+        saving.value = false;
+    });
+}
 </script>
 
 <template>
     <NotFound v-if="notFound"/>
-    <Sidebar v-else>
-        <Loading v-if="section === null || subjectName === '' || typeName === ''"/>
-        <Card v-else class="section">
-            <p class="main-title">{{ section.id === 0 ? '新建' : '编辑' }}题目</p>
-            <p class="title">{{ `学科：${subjectName}` }}</p>
-            <p class="title">{{ `类型：${typeName}` }}</p>
-            <Text class="spacer"/>
-            <p class="small-title">大题描述</p>
-            <Input :area="true" placeholder="Section Description" type="text" v-model="section.description"/>
-            <br/>
-            <div v-for="(question, questionIndex) in section.questions" :key="questionIndex" class="question">
-                <Text class="spacer"/>
-                <div class="question-description">
-                    <p class="title">
-                        {{ questionIndex + 1 }}.
-                    </p>
-                    <Input :area="true" placeholder="Question Description" type="text" v-model="question.description"/>
-                </div>
-                <div v-for="(_, optionIndex) in question.options" :key="optionIndex" class="option-box">
-                    <StatusButton class="title" @click="setAnswer(questionIndex, optionIndex)" :down="question.answer === optionIndex">{{ getName(optionIndex) }}</StatusButton>
-                    <Input placeholder="Option Description" type="text" v-model="question.options[optionIndex]"/>
-                </div>
-
-                <div class="option-box">
-                    <div class="button-box">
-                        <CommonButton @click="addOption(questionIndex)" class="add-button"><PlusIcon/></CommonButton>
-                        <CommonButton @click="deleteOption(questionIndex)" class="add-button"><MinusIcon/></CommonButton>
-                    </div>
-                </div>
-                <p class="title">解析</p>
-                <Input :area="true" placeholder="Analysis" type="text" v-model="question.analysis"/>
+    <Loading v-else-if="section === null || subjectName === '' || typeName === ''" class="loading"/>
+    <Card v-else class="section">
+        <p class="main-title">{{ section.id === 0 ? '新建' : '编辑' }}题目</p>
+        <p class="title">{{ `学科：${subjectName}` }}</p>
+        <p class="title">{{ `类型：${typeName}` }}</p>
+        <Spacer/>
+        <p class="small-title">大题描述</p>
+        <div style="display: flex;">
+            <Input :area="true" placeholder="Section Description" type="text" v-model="section.description" class="section-description-input"/>
+        </div>
+        <br/>
+        <div v-for="(question, questionIndex) in section.questions" :key="questionIndex" class="question">
+            <Spacer/>
+            <div class="question-description">
+                <p class="title">
+                    {{ questionIndex + 1 }}.
+                </p>
+                <Input :area="true" placeholder="Question Description" type="text" v-model="question.description" class="question-description-input"/>
+            </div>
+            <div v-for="(_, optionIndex) in question.options" :key="optionIndex" class="option-box">
+                <StatusButton 
+                    class="option-title" 
+                    @click="setAnswer(questionIndex, optionIndex)" 
+                    :down="question.answer === optionIndex"
+                    :class="{ 'right-answer': question.answer === optionIndex }"
+                >
+                    {{ getName(optionIndex) }}
+                </StatusButton>
+                <Input placeholder="Option Description" type="text" v-model="question.options[optionIndex]" class="option-input"/>
             </div>
 
-            <Text class="spacer"/>
-            <div class="button-box">
-                <CommonButton @click="addQuestion" class="add-button"><PlusIcon/></CommonButton>
-                <CommonButton @click="deleteQuestion" class="add-button"><MinusIcon/></CommonButton>
-                <StatusButton @click="saveSection" class="add-button"><ContentSaveIcon/></StatusButton>
+            <div class="option-box">
+                <div class="button-box">
+                    <CommonButton @click="addOption(questionIndex)" class="add-button"><PlusIcon/></CommonButton>
+                    <CommonButton @click="deleteOption(questionIndex)" class="add-button"><MinusIcon/></CommonButton>
+                </div>
             </div>
-        </Card>
-    </Sidebar>
+            <p class="title">解析</p>
+            <div class="analysis-box">
+                <Input :area="true" placeholder="Analysis" type="text" v-model="question.analysis" class="analysis-input"/>
+            </div>
+        </div>
+
+        <Spacer/>
+        <div class="button-box">
+            <CommonButton @click="addQuestion" class="add-button"><PlusIcon/></CommonButton>
+            <CommonButton @click="deleteQuestion" class="add-button"><MinusIcon/></CommonButton>
+            <StatusButton @click="saveSection" class="add-button"><ContentSaveIcon/></StatusButton>
+            <StatusButton v-if="!isNewSection" @click="deleteSection_" class="add-button"><TrashCanIcon/></StatusButton>
+        </div>
+    </Card>
 </template>
 
 <style scoped lang="scss">
+.loading {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 20%;
+    width: 30%;
+}
 
 .main-title {
     margin: 10px;
@@ -205,18 +236,18 @@ function saveSection()
     margin-left: 13px;
 }
 
-.question-description {
+.question-description,
+.analysis-box {
     display: flex;
     margin-top: 5px;
     margin-bottom: 5px;
-    width: 60%;
 }
 
-.spacer {
-    height: 1px;
-    background-color: #000000;
-    margin: 10px 0;
-    opacity: 30%;
+.section-description-input,
+.question-description-input,
+.analysis-input {
+    width: 60%;
+    height: 100px;
 }
 
 .title {
@@ -226,16 +257,21 @@ function saveSection()
 
 .right-answer {
     color: green;
-}
-
-.wrong-answer {
-    color: red;
+    transition: color 0.4s ease;
 }
 
 .option-box {
     margin-left: 13px;
     display: flex;
     flex-direction: row;
+    .option-title {
+        margin: 10px;
+        font-weight: bold;
+        width: 50px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 }
 
 .option {

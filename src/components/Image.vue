@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {createAnimationsController} from "../utils/AnimationsController.ts";
-import {ref, watch} from "vue";
+import {onMounted, ref, watch} from "vue";
 import {sleep} from "../utils/sleep.ts";
 import {$appearDuration, State, useTransitionStore} from "../stores/transition.ts";
 
@@ -55,12 +55,18 @@ function onTransitionChange(value: State, oldValue: State | undefined)
 
 let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
-watch(() => transitionStore.state, onTransitionChange, {immediate: true});
+const image = ref<HTMLImageElement | null>(null);
+onMounted(() => {
+    if (image.value && window.getComputedStyle(image.value).getPropertyValue('--transition') !== 'static')
+    {
+        watch(() => transitionStore.state, onTransitionChange, {immediate: true});
+    }
+})
 
 </script>
 
 <template>
-    <div @click="(onClick as unknown as () => void)" :class="{'clickable': onClick, [borderClassName]: true}">
+    <div @click="(onClick as unknown as () => void)" :class="{'clickable': onClick, [borderClassName]: true} " ref="image">
         <img :src="src" :alt="alt" :class="imgClassName"/>
     </div>
 </template>
@@ -140,11 +146,11 @@ div {
 }
 
 .image-disappear {
-    animation: img-disappear var(--appear-duration) ease-out forwards;
+    animation: img-disappear $appear-duration ease-out forwards;
 }
 
 .image-appear {
-    animation: img-appear var(--appear-duration) ease-in forwards;
+    animation: img-appear $appear-duration ease-in forwards;
 }
 
 

@@ -8,6 +8,8 @@ import { ref } from "vue";
 import Loading from "../components/Loading.vue";
 import { getSubject } from "../networks/backend/subject.ts";
 import { getSectionType } from "../networks/backend/section.ts";
+import Spacer from "../components/Spacer.vue";
+import Input from "../components/Input.vue";
 const {quiz, editable} = defineProps<{ quiz: Quiz<any, any, any>, editable: boolean }>();
 
 const subjectNames = ref(new Map<SubjectId, string>());
@@ -59,17 +61,19 @@ function getName(index: number)
 </script>
 
 <template>
-    <Loading v-if="loading"/>
+    <Loading v-if="loading" class="loading"/>
     <Card v-else v-for="(section, sectionIndex) in quiz.sections" class="section">
         <div class="section-description">
             <p class="title">
                 {{ `学科：${subjectNames.get(section.subject)} 类型：${sectionTypeNames.get(section.type)}` }}
             </p>
             <br/>
-            {{ section.description }}
+            <div class="section-description-wrapper">
+                <Input :area="true" placeholder="Section Description" type="text" v-model="section.description" class="section-description-input" disabled/>
+            </div>
         </div>
         <br/>
-        <Text class="spacer"/>
+        <Spacer/>
         <br/>
         <div v-for="(question, questionIndex) in section.questions" class="question">
             <div class="question-description">
@@ -81,22 +85,26 @@ function getName(index: number)
             <div v-for="(option, optionIndex) in question.options" class="option-box">
                 <StatusButton class="option" :down="question.userAnswer === optionIndex"
                               @click="onOptionClick(sectionIndex, questionIndex, optionIndex)"
-                              :class="{ 'right-answer': optionIndex === question.answer, 'wrong-answer': question.userAnswer === optionIndex && question.userAnswer !== question.answer && question.answer !== null }"
+                              :class="{ 
+                                'right-answer': optionIndex === question.answer, 
+                                'wrong-answer': question.userAnswer === optionIndex && question.userAnswer !== question.answer && question.answer !== null,
+                                'choice-answer': question.userAnswer === optionIndex && question.answer === null,
+                                'default-answer': question.userAnswer === null || question.userAnswer !== optionIndex && optionIndex !== question.answer
+                              }"
                 >
-                    <div class="title">
+                    <div class="option-title" style="height: 100%;">
                         {{ getName(optionIndex) }}
                     </div>
                     {{ option }}
                 </StatusButton>
             </div>
-            <template v-if="question.analysis">
-                <Text>
-                    <div class="analysis"
-                         :class="question.userAnswer===question.answer ? 'right-answer' : 'wrong-answer'">
-                        {{ '解析：' + question.analysis }}
-                    </div>
-                </Text>
-            </template>
+            <Text 
+                v-if="question.analysis" 
+                class="analysis"
+                :class="question.userAnswer===question.answer ? 'right-answer' : 'wrong-answer'"
+            >
+                {{ '解析：' + question.analysis }}
+            </Text>
             <br v-if="questionIndex < section.questions.length - 1"/>
         </div>
     </Card>
@@ -111,7 +119,16 @@ function getName(index: number)
     margin-top: 10px;
     margin-left: 13px;
     margin-bottom: 5px;
-    width: 80%;
+
+    .section-description-wrapper {
+        display: flex;
+     
+        .section-description-input {
+            width: 60%;
+            height: 500px;
+            line-height: 1.5;
+        }
+    }
 }
 
 .question-description {
@@ -120,26 +137,35 @@ function getName(index: number)
     margin-left: 13px;
     margin-bottom: 5px;
     width: 60%;
-}
-
-.spacer {
-    height: 1px;
-    background-color: #000000;
-    margin: 10px 0;
-    opacity: 30%;
+    white-space: pre-wrap;
 }
 
 .title {
+    top: 0;
     margin: 0 10px 0 0;
     font-weight: bold;
 }
 
+$answer-color-duration: 0.4s;
+
 .right-answer {
     color: green;
+    transition: color $answer-color-duration ease;
 }
 
 .wrong-answer {
     color: red;
+    transition: color $answer-color-duration ease;
+}
+
+.choice-answer {
+    color: #0170D2;
+    transition: color $answer-color-duration ease;
+}
+
+.default-answer {
+    color: var(--color);
+    transition: color $answer-color-duration ease;
 }
 
 .option-box {
@@ -152,11 +178,29 @@ function getName(index: number)
     width: 30%;
     max-width: 30%;
     text-align: left;
+    white-space: pre-wrap;
+
+    .option-title {
+        top: 0;
+        margin: 0 10px 0 0;
+        font-weight: bold;
+        width: 30px;
+        display: flex;
+    }
 }
 
 .analysis {
     margin-left: 13px;
     margin-bottom: 20px;
     width: 60%;
+}
+
+.loading {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 20%;
+    width: 30%;
 }
 </style>

@@ -3,7 +3,6 @@
 import Loading from "../components/Loading.vue";
 import {ref, watch} from "vue";
 import type {Quiz} from "../dataClasses/Quiz.ts";
-import Sidebar from "../templates/sidebar/Sidebar.vue";
 import {newQuiz, saveQuiz} from "../networks/backend/quiz.ts";
 import {useRoute, useRouter} from "vue-router";
 import QuizView from "../templates/QuizView.vue";
@@ -59,15 +58,11 @@ watch(data, () => save(true), {deep: true})
 </script>
 
 <template>
-    <Sidebar>
-        <template v-if="data === null">
-            <Loading class="loading"/>
-        </template>
-        <template v-else>
-            <QuizView :quiz="data" :editable="true"/>
-            <StatusButton class="submit" @click="save">Submit</StatusButton>
-        </template>
-    </Sidebar>
+    <Loading v-if="data === null" class="loading"/>
+    <template v-else>
+        <QuizView :quiz="data" :editable="true"/>
+        <StatusButton class="submit" @click="save">Submit</StatusButton>
+    </template>
 </template>
 
 <style scoped lang="scss">

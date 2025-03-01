@@ -13,8 +13,19 @@ svg {
 }
 
 :root {
-    --appear-duration: 750ms;
-    --white-bgcolor: #E2E3E7;
-    --black-bgcolor: #35363A;
-    --bgcolor: var(--white-bgcolor);
+    --bgcolor: #{$light-bgcolor};
+    --color: #{$light-color};
+    --up-shadow: #{$light-up-shadow};
+    --down-shadow: #{$light-down-shadow};
+    --border-color: #{$light-border-color};
+
+    -webkit-tap-highlight-color: transparent;
+}
+
+[data-theme='dark'] {
+    --bgcolor: #{$dark-bgcolor};
+    --color: #{$dark-color};
+    --up-shadow: #{$dark-up-shadow};
+    --down-shadow: #{$dark-down-shadow};
+    --border-color: #{$dark-border-color};
 }

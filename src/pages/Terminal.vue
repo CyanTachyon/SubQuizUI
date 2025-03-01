@@ -4,7 +4,6 @@ import {getToken} from "../utils/utils.ts";
 import {useRouter} from "vue-router";
 import {onBeforeUnmount, onMounted, ref, watch} from "vue";
 import {AnsiUp} from "ansi_up/ansi_up";
-import Sidebar from "../templates/sidebar/Sidebar.vue";
 import Input from "../components/Input.vue";
 import { createAnimationsController } from "../utils/AnimationsController.ts";
 import { sleep } from "../utils/sleep.ts";
@@ -225,28 +224,26 @@ watch(() => transitionStore.state, onTransitionChange, {immediate: true});
 </script>
 
 <template>
-    <Sidebar>
-        <div class="main">
-            <div id="messages" ref="messages" :class="className"/>
-            <form @submit="submit">
-                <Input 
-                    class="messageInput"
-                    :area="false" 
-                    placeholder="输入命令..." 
-                    @keydown="keyDownListener" 
-                    v-model="inputCommand"
-                    align="left"
-                />
-            </form>
+    <div class="main">
+        <div id="messages" ref="messages" :class="className"/>
+        <form @submit="submit">
             <Input 
-                align="left" 
-                :area="true" 
-                :value="tabs.map((tab, index) => tab + (index === tabs.length - 1 ? '' : ' ')).join(' ')" 
-                class="tips"
-                disabled
+                class="messageInput"
+                :area="false" 
+                placeholder="输入命令..." 
+                @keydown="keyDownListener" 
+                v-model="inputCommand"
+                align="left"
             />
-        </div>
-    </Sidebar>
+        </form>
+        <Input 
+            align="left" 
+            :area="true" 
+            :value="tabs.map((tab, index) => tab + (index === tabs.length - 1 ? '' : ' ')).join(' ')" 
+            class="tips"
+            disabled
+        />
+    </div>
 </template>
 
 <style scoped lang="scss">

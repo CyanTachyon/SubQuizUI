@@ -1,24 +1,24 @@
 <template>
-    <div class="notification-container">
-        <TransitionGroup
-                name="notification"
-                tag="div"
-                class="notifications-wrapper"
+    <TransitionGroup
+            name="notification"
+            tag="div"
+            class="notifications-wrapper"
+    >
+        <div
+                v-for="notification in notificationStore.notifications"
+                :key="notification.id"
+                class="notification-item"
+                :class="[notification.type || 'info']"
         >
-            <div
-                    v-for="notification in notificationStore.notifications"
-                    :key="notification.id"
-                    class="notification-item"
-                    :class="[notification.type || 'info']"
-            >
-                {{ notification.message }}
-            </div>
-        </TransitionGroup>
+            {{ notification.message }}
+        </div>
+    </TransitionGroup>
 
-        <main>
+    <main>
+        <Sidebar>
             <RouterView/>
-        </main>
-    </div>
+        </Sidebar>
+    </main>
 </template>
 <script setup lang="ts">
 import {isNavigationFailure, useRouter} from "vue-router";
@@ -26,6 +26,7 @@ import {$appearDuration, useTransitionStore} from "./stores/transition.ts";
 import {useUser} from "./stores/user.ts";
 import {useNotificationStore} from "./stores/notification.ts";
 import {useThemeStore} from './stores/theme'
+import Sidebar from "./templates/sidebar/Sidebar.vue";
 
 const router = useRouter()
 const store = useTransitionStore();
@@ -64,40 +65,27 @@ const themeStore = useThemeStore()
 themeStore.initialize()
 </script>
 <style lang="scss">
-:root {
-    --bgcolor: #{$light-bgcolor};
-    --color: #{$light-color};
-    --up-shadow: #{$light-up-shadow};
-    --down-shadow: #{$light-down-shadow};
-    --border-color: #{$light-border-color};
-}
-
-[data-theme='dark'] {
-    --bgcolor: #{$dark-bgcolor};
-    --color: #{$dark-color};
-    --up-shadow: #{$dark-up-shadow};
-    --down-shadow: #{$dark-down-shadow};
-    --border-color: #{$dark-border-color};
-}
 
 body {
     -webkit-user-select: none;
     user-select: none;
     background-color: var(--bgcolor);
     color: var(--color);
-    transition: background-color 0.5s ease, color 0.5s ease;
+    // transition: background-color 0.5s ease, color 0.5s ease;
 }
 
 main {
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    width: 100vw;
+    height: 100%;
+    width: 100%;
 }
 
-.notification-container {
+#app {
     position: fixed;
     inset: 0;
+    height: 100%;
+    width: 100%;
 }
 
 .notifications-wrapper {

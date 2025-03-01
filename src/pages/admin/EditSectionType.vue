@@ -1,6 +1,5 @@
 <script setup lang="ts">
 
-import Sidebar from "../../templates/sidebar/Sidebar.vue";
 import {useRouter} from "vue-router";
 import {ref} from "vue";
 import Card from "../../components/Card.vue";
@@ -82,25 +81,30 @@ function submit()
 
 <template>
     <NotFound v-if="subjectInfo === null || hasPermission === false || notFound"/>
-    <Sidebar v-else>
-        <Loading v-if="subjectInfo === undefined || (sectionType !== null && sectionTypeInfo === null)"/>
-        <div class="container" v-else>
-            <Card>
-
-                <p class="main-title">{{ sectionType === null ? '创建新题目类型' : '编辑题目类型' }}</p>
-                <p class="title">所属学科</p>
-                <Input :area="false" placeholder="Subject Name" type="text" v-model="subjectInfo.name" disabled/>
-                <p class="title">题目类型名称</p>
-                <Input :area="false" placeholder="Section Type Name" type="text" v-model="sectionTypeName"/>
-                <p class="title">题目类型描述</p>
-                <Input :area="true" placeholder="Section Type Description" type="text" v-model="sectionTypeDescription" class="description"/>
-                <StatusButton @click="submit">{{ sectionType === null ? '创建题目类型' : '编辑题目类型' }}</StatusButton>
-            </Card>
-        </div>
-    </Sidebar>
+    <Loading v-else-if="subjectInfo === undefined || (sectionType !== null && sectionTypeInfo === null)" class="loading"/>
+    <div v-else class="container">
+        <Card>
+            <p class="main-title">{{ sectionType === null ? '创建新题目类型' : '编辑题目类型' }}</p>
+            <p class="title">所属学科</p>
+            <Input :area="false" placeholder="Subject Name" type="text" v-model="subjectInfo.name" disabled/>
+            <p class="title">题目类型名称</p>
+            <Input :area="false" placeholder="Section Type Name" type="text" v-model="sectionTypeName"/>
+            <p class="title">题目类型描述</p>
+            <Input :area="true" placeholder="Section Type Description" type="text" v-model="sectionTypeDescription" class="description"/>
+            <StatusButton @click="submit">{{ sectionType === null ? '创建题目类型' : '编辑题目类型' }}</StatusButton>
+        </Card>
+    </div>
 </template>
 
 <style scoped lang="scss">
+.loading {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 20%;
+    width: 30%;
+}
 
 .container {
     display: flex;

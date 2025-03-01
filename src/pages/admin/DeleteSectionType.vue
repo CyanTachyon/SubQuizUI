@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import NotFound from "../NotFound.vue";
-import Sidebar from "../../templates/sidebar/Sidebar.vue";
 import Loading from "../../components/Loading.vue";
 import Card from "../../components/Card.vue";
 import Input from "../../components/Input.vue";
@@ -15,6 +14,7 @@ import { getSubject } from "../../networks/backend/subject.ts";
 import Text from "../../components/Text.vue";
 import { useRouter } from "vue-router";
 import { useNotificationStore } from "../../stores/notification.ts";
+import Spacer from "../../components/Spacer.vue";
 const route = useRoute();
 const router = useRouter();
 const notification = useNotificationStore();
@@ -45,30 +45,37 @@ function goBack()
 
 <template>
     <NotFound v-if="sectionTypeInfo === null"/>
-    <Sidebar v-else>
-        <Loading v-if="sectionTypeInfo === undefined || subjectInfo === undefined"/>
-        <div class="container" v-else>
-            <Card>
+    <Loading v-else-if="sectionTypeInfo === undefined || subjectInfo === undefined" class="loading"/>
+    <div v-else class="container">
+        <Card>
 
-                <p class="main-title">删除题目类型</p>
-                <p class="title">所属学科</p>
-                <Input :area="false" placeholder="Subject Name" type="text" v-model="subjectInfo.name" class="input" disabled/>
-                <p class="title">题目类型名称</p>
-                <Input :area="false" placeholder="Section Type Name" type="text" v-model="sectionTypeInfo.name" class="input" disabled/>
-                <p class="title">题目类型描述</p>
-                <Input :area="true" placeholder="Section Type Description" type="text" v-model="sectionTypeInfo.description" class="description" disabled/>
-                <Text class="warning title">删除该题目类型后，所有与该题目类型相关的题目将被删除，请谨慎操作</Text>
-                <Text class="spacer"/>
-                <div class="button-container">
-                    <StatusButton @click="goBack" :down="false">返回</StatusButton>
-                    <StatusButton @click="onDelete" :down="false">确认删除</StatusButton>
-                </div>
-            </Card>
-        </div>
-    </Sidebar>
+            <p class="main-title">删除题目类型</p>
+            <p class="title">所属学科</p>
+            <Input :area="false" placeholder="Subject Name" type="text" v-model="subjectInfo.name" class="input" disabled/>
+            <p class="title">题目类型名称</p>
+            <Input :area="false" placeholder="Section Type Name" type="text" v-model="sectionTypeInfo.name" class="input" disabled/>
+            <p class="title">题目类型描述</p>
+            <Input :area="true" placeholder="Section Type Description" type="text" v-model="sectionTypeInfo.description" class="description" disabled/>
+            <Text class="warning title">删除该题目类型后，所有与该题目类型相关的题目将被删除，请谨慎操作</Text>
+            <Spacer/>
+            <div class="button-container">
+                <StatusButton @click="goBack" :down="false">返回</StatusButton>
+                <StatusButton @click="onDelete" :down="false">确认删除</StatusButton>
+            </div>
+        </Card>
+    </div>
 </template>
 
 <style scoped lang="scss">
+.loading {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 20%;
+    width: 30%;
+}
+
 .container {
     display: flex;
     height: 100%;
@@ -103,13 +110,5 @@ function goBack()
     gap: 20px;
     flex-direction: row;
     align-items: center;
-}
-
-.spacer {
-    flex-grow: 1;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-    height: 1px;
-    min-height: 1px;
-    max-height: 1px;
 }
 </style>

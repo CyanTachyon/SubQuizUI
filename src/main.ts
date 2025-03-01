@@ -19,9 +19,11 @@ import SectionType from './pages/admin/SectionType.vue';
 import DeleteSectionType from './pages/admin/DeleteSectionType.vue';
 import EditSection from './pages/admin/EditSection.vue';
 import Admins from './pages/admin/Admins.vue';
+import UpdateInfo from './pages/UpdateInfo.vue';
 const routes: Readonly<RouteRecordRaw[]> = [
     { path: '/', name: 'Home', component: Home },
     { path: '/about', name: 'About', component: About },
+    { path: '/update-info', name: 'UpdateInfo', component: UpdateInfo },
     { path: '/analysis/:id', name: 'Analysis', component: Analysis },
     { path: '/history', name: 'History', component: History },
     { path: '/login', name: 'Login', component: Login },

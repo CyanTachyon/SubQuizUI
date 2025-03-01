@@ -64,7 +64,12 @@ function onTransitionChange(value: State, oldValue: State | undefined)
 }
 
 let transitionStore = useTransitionStore();
-watch(() => transitionStore.state, onTransitionChange, {immediate: true});
+onMounted(() => {
+    if (loaderEl.value && window.getComputedStyle(loaderEl.value).getPropertyValue('--transition') !== 'static')
+    {
+        watch(() => transitionStore.state, onTransitionChange, {immediate: true});
+    }
+})
 
 </script>
 
@@ -165,11 +170,11 @@ watch(() => transitionStore.state, onTransitionChange, {immediate: true});
 }
 
 .disappear {
-    animation: disappear var(--appear-duration) ease-out forwards;
+    animation: disappear $appear-duration ease-out forwards;
 }
 
 .appear {
-    animation: appear var(--appear-duration) ease-in forwards;
+    animation: appear $appear-duration ease-in forwards;
 }
 
 .disappeared {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref, watch} from "vue";
+import {onMounted, ref, watch} from "vue";
 import {createAnimationsController} from "../utils/AnimationsController.ts";
 import {$appearDuration, State, useTransitionStore} from "../stores/transition.ts";
 import {sleep} from "../utils/sleep.ts";
@@ -52,7 +52,13 @@ function onTransitionChange(value: State, oldValue: State | undefined)
 
 let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
-watch(() => transitionStore.state, onTransitionChange, {immediate: true});
+const statusButton = ref<HTMLDivElement | null>(null);
+onMounted(() => {
+    if (statusButton.value && window.getComputedStyle(statusButton.value).getPropertyValue('--transition') !== 'static')
+    {
+        watch(() => transitionStore.state, onTransitionChange, {immediate: true});
+    }
+})
 
 function click()
 {
@@ -63,7 +69,7 @@ function click()
 </script>
 
 <template>
-    <div @click="click" class="btn" :class="className">
+    <div @click="click" class="btn" :class="className" ref="statusButton">
         <slot/>
     </div>
 </template>

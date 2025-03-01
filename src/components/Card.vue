@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {createAnimationsController} from "../utils/AnimationsController.ts";
-import {ref, watch} from "vue";
+import {onMounted, ref, watch} from "vue";
 import {$appearDuration, State, useTransitionStore} from "../stores/transition.ts";
 import {sleep} from "../utils/sleep.ts";
 
@@ -33,12 +33,18 @@ function onTransitionChange(value: State, oldValue: State | undefined)
 
 let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
-watch(() => transitionStore.state, onTransitionChange, {immediate: true});
+const card = ref<HTMLDivElement | null>(null);
+onMounted(() => {
+    if (card.value && window.getComputedStyle(card.value).getPropertyValue('--transition') !== 'static')
+    {
+        watch(() => transitionStore.state, onTransitionChange, {immediate: true});
+    }
+})
 
 </script>
 
 <template>
-    <div class="card" :class="className">
+    <div class="card" :class="className" ref="card">
         <slot/>
     </div>
 </template>

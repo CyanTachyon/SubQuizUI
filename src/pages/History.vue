@@ -1,6 +1,5 @@
 <script setup lang="ts">
 
-import Sidebar from "../templates/sidebar/Sidebar.vue";
 import Loading from "../components/Loading.vue";
 import {useRoute, useRouter} from "vue-router";
 import {ref} from "vue";
@@ -11,6 +10,7 @@ import Card from "../components/Card.vue";
 import Pagination from "../components/Pagination.vue";
 import { pushUrl } from "../utils/utils.ts";
 import Text from "../components/Text.vue";
+import Spacer from "../components/Spacer.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -61,7 +61,8 @@ function durationToString(duration: number | null)
 function startTimeToString(time: number)
 {
     const date = new Date(time);
-    return "" + date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+    const padZero = (num: number) => num.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ${padZero(date.getHours())}:${padZero(date.getMinutes())}:${padZero(date.getSeconds())}`;
 }
 
 function handlePageChange(newPage: number)
@@ -82,29 +83,25 @@ function getTotalPage()
 </script>
 
 <template>
-    <Sidebar>
-        <template v-if="data === null">
-            <Loading class="loading"/>
-        </template>
-        <template v-else>
-            <div class="quizzes-container">
-                <div class="quizzes">
-                    <template v-for="q in data.list">
-                        <Card class="quiz" @click="gotoQuiz(q)">
-                            <p class="title">{{ startTimeToString(q.time) }}</p>
-                            <Text class="spacer"/>
-                            <p>测试ID：{{ q.id }}</p>
-                            <p>题目数量：{{ q.sections.length }}</p>
-                            <p>测试状态：{{ q.finished ? '已完成' : '进行中' }}</p>
-                            <p>答题用时：{{ durationToString(q.duration) }}</p>
-                        </Card>
-                    </template>
-                    <Text v-if="data.list.length === 0" class="no-quizzes">暂无测试记录</Text>
-                </div>
-                <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" class="pagination"/>
+    <Loading v-if="data === null" class="loading"/>
+    <div v-else class="quizzes-container">
+        <div class="quizzes-container">
+            <div class="quizzes">
+                <template v-for="q in data.list">
+                    <Card class="quiz" @click="gotoQuiz(q)">
+                        <p class="title">{{ startTimeToString(q.time) }}</p>
+                        <Spacer/>
+                        <p>测试ID：{{ q.id }}</p>
+                        <p>题目数量：{{ q.sections.length }}</p>
+                        <p>测试状态：{{ q.finished ? '已完成' : '进行中' }}</p>
+                        <p>答题用时：{{ durationToString(q.duration) }}</p>
+                    </Card>
+                </template>
+                <Text v-if="data.list.length === 0" class="no-quizzes">暂无测试记录</Text>
             </div>
-        </template>
-    </Sidebar>
+            <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" class="pagination"/>
+        </div>
+    </div>
 </template>
 
 <style scoped lang="scss">
@@ -132,7 +129,7 @@ function getTotalPage()
     margin: 20px 0 0 0;
     display: grid;
     flex-grow: 1;
-    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     justify-content: start;
     /* align-items: start; */
     /* align-content: start; */
@@ -152,14 +149,6 @@ function getTotalPage()
     font-size: 1.25em;
     margin-bottom: 0px;
     font-weight: bold;
-}
-
-.spacer {
-    flex-grow: 1;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-    height: 1px;
-    min-height: 1px;
-    max-height: 1px;
 }
 
 .pagination {
