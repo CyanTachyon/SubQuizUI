@@ -9,6 +9,7 @@ import Card from '../components/Card.vue';
 import Input from '../components/Input.vue';
 import { getSubject } from '../networks/backend/subject.ts';
 import Slider from '../components/Slider.vue';
+import NotFound from './NotFound.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -48,18 +49,23 @@ function startQuiz()
     router.push(`/quiz?count=${count.value}` + (subject ? `&subject=${subject}` : ''));
 }
 
+function gotoSubject()
+{
+    router.push('/admin/subject/list');
+}
+
 </script>
 
 <template>
     <NotFound v-if="notFound"/>
-    <Loading v-else-if="subject && subjectName === ''"/>
+    <Loading v-else-if="subject && subjectName === ''" class="loading"/>
     <div v-else class="container">
         <Card class="main-card">
             <p class="main-title">开始新的测试</p>
             <p class="title">学科</p>
-            <Input :area="false" placeholder="Subject Name" type="text" v-model="subjectName" disabled/>
+            <Input :area="false" placeholder="Subject Name" type="text" v-model="subjectName" readonly @click="gotoSubject"/>
             <p class="title">题目数量</p>
-            <Input :area="false" placeholder="Section Type Name" type="number" v-model="count"/>
+            <Input :area="false" placeholder="Section Count" type="number" v-model="count"/>
             <Slider :min-value="0" :max-value="100" :step="1" v-model="count"/>
             <div class="button-container">
                 <StatusButton @click="startQuiz">开始测试</StatusButton>
@@ -69,7 +75,14 @@ function startQuiz()
 </template>
 
 <style scoped lang="scss">
-
+.loading {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 20%;
+    width: 30%;
+}
 
 .container {
     display: flex;

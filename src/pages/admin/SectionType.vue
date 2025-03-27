@@ -17,6 +17,7 @@ import type { SectionId, SectionTypeId } from "../../dataClasses/Ids.ts";
 import NotFound from "../NotFound.vue";
 import type { Section } from "../../dataClasses/Section.ts";
 import Spacer from "../../components/Spacer.vue";
+import type { AnswerType } from "../../dataClasses/Question.ts";
 
 const route = useRoute();
 const router = useRouter();
@@ -41,7 +42,7 @@ function getStart()
     return (page.value - 1) * count;
 }
 
-const data = ref(void 0 as undefined | null | Slice<Section<number, null, string>>)
+const data = ref(void 0 as undefined | null | Slice<Section<AnswerType, null, string>>)
 
 function handlePageChange(newPage: number)
 {

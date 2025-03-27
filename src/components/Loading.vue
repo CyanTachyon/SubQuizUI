@@ -106,7 +106,6 @@ onMounted(() => {
     calc(var(--size) * -0.075) calc(var(--size) * -0.075) calc(var(--size) * 0.1) var(--down-shadow),
     inset calc(var(--size) / -40) calc(var(--size) / -40) calc(var(--size) / 40) var(--down-shadow),
     inset calc(var(--size) / 40) calc(var(--size) / 40) calc(var(--size) / 40) var(--up-shadow);
-    transition: box-shadow 0.5s ease, border 0.5s ease, background 0.5s ease;
 }
 
 .loader div::before {
@@ -122,7 +121,6 @@ onMounted(() => {
     inset calc(var(--size) / 40) calc(var(--size) / 40) calc(var(--size) / 40) var(--down-shadow),
     0 calc(var(--size) * 2.1) 0 calc(var(--size) * 2) #2196f3,;
 
-    transition: box-shadow 0.5s ease, border 0.5s ease;
     animation: animate 2.5s ease-in-out infinite;
     animation-delay: calc(var(--x) * -0.3s);
     transform: translateY(calc(var(--size) * 0.8));

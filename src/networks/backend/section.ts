@@ -4,6 +4,7 @@ import {sendRequest, Target} from "../utils/sendRequest.ts";
 import type {SectionType} from "../../dataClasses/SectionType.ts";
 import type {Section} from "../../dataClasses/Section.ts";
 import type {Slice} from "../../dataClasses/Slice.ts";
+import type { AnswerType } from "../../dataClasses/Question.ts";
 
 const newSectionTypeUrl = "/section/type"
 export function newSectionType(subject: SubjectId, name: string, description: string)
@@ -62,7 +63,7 @@ export function getSectionTypeList(begin: number, count: number, subject?: Subje
 }
 
 const newSectionUrl = "/section"
-export function newSection(section: Omit<Section<number, null, string>, 'id'>)
+export function newSection(section: Omit<Section<AnswerType, null, string>, 'id'>)
 {
     return checkResponse<SectionTypeId>(sendRequest({
         target: Target.BACKEND,
@@ -75,7 +76,7 @@ export function newSection(section: Omit<Section<number, null, string>, 'id'>)
 const getSectionUrl = "/section/{id}"
 export function getSection(id: number)
 {
-    return checkResponse<Section<number, null, string>>(sendRequest({
+    return checkResponse<Section<AnswerType, null, string>>(sendRequest({
         target: Target.BACKEND,
         url: getSectionUrl,
         method: 'GET',
@@ -84,7 +85,7 @@ export function getSection(id: number)
 }
 
 const modifySectionUrl = "/section/{id}"
-export function modifySection(section: Section<number, null, string>)
+export function modifySection(section: Section<AnswerType, null, string>)
 {
     return checkResponse<null>(sendRequest({
         target: Target.BACKEND,
@@ -109,7 +110,7 @@ export function deleteSection(id: number)
 const getSectionListUrl = "/section/list"
 export function getSectionList(begin: number, count: number, subject?: SubjectId, type?: SectionTypeId)
 {
-    return checkResponse<Slice<Section<number, null, string>>>(sendRequest({
+    return checkResponse<Slice<Section<AnswerType, null, string>>>(sendRequest({
         target: Target.BACKEND,
         url: getSectionListUrl,
         method: 'GET',

@@ -23,6 +23,7 @@ import {Permission} from "../../dataClasses/Permission.ts";
 import ThemeIcon from "vue-material-design-icons/ThemeLightDark.vue";
 import {useThemeStore} from "../../stores/theme";
 import Spacer from "../../components/Spacer.vue";
+import { Capacitor } from "@capacitor/core";
 
 let open = ref(localStorage.getItem('sidebar-open') !== 'false');
 let sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');
@@ -77,7 +78,7 @@ function gotoSSO()
             <SidebarItem @click="goto('/history')" :icon="HistoryIcon" title="答题记录"/>
             <SidebarItem v-if="user.hasAdmin()" @click="goto('/admin/admins')" :icon="ShieldCrownOutlineIcon" title="全局管理"/>
             <SidebarItem v-if="user.user?.permission === Permission.ROOT" @click="goto('/terminal')" :icon="ConsoleIcon" title="控制台"/>
-            <SidebarItem @click="themeStore.toggleTheme" :icon="ThemeIcon" title="切换主题"/>
+            <SidebarItem v-if="Capacitor.getPlatform() === 'web'" @click="themeStore.toggleTheme" :icon="ThemeIcon" title="切换主题"/>
             <SidebarItem @click="goto('/about')" :icon="InfoMationOutlineIcon" title="关于项目"/>
 
             <Spacer/>
@@ -117,14 +118,15 @@ function gotoSSO()
     height: 100%;
     overflow: auto;
     scrollbar-width: none;
-    --transition: default;
+    position: relative;
+    --transition:default;
 }
 
 .sidebar-container {
     height: 100%;
     width: 100%;
     display: flex;
-    --transition: static;
+    --transition:static;
 }
 
 @keyframes open-sidebar {

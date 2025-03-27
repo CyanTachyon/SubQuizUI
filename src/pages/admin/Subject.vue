@@ -31,9 +31,40 @@ const hasPermission = ref(undefined as undefined | boolean);
 
 document.title = '学科列表 - SubQuiz';
 
-getSubject(subject).then(value => subjectInfo.value = value, () => subjectInfo.value = null);
-if (!user.hasAdmin()) getUserPermissionInSubject(subject, 0).then(value => hasPermission.value = isAdmin(value), () => hasPermission.value = false);
-else hasPermission.value = true;
+(async () => {
+    if (!user.hasAdmin()) 
+    {
+        try
+        {
+            let value = await getUserPermissionInSubject(subject, 0);
+            hasPermission.value = isAdmin(value);
+        }
+        catch (e)
+        {
+            hasPermission.value = false;
+        }
+    }
+    else hasPermission.value = true;
+
+    if (!hasPermission.value) 
+    {
+        router.push('/?subject=' + subject)
+        return;
+    }
+
+    try
+    {
+        let value = await getSubject(subject);
+        subjectInfo.value = value;
+    }
+    catch (e)
+    {
+        subjectInfo.value = null;
+    }
+
+    handlePageChange(page.value)
+})()
+
 
 function getStart()
 {
@@ -51,8 +82,6 @@ function handlePageChange(newPage: number)
     }
     getSectionTypeList(getStart(), count, subject).then(value => data.value = value);
 }
-
-handlePageChange(page.value)
 
 function getTotalPage()
 {

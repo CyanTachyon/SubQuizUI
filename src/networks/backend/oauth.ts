@@ -16,7 +16,7 @@ export async function login(code: string)
     })
     let token = res.data;
     if (token) setToken(token);
-    await checkResponse((async () => res)());
+    await checkResponse(Promise.resolve(res));
     let user = useUser()
     user.reload();
 }

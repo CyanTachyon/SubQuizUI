@@ -4,7 +4,7 @@ import {createAnimationsController} from "../utils/AnimationsController.ts";
 import {$appearDuration, State, useTransitionStore} from "../stores/transition.ts";
 import {sleep} from "../utils/sleep.ts";
 
-const {onClick, down, disappear} = defineProps({
+const {onClick, down, disappear, disabled} = defineProps({
     onClick: {
         type: Function,
         default()
@@ -19,6 +19,10 @@ const {onClick, down, disappear} = defineProps({
         type: Boolean,
         default: false
     },
+    disabled: {
+        type: Boolean,
+        default: false
+    }
 });
 let className = ref(disappear ? 'disappear-button' : (down ? 'down-button' : 'up-button'));
 let controller = createAnimationsController();
@@ -62,14 +66,14 @@ onMounted(() => {
 
 function click()
 {
-    if (disappear) return;
+    if (disappear || disabled) return;
     controller.push([() => (onClick as unknown as () => void)()], false)
 }
 
 </script>
 
 <template>
-    <div @click="click" class="btn" :class="className" ref="statusButton">
+    <div @click="click" class="btn" :class="className" ref="statusButton" :disabled="disabled">
         <slot/>
     </div>
 </template>

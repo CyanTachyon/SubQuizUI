@@ -67,7 +67,7 @@ function goto(url: string)
     top: 45%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 450px;
+    width: 500px;
 }
 
 .btn {

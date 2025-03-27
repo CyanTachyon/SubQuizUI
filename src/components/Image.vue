@@ -72,7 +72,6 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-
 .clickable {
     cursor: pointer;
 }

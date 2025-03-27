@@ -5,7 +5,7 @@ import {$appearDuration, State, useTransitionStore} from "../stores/transition.t
 import {sleep} from "../utils/sleep.ts";
 import StatusButton from "./StatusButton.vue";
 
-const {onClick, disappear} = defineProps({
+const {onClick, disappear, disabled } = defineProps({
     onClick: {
         type: Function,
         default()
@@ -16,6 +16,10 @@ const {onClick, disappear} = defineProps({
         type: Boolean,
         default: false
     },
+    disabled: {
+        type: Boolean,
+        default: false,
+    }
 });
 
 let className = ref('');
@@ -64,10 +68,7 @@ watch(() => transitionStore.state, onTransitionChange, {immediate: true});
 </script>
 
 <template>
-    <!-- <div @click="click" class="btn tmp-button" :class="className">
-        <slot/>
-    </div> -->
-    <StatusButton @click="click" :disappear="disappear" :down="down">
+    <StatusButton @click="click" :disappear="disappear" :down="down" :disabled="disabled">
         <slot/>
     </StatusButton>
 </template>

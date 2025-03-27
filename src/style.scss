@@ -1,7 +1,12 @@
+@font-face {
+    font-family: "SubQuiz font";
+    src: url("/src/assets/fonts/jetbrainsmono.woff2") format('woff2');
+}
+
 /*! purgecss ignore */
 * {
     box-sizing: border-box;
-    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    font-family: 'SubQuiz font', 'SubQuiz font chinese', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     -moz-tab-size: 4;
     -o-tab-size: 4;
     tab-size: 4;

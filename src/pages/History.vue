@@ -11,6 +11,7 @@ import Pagination from "../components/Pagination.vue";
 import { pushUrl } from "../utils/utils.ts";
 import Text from "../components/Text.vue";
 import Spacer from "../components/Spacer.vue";
+import type { AnswerType } from "../dataClasses/Question.ts";
 
 const route = useRoute();
 const router = useRouter();
@@ -24,9 +25,9 @@ function getStart()
     return (page.value - 1) * count;
 }
 
-const data = ref(null as null | Slice<Quiz<number | null, number | null, string>>)
+const data = ref(null as null | Slice<Quiz<AnswerType | null, AnswerType | null, string>>)
 
-function gotoQuiz(q: Quiz<number | null, number | null, string>)
+function gotoQuiz(q: Quiz<AnswerType | null, AnswerType | null, string>)
 {
     if (q.finished) router.push('/analysis/' + q.id)
     else router.push('/quiz')

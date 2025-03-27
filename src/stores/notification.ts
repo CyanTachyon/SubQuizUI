@@ -10,7 +10,7 @@ export interface Notification {
 export const useNotificationStore = defineStore('notification', {
     state: () => ({
         notifications: [] as Notification[],
-        nextId: 0
+        nextId: 1
     }),
     actions: {
         addError(message: string | Error) {
@@ -25,7 +25,8 @@ export const useNotificationStore = defineStore('notification', {
         addInfo(message: string) {
             this.add({ message, type: 'info' })
         },
-        add(notification: Omit<Notification, 'id'>) {
+        add(notification: Omit<Notification, 'id'>) 
+        {
             const id = this.nextId++
             this.notifications.push({
                 id,
@@ -33,9 +34,13 @@ export const useNotificationStore = defineStore('notification', {
                 timeout: notification.timeout ?? 3000
             })
 
-            setTimeout(() => {
-                this.remove(id)
-            }, notification.timeout ?? 3000)
+            if (notification.timeout !== -1)
+            {
+                setTimeout(() => {
+                    this.remove(id)
+                }, notification.timeout ?? 3000)
+            }
+            return id
         },
         remove(id: number) {
             const index = this.notifications.findIndex(n => n.id === id)

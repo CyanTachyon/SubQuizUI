@@ -14,11 +14,13 @@ import CommonButton from "../../components/CommonButton.vue";
 import PlusIcon from "vue-material-design-icons/Plus.vue";
 import MinusIcon from "vue-material-design-icons/Minus.vue";
 import ContentSaveIcon from "vue-material-design-icons/ContentSave.vue";
-import type { Question } from "../../dataClasses/Question.ts";
+import type { AnswerType, Question, QuestionType } from "../../dataClasses/Question.ts";
 import { useRouter } from "vue-router";
 import Spacer from "../../components/Spacer.vue";
 import TrashCanIcon from "vue-material-design-icons/TrashCan.vue";
-
+import CloseIcon from "vue-material-design-icons/Close.vue";
+import CheckIcon from "vue-material-design-icons/Check.vue";
+import HelpCircleOutlineIcon from "vue-material-design-icons/HelpCircleOutline.vue";
 function getName(index: number)
 {
     if (!index) return 'A.';
@@ -35,7 +37,7 @@ function getName(index: number)
 
 const route = useRoute();
 const router = useRouter();
-const section = ref(null as Section<number, null, string> | null);
+const section = ref(null as Section<AnswerType, null, string> | null);
 const notFound = ref(false);
 const subjectName = ref('');
 const typeName = ref('');
@@ -85,12 +87,101 @@ function addQuestion()
         answer: 0,
         userAnswer: null,
         analysis: '',
+        type: 'single',
     });
 }
 
-function setAnswer(questionIndex: number, optionIndex: number)
+function setAnswer(questionIndex: number, answer: number | string | boolean)
 {
-    section.value.questions[questionIndex].answer = optionIndex;
+    if (section.value.questions[questionIndex].type === 'single')
+    {
+        section.value.questions[questionIndex].answer = Number(answer);
+    }
+    else if (section.value.questions[questionIndex].type === 'multiple')
+    {
+        answer = Number(answer);
+        if (!section.value.questions[questionIndex].answer)
+        {
+            section.value.questions[questionIndex].answer = [answer];
+            return;
+        }
+
+        let answerArray = section.value.questions[questionIndex].answer as number[];
+        if (answerArray.includes(answer))
+        {
+            answerArray = answerArray.filter(item => item !== answer);
+        }
+        else
+        {
+            answerArray.push(answer);
+        }
+        section.value.questions[questionIndex].answer = answerArray;
+    }
+    else if (section.value.questions[questionIndex].type === 'judge')
+    {
+        section.value.questions[questionIndex].answer = Boolean(answer);
+    }
+    else if (section.value.questions[questionIndex].type === 'fill' || section.value.questions[questionIndex].type === 'essay')
+    {
+        section.value.questions[questionIndex].answer = String(answer);
+    }
+}
+
+function changeQuestionType(questionIndex: number)
+{
+    const type = section.value.questions[questionIndex].type;
+    if (type === 'single') section.value.questions[questionIndex] = {
+        description: section.value.questions[questionIndex].description,
+        options: section.value.questions[questionIndex].options,
+        answer: [],
+        userAnswer: null,
+        analysis: section.value.questions[questionIndex].analysis,
+        type: 'multiple',
+    }
+    else if (type === 'multiple') section.value.questions[questionIndex] = {
+        description: section.value.questions[questionIndex].description,
+        options: null,
+        answer: false,
+        userAnswer: null,
+        analysis: section.value.questions[questionIndex].analysis,
+        type: 'judge',
+    }
+    else if (type === 'judge') section.value.questions[questionIndex] = {
+        description: section.value.questions[questionIndex].description,
+        options: null,
+        answer: "",
+        userAnswer: null,
+        analysis: section.value.questions[questionIndex].analysis,
+        type: 'fill',
+    }
+    else if (type === 'fill') section.value.questions[questionIndex] = {
+        description: section.value.questions[questionIndex].description,
+        options: null,
+        answer: section.value.questions[questionIndex].answer,
+        userAnswer: null,
+        analysis: section.value.questions[questionIndex].analysis,
+        type: 'essay',
+    }
+    else if (type === 'essay') section.value.questions[questionIndex] = {
+        description: section.value.questions[questionIndex].description,
+        options: ['', '', '', ''],
+        answer: 0,
+        userAnswer: null,
+        analysis: section.value.questions[questionIndex].analysis,
+        type: 'single',
+    }
+}
+
+function getTypeName(type: QuestionType)
+{
+    switch (type)
+    {
+        case 'single': return '单选';
+        case 'multiple': return '多选';
+        case 'judge': return '判断';
+        case 'fill': return '填空';
+        case 'essay': return '简答';
+    }
 }
 
 function addOption(questionIndex: number)
@@ -121,12 +212,12 @@ function saveSection()
                 subject: section.value.subject,
                 type: section.value.type,
                 description: section.value.description,
-                questions: section.value.questions as Question<number, null, string>[],
+                questions: section.value.questions as Question<AnswerType, null, string>[],
             });
         }
         else
         {
-            await modifySection(section.value as Section<number, null, string>);
+            await modifySection(section.value as Section<AnswerType, null, string>);
         }
         router.push(`/admin/section/type/${section.value.type}`);
         
@@ -160,38 +251,77 @@ function deleteSection_()
         </div>
         <br/>
         <div v-for="(question, questionIndex) in section.questions" :key="questionIndex" class="question">
-            <Spacer/>
+            <Spacer style="margin-bottom: 10px; margin-top: 10px;"/>
             <div class="question-description">
-                <p class="title">
+                <p class="q-title">
                     {{ questionIndex + 1 }}.
                 </p>
-                <Input :area="true" placeholder="Question Description" type="text" v-model="question.description" class="question-description-input"/>
+                <CommonButton 
+                    @click="changeQuestionType(questionIndex)">
+                    {{ getTypeName(question.type) }}
+                </CommonButton>
             </div>
-            <div v-for="(_, optionIndex) in question.options" :key="optionIndex" class="option-box">
+            <Input :area="true" placeholder="Question Description" type="text" v-model="question.description" class="question-description-input"/>
+
+            <!-- 单选和多选 -->
+
+            <div v-if="question.type === 'single' || question.type === 'multiple'" v-for="(_, optionIndex) in question.options" :key="optionIndex" class="option-box">
                 <StatusButton 
                     class="option-title" 
                     @click="setAnswer(questionIndex, optionIndex)" 
-                    :down="question.answer === optionIndex"
-                    :class="{ 'right-answer': question.answer === optionIndex }"
+                    :down="Array.isArray(question.answer) ? question.answer.includes(optionIndex) : question.answer === optionIndex"
+                    :class="{ 'right-answer': Array.isArray(question.answer) ? question.answer.includes(optionIndex) : question.answer === optionIndex }"
                 >
                     {{ getName(optionIndex) }}
                 </StatusButton>
                 <Input placeholder="Option Description" type="text" v-model="question.options[optionIndex]" class="option-input"/>
             </div>
 
-            <div class="option-box">
+            <div v-if="question.type === 'single' || question.type === 'multiple'" class="option-box">
                 <div class="button-box">
                     <CommonButton @click="addOption(questionIndex)" class="add-button"><PlusIcon/></CommonButton>
                     <CommonButton @click="deleteOption(questionIndex)" class="add-button"><MinusIcon/></CommonButton>
                 </div>
             </div>
+
+            <!-- 判断 -->
+            <div v-else-if="question.type === 'judge'" class="judge-option-box">
+                <StatusButton 
+                    class="judge-option" 
+                    :down="question.answer === false" 
+                    :class="{ 'right-answer': question.answer === false }"
+                    @click="setAnswer(questionIndex, false)"
+                >
+                    <CloseIcon/>
+                </StatusButton>
+                <StatusButton 
+                    class="judge-option" 
+                    :down="question.answer === true" 
+                    :class="{ 'right-answer': question.answer === true }"
+                    @click="setAnswer(questionIndex, true)"
+                >
+                    <CheckIcon/>
+                </StatusButton>
+            </div>
+
+            <!-- 填空/简答 -->
+            <template v-else-if="question.type === 'fill' || question.type === 'essay'">
+                <div class="title">
+                    答案/评标
+                    <span title="简答题和填空题将由AI判卷，因此请尽可能详细描述评分标准，以提高判卷的准确性。"><HelpCircleOutlineIcon/></span>
+                </div>
+                <div class="analysis-box">
+                    <Input :area="true" placeholder="Answer" type="text" class="analysis-input" :value="question.answer" @input="setAnswer(questionIndex, $event.target.value)"/>
+                </div>
+            </template>
+
             <p class="title">解析</p>
             <div class="analysis-box">
                 <Input :area="true" placeholder="Analysis" type="text" v-model="question.analysis" class="analysis-input"/>
             </div>
         </div>
 
-        <Spacer/>
+        <Spacer style="margin-bottom: 10px; margin-top: 10px;"/>
         <div class="button-box">
             <CommonButton @click="addQuestion" class="add-button"><PlusIcon/></CommonButton>
             <CommonButton @click="deleteQuestion" class="add-button"><MinusIcon/></CommonButton>
@@ -255,6 +385,16 @@ function deleteSection_()
     font-weight: bold;
 }
 
+.q-title {
+    margin: 10px;
+    font-weight: bold;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
 .right-answer {
     color: green;
     transition: color 0.4s ease;
@@ -271,6 +411,20 @@ function deleteSection_()
         display: flex;
         justify-content: center;
         align-items: center;
+    }
+}
+
+.judge-option-box {
+    display: flex;
+    flex-direction: row;
+
+    .judge-option {
+        height: 45px;
+        width: 45px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 }
 

@@ -5,7 +5,7 @@ import {sleep} from '../utils/sleep';
 import {$appearDuration, State, useTransitionStore} from '../stores/transition';
 
 const model = defineModel<string | number>({required: false});
-const {placeholder, type, disappear, area, onBlur, align} = defineProps({
+const {placeholder, type, disappear, area, onBlur, align, readonly} = defineProps({
     placeholder: {
         type: String,
         default: ''
@@ -29,6 +29,9 @@ const {placeholder, type, disappear, area, onBlur, align} = defineProps({
     align: {
         type: String,
         required: false
+    },
+    readonly: {
+        type: Boolean,
     }
 });
 
@@ -47,7 +50,7 @@ let isFocused = ref(false);
 
 function handleFocus() 
 {
-    if (isFocused.value || disappear) return;
+    if (isFocused.value || disappear || readonly) return;
     controller.push([
         () => {
             className.value = 'down';
@@ -140,6 +143,7 @@ const element = area ? 'textarea' : 'input';
             @focus="handleFocus"
             @blur="handleFocusOut"
             ref="input"
+            :readonly="readonly"
         >
         <slot/>
     </component>

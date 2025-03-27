@@ -1,6 +1,8 @@
 import {computed} from "vue";
-import {safeRedirect} from "./redirect.ts";
+import {Capacitor} from '@capacitor/core';
 import {connectUrl, Target} from "../networks/utils/sendRequest.ts";
+import { router } from "../main.ts";
+import { safeRedirect } from "./redirect.ts";
 
 export function getToken()
 {
@@ -17,8 +19,26 @@ export let token = computed({get: getToken, set: setToken,})
 
 export function tryLogin()
 {
-    let from = connectUrl(Target.SELF, '/login', {from: location.pathname});
-    safeRedirect(connectUrl(Target.SSO_FRONTEND, '/oauth', {from}));
+    tryOpenSSO('/oauth');
+}
+
+export function tryAuthorize()
+{
+    tryOpenSSO('/authorize/' + environment.ssoServiceId);
+}
+
+function tryOpenSSO(url: string)
+{
+    if (Capacitor.getPlatform() !== 'web') 
+    {
+        const callbackUrl = connectUrl(Target.FRONTEND, '/_app/login', {from: location.pathname});
+        router.push(connectUrl(Target.EMPTY, '/_app/sso' + url, {from: callbackUrl}));
+    }
+    else 
+    {
+        const callbackUrl = connectUrl(Target.FRONTEND, '/login', {from: location.pathname});
+        safeRedirect(connectUrl(Target.SSO_FRONTEND, url, {from: callbackUrl}));
+    }
 }
 
 export function getUrlSearchParams(): Record<string, string>
@@ -41,3 +61,8 @@ export function replaceUrl(url: string = location.pathname, query: Record<string
 }
 
 
+export function isLagcyAndroidApp()
+{
+    // 是否是老版本的安卓app，即1.0.2及以下的版本
+    return Capacitor.getPlatform() === 'android' && window.location.hostname !== environment.androidHostname
+}

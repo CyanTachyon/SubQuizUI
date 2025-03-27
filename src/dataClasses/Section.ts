@@ -1,7 +1,7 @@
-import type {Question} from "./Question.ts";
+import type {Question, AnswerType} from "./Question.ts";
 import type {SectionId} from "./Ids.ts";
 
-export interface Section<Answer extends number | null, UserAnswer extends number | null, Analysis extends string | null>
+export interface Section<Answer extends AnswerType | null, UserAnswer extends AnswerType | null, Analysis extends string | null>
 {
     id: SectionId,
     subject: number,

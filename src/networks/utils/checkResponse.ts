@@ -1,7 +1,5 @@
 import type {ResponseBody} from "../../dataClasses/ResponseBody.ts";
-import {safeRedirect} from "../../utils/redirect.ts";
-import {connectUrl, Target} from "./sendRequest.ts";
-import {tryLogin} from "../../utils/utils.ts";
+import {tryAuthorize, tryLogin} from "../../utils/utils.ts";
 import {useNotificationStore} from "../../stores/notification.ts";
 
 export class ResponseError extends Error
@@ -22,20 +20,11 @@ export function success<DATA>(response: ResponseBody<DATA>)
 
 function defaultOnFail<T>(response: ResponseBody<T>): T
 {
-    if (response.code === 417)
-    {
-        safeRedirect(connectUrl(Target.SSO_FRONTEND, '/authorize/' + environment.ssoServiceId, {from: location.href}));
-    }
-    else if (response.code === 401)
-    {
-        tryLogin();
-    }
+    if (response.code === 417) tryAuthorize();
+    else if (response.code === 401) tryLogin();
     let error = new ResponseError(response);
     const notifications = useNotificationStore()
-    notifications.add({
-        type: 'error',
-        message: `错误：${response.message}`,
-    })
+    notifications.addError(`错误：${response.message}`);
     throw error;
 }
 
@@ -55,7 +44,8 @@ export async function checkResponse<DATA>(
     catch (e)
     {
         const notifications = useNotificationStore()
-        if (e instanceof Error) notifications.add({type: 'error', message: `错误：${e.message}`})
+        if (e.message) notifications.add({type: 'error', message: `错误：${e.message}`})
+        else if (e.stack) notifications.add({type: 'error', message: `错误：${e.stack}`})
         else notifications.add({type: 'error', message: `错误：${e}`})
         throw e
     }

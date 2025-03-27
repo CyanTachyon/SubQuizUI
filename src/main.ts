@@ -20,30 +20,58 @@ import DeleteSectionType from './pages/admin/DeleteSectionType.vue';
 import EditSection from './pages/admin/EditSection.vue';
 import Admins from './pages/admin/Admins.vue';
 import UpdateInfo from './pages/UpdateInfo.vue';
+import { App as CapacitorApp } from '@capacitor/app';
+import LoginApp from './pages/_app/LoginDone.vue';
+import SSO from './pages/_app/SSO.vue';
+import { Capacitor } from '@capacitor/core';
+
+if (Capacitor.getPlatform() === 'web') {
+    import('./font_cdn.css');
+} else {
+    import('./font.css');
+}
+
 const routes: Readonly<RouteRecordRaw[]> = [
-    { path: '/', name: 'Home', component: Home },
-    { path: '/about', name: 'About', component: About },
-    { path: '/update-info', name: 'UpdateInfo', component: UpdateInfo },
-    { path: '/analysis/:id', name: 'Analysis', component: Analysis },
-    { path: '/history', name: 'History', component: History },
+    { path: '/', name: 'Home', component: Home, meta: { sidebar: true } },
+    { path: '/about', name: 'About', component: About, meta: { sidebar: true } },
+    { path: '/update-info', name: 'UpdateInfo', component: UpdateInfo, meta: { sidebar: true }  },
+    { path: '/analysis/:id', name: 'Analysis', component: Analysis, meta: { sidebar: true }  },
+    { path: '/history', name: 'History', component: History, meta: { sidebar: true }  },
     { path: '/login', name: 'Login', component: Login },
-    { path: '/quiz', name: 'Quiz', component: Quiz },
-    { path: '/terminal', name: 'Terminal', component: Terminal },
-    { path: '/admin/admins', name: 'Admins', component: Admins },
-    { path: '/admin/subject/list', component: SubjectList },
-    { path: '/admin/subject/edit/:id', component: EditSubject },
-    { path: '/admin/subject/:id', component: Subject },
-    { path: '/admin/section/type/edit/:id', component: EditSectionType },
-    { path: '/admin/section/type/:id', component: SectionType },
-    { path: '/admin/section/type/delete/:id', component: DeleteSectionType },
-    { path: '/admin/section/edit/:id', component: EditSection },
+    { path: '/quiz', name: 'Quiz', component: Quiz, meta: { sidebar: true }  },
+    { path: '/terminal', name: 'Terminal', component: Terminal, meta: { sidebar: true }  },
+    { path: '/admin/admins', name: 'Admins', component: Admins, meta: { sidebar: true }  },
+    { path: '/admin/subject/list', component: SubjectList, meta: { sidebar: true }  },
+    { path: '/admin/subject/edit/:id', component: EditSubject, meta: { sidebar: true }  },
+    { path: '/admin/subject/:id', component: Subject, meta: { sidebar: true }  },
+    { path: '/admin/section/type/edit/:id', component: EditSectionType, meta: { sidebar: true }  },
+    { path: '/admin/section/type/:id', component: SectionType, meta: { sidebar: true }  },
+    { path: '/admin/section/type/delete/:id', component: DeleteSectionType, meta: { sidebar: true } },
+    { path: '/admin/section/edit/:id', component: EditSection, meta: { sidebar: true } },
+
+    { path: '/_app/login', name: 'LoginApp', component: LoginApp },
+    { path: '/_app/sso/:url*', name: 'SSO', component: SSO },
+
     { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFound }
 ]
 
-const router = createRouter({
+export const router = createRouter({
     history: createWebHistory(),
     routes,
 })
+
+// 监听 deep link 事件
+CapacitorApp.addListener('appUrlOpen', (data) => {
+  console.log('Deep link received:', data.url);
+  try {
+    const parsedUrl = new URL(data.url);
+    const code = parsedUrl.searchParams.get('code') || '';
+    const from = parsedUrl.searchParams.get('from') || '/';
+    router.push({ path: '/login', query: { code, from } });
+  } catch (err) {
+    console.error('Failed to parse deep link URL:', err);
+  }
+});
 
 createApp(App)
     .use(createPinia())

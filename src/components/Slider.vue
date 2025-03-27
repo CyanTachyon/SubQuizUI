@@ -69,6 +69,7 @@ function onTransitionChange(value: State, oldValue: State | undefined)
 let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
 const slider = ref<HTMLDivElement | null>(null);
+const sliderTrack = ref<HTMLDivElement | null>(null);
 onMounted(() => {
     if (slider.value && window.getComputedStyle(slider.value).getPropertyValue('--transition') !== 'static')
     {
@@ -111,22 +112,7 @@ function updatePosition(clientX: number)
 
 function startDrag(e: MouseEvent | TouchEvent)
 {
-    const container = (e.currentTarget as HTMLElement).querySelector('.slider-track')!;
-    containerRect = container.getBoundingClientRect();
-    isDragging.value = true;
-
-    const clientX = e instanceof TouchEvent ? e.touches[0].clientX : e.clientX;
-    updatePosition(clientX);
-
-    document.addEventListener('mousemove', onDrag);
-    document.addEventListener('mouseup', stopDrag);
-    document.addEventListener('touchmove', onDrag, {passive: false});
-    document.addEventListener('touchend', stopDrag);
-}
-
-function startThumbDrag(e: MouseEvent | TouchEvent)
-{
-    const container = (e.currentTarget as HTMLElement).querySelector('.slider-track')!;
+    const container = sliderTrack.value!;
     containerRect = container.getBoundingClientRect();
     isDragging.value = true;
 
@@ -174,15 +160,13 @@ watch(value, (newVal, oldValue) =>
                 @mousedown="startDrag"
                 @touchstart.passive="startDrag"
         >
-            <div class="slider-track">
+            <div class="slider-track" ref="sliderTrack">
                 <div class="slider-progress" :style="{ '--w': progressPercentage + '%' }"></div>
 
                 <div
                         class="slider-thumb"
                         :class="thumbClassName"
                         :style="{ left: progressPercentage + '%' }"
-                        @mousedown="startThumbDrag"
-                        @touchstart.passive="startThumbDrag"
                 ></div>
                 <div v-if="showStep" class="step-markers">
                     <div

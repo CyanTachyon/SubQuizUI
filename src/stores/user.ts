@@ -3,7 +3,7 @@ import {setToken, token} from "../utils/utils.ts";
 import type {UserInfo} from "../dataClasses/User.ts";
 import {getUserInfo} from "../networks/backend/user.ts";
 import {avatarUrl} from "../networks/sso/avatar.ts";
-import SubIT_icon from '../assets/SubIT_icon.png';
+import SubIT_icon from '../assets/icon.svg';
 import {isAdmin} from "../dataClasses/Permission.ts";
 
 export const useUser = defineStore('user', {
