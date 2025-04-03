@@ -5,8 +5,9 @@ export enum Target
     EMPTY = 0,
     SSO_BACKEND = 1,
     SSO_FRONTEND = 2,
-    BACKEND = 3,
-    FRONTEND = 4,
+    CDN = 3,
+    BACKEND = 4,
+    FRONTEND = 5,
 }
 
 export function connectUrl(target: Target | undefined, url: string, params: Record<string, string> = {})
@@ -19,6 +20,7 @@ export function connectUrl(target: Target | undefined, url: string, params: Reco
         if (!url.startsWith('/')) url = '/' + url;
         if (target === Target.SSO_BACKEND) rUrl = environment.ssoBackend + url;
         else if (target === Target.SSO_FRONTEND) rUrl = environment.ssoFrontend + url;
+        else if (target === Target.CDN) rUrl = environment.cdn + url;
         else if (target === Target.BACKEND) rUrl = Capacitor.getPlatform() === 'web' ? environment.backend + url : environment.androidBackend + url;
         else /*if (target === Target.FRONTEND)*/ rUrl = environment.frontend + url;
     }

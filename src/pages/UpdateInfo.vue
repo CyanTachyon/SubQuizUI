@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import Card from '../components/Card.vue';
 import Spacer from "../components/Spacer.vue";
-import showdown from 'showdown';
-
-const converter = new showdown.Converter();
 
 interface UpdateInfo {
     date?: string;
@@ -25,7 +22,7 @@ const updateInfo: UpdateInfo[] = ([
     {
         date: '2025-03-21',
         version: '1.0.0',
-        description: '添加多选、判断、填空、简答题支持，介入AI实现填空及简答题批改',
+        description: '添加多选、判断、填空、简答题支持，接入AI实现填空及简答题批改',
     },
     {
         date: '2025-03-24',
@@ -48,27 +45,54 @@ const updateInfo: UpdateInfo[] = ([
         '- 修复安卓端的一些bug\n'
     },
     {
+        date: '2025-03-25',
+        version: '1.0.4',
+        description: '' +
+        '- Markdown支持\n'
+    },
+    {
+        date: '2025-03-30',
+        version: '1.0.5',
+        description: '' +
+        '- 题目插入图片支持\n'
+    },
+    {
+        date: '2025-03-31',
+        version: '1.0.6',
+        description: '' +
+        '- 修复markdown和katex渲染相关bug\n'
+    },
+    {
+        date: '2025-04-01',
+        version: '1.0.7',
+        description: '' +
+        '- 支持设置题目权重\n'
+    },
+    {
+        date: '2025-04-02',
+        version: '1.0.8',
+        description: '' +
+        '- 修复在某些旧版浏览器上渲染markdown失败的bug\n'
+    },
+    {
         version: 'TODO LIST',
         description: '以下是预计添加的新功能，但我开发速度有限，所以别急^v^\n' +
-        "0. 支持题目中插入图片\n" +
-        "1. 支持给题目设置难度系数\n" +
-        "2. 支持给题目设置标签/知识点\n" +
-        "3. 支持按照题目类型/难度/标签/知识点过滤题目\n"
+        "1. 简答/填空允许提交图片\n" +
+        "2. 支持给题目设置难度系数\n" +
+        "3. 支持给题目设置标签/知识点\n" +
+        "4. 支持按照题目类型/难度/标签/知识点过滤题目\n"
         ,
     }
-] as UpdateInfo[]).reverse().map(item => {
-    item.description = converter.makeHtml(item.description);
-    return item;
-});
+] as UpdateInfo[]).reverse();
 </script>
 
 <template>
     <div class="update-info-container">
-        <Card class="update-info-item" v-for="item in updateInfo" :key="item.date">
+        <Card class="update-info-item" v-for="item in updateInfo" :key="item.version">
             <div class="update-info-item-version">{{ item.version }}</div>
             <Spacer/>
             <div v-if="item.date" class="update-info-item-date">发布时间：{{ item.date }}</div>
-            <div class="update-info-item-description" v-html="item.description"></div>
+            <div class="update-info-item-description" v-markdown="{content: item.description}"></div>
         </Card>
     </div>
 </template>

@@ -4,7 +4,7 @@ interface Environment
 {
     version: string;
     androidBackend: string;
-    androidLatestInfo: string;
+    cdn: string;
     backend: string;
     frontend: string;
 

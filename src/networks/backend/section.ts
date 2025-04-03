@@ -84,7 +84,7 @@ export function getSection(id: number)
     }));
 }
 
-const modifySectionUrl = "/section/{id}"
+const modifySectionUrl = "/section"
 export function modifySection(section: Section<AnswerType, null, string>)
 {
     return checkResponse<null>(sendRequest({
@@ -92,7 +92,6 @@ export function modifySection(section: Section<AnswerType, null, string>)
         url: modifySectionUrl,
         method: 'PUT',
         data: section,
-        params: {id: section.id},
     }));
 }
 
@@ -115,5 +114,37 @@ export function getSectionList(begin: number, count: number, subject?: SubjectId
         url: getSectionListUrl,
         method: 'GET',
         params: {begin, count, subject, type},
+    }));
+}
+
+const sectionImageUrl = "/section/{id}/image"
+
+export function addSectionImage(sectionId: number, type: 'GIF' | 'JPEG' | 'PNG' | 'SVG' | 'XIcon', md5: string)
+{
+    return checkResponse<string | null>(sendRequest({
+        target: Target.BACKEND,
+        url: sectionImageUrl,
+        method: 'POST',
+        params: {id: sectionId, type, md5},
+    }));
+}
+
+export function removeSectionImage(sectionId: number, md5: string)
+{
+    return checkResponse<null>(sendRequest({
+        target: Target.BACKEND,
+        url: sectionImageUrl,
+        method: 'DELETE',
+        params: {id: sectionId, md5},
+    }));
+}
+
+export function getSectionImages(sectionId: number)
+{
+    return checkResponse<string[]>(sendRequest({
+        target: Target.BACKEND,
+        url: sectionImageUrl,
+        method: 'GET',
+        params: {id: sectionId},
     }));
 }

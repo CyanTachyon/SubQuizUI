@@ -8,19 +8,25 @@ import type { Section } from "../../dataClasses/Section.ts";
 import { ref } from "vue";
 import { useRoute } from "vue-router";
 import type { SectionId, SubjectId, SectionTypeId } from "../../dataClasses/Ids.ts";
-import { deleteSection, getSection, getSectionType, modifySection, newSection, } from "../../networks/backend/section.ts";
+import { deleteSection, getSection, getSectionImages, getSectionType, modifySection, newSection, removeSectionImage, } from "../../networks/backend/section.ts";
 import { getSubject } from "../../networks/backend/subject.ts";
 import CommonButton from "../../components/CommonButton.vue";
 import PlusIcon from "vue-material-design-icons/Plus.vue";
 import MinusIcon from "vue-material-design-icons/Minus.vue";
 import ContentSaveIcon from "vue-material-design-icons/ContentSave.vue";
-import type { AnswerType, Question, QuestionType } from "../../dataClasses/Question.ts";
+import type { AnswerType, QuestionType } from "../../dataClasses/Question.ts";
 import { useRouter } from "vue-router";
 import Spacer from "../../components/Spacer.vue";
 import TrashCanIcon from "vue-material-design-icons/TrashCan.vue";
 import CloseIcon from "vue-material-design-icons/Close.vue";
 import CheckIcon from "vue-material-design-icons/Check.vue";
 import HelpCircleOutlineIcon from "vue-material-design-icons/HelpCircleOutline.vue";
+import Switch from "../../components/Switch.vue";
+import QuizView from "../../templates/QuizView.vue";
+import { pushUrl } from "../../utils/utils.ts";
+import { uploadSectionImage } from "../../utils/sectionImage.ts";
+import { useNotificationStore } from "../../stores/notification.ts";
+import Slider from "../../components/Slider.vue";
 function getName(index: number)
 {
     if (!index) return 'A.';
@@ -41,14 +47,12 @@ const section = ref(null as Section<AnswerType, null, string> | null);
 const notFound = ref(false);
 const subjectName = ref('');
 const typeName = ref('');
-const isNewSection = ref(false);
 
 document.title = '编辑题目 - SubQuiz';
 
 (async () => {
     if (route.params.id === 'new')
     {
-        isNewSection.value = true;
         const subject = Number(route.query.subject) as SubjectId;
         const type = Number(route.query.type) as SectionTypeId;
         if (!subject || !type)
@@ -56,22 +60,28 @@ document.title = '编辑题目 - SubQuiz';
             notFound.value = true;
             return;
         }
-        section.value = {
+        let section_: Section<AnswerType, null, string> = {
             id: 0,
             subject: subject,
             type: type,
             description: '',
+            weight: 50,
+            available: false,
+            markdown: false,
             questions: [],
         };
+        section_.id = await newSection(section_);
+        section.value = section_;
+        pushUrl(`/admin/section/${section_.id}`);
     }
     else
     {
-        isNewSection.value = false;
         section.value = await getSection(Number(route.params.id) as SectionId);
     }
 
     if (section.value)
     {
+        updateImages();
         subjectName.value = await getSubject(section.value.subject).then(value => value.name);
         typeName.value = await getSectionType(section.value.type).then(value => value.name);
     }
@@ -206,19 +216,7 @@ function saveSection()
     (async () => {
         if (saving.value) return;
         saving.value = true;
-        if (section.value.id === 0)
-        {
-            await newSection({
-                subject: section.value.subject,
-                type: section.value.type,
-                description: section.value.description,
-                questions: section.value.questions as Question<AnswerType, null, string>[],
-            });
-        }
-        else
-        {
-            await modifySection(section.value as Section<AnswerType, null, string>);
-        }
+        await modifySection(section.value as Section<AnswerType, null, string>);
         router.push(`/admin/section/type/${section.value.type}`);
         
     })().catch(() => {
@@ -235,20 +233,111 @@ function deleteSection_()
         saving.value = false;
     });
 }
+
+const preview = ref(false);
+const images = ref([] as string[]);
+
+async function updateImages()
+{
+    loadingImges.value = true;
+    try
+    {
+        images.value = await getSectionImages(section.value.id)
+    }
+    finally
+    {
+        loadingImges.value = false;
+    }
+}
+
+const loadingImges = ref(false);
+async function addImage()
+{
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (event) => {
+        const file = (event.target as HTMLInputElement).files[0];
+        console.log(file);
+        if (!file) return;
+        uploadSectionImage(file, section.value.id).then(() => {
+            updateImages();
+        }).catch((e) => {
+            useNotificationStore().addError(e);
+        });
+    };
+    input.click();
+}
+
+function getImageUrl(key: string)
+{
+    return environment.cdn + '/' + key;
+}
+
+const textareaRef = ref<InstanceType<typeof Input>>(null);
+
+function onImageClick(name: string)
+{
+    section.value.markdown = true;
+    const imgMarkdown = `![](${name} "=x300")`;
+    const textarea = textareaRef.value?.element;
+    if (!textarea) return;
+    const startPos = textarea.selectionStart;
+    const endPos = textarea.selectionEnd;
+    const originalText = textarea.value;
+    const beforeText = originalText.substring(0, startPos);
+    const afterText = originalText.substring(endPos);
+    section.value.description = beforeText + imgMarkdown + afterText;
+    const newPos = startPos + imgMarkdown.length;
+    textarea.selectionStart = newPos;
+    textarea.selectionEnd = newPos;
+    textarea.focus();
+}
+
+function deleteImage(name: string)
+{
+    (async () => {
+        await removeSectionImage(section.value.id, name);
+        updateImages();
+    })().catch(() => {
+        useNotificationStore().addError('删除图片失败');
+    });
+}
+
 </script>
 
 <template>
     <NotFound v-if="notFound"/>
     <Loading v-else-if="section === null || subjectName === '' || typeName === ''" class="loading"/>
-    <Card v-else class="section">
+    <Card v-else-if="!preview" class="section">
         <p class="main-title">{{ section.id === 0 ? '新建' : '编辑' }}题目</p>
         <p class="title">{{ `学科：${subjectName}` }}</p>
         <p class="title">{{ `类型：${typeName}` }}</p>
+        <StatusButton @click="preview = true">
+            题目预览
+        </StatusButton>
         <Spacer/>
         <p class="small-title">大题描述</p>
-        <div style="display: flex;">
-            <Input :area="true" placeholder="Section Description" type="text" v-model="section.description" class="section-description-input"/>
+        <div style="display: flex;" class="small-title">
+            <Switch :on="section.markdown" @click="section.markdown = !section.markdown"/>
+            {{ section.markdown ? ' markdown' : ' text' }}
         </div>
+        <div style="display: flex;">
+            <Input ref="textareaRef" :area="true" placeholder="Section Description" type="text" v-model="section.description" class="section-description-input"/>
+        </div>
+        <br/>
+        <Loading v-if="loadingImges" class="img-loading"/>
+        <template v-else>
+            <div v-if="images.length" style="margin-left: 10px;">
+                点击图片将图片插入题目
+            </div>
+            <div class="img-sources">
+                <div v-for="img in images" class="img" :key="img" :style="'--img-url: url(' + getImageUrl(img) + ');'" @click="onImageClick(img.substring(img.lastIndexOf('/')))">
+                    <TrashCanIcon :size="30" @click.stop="deleteImage(img.substring(img.lastIndexOf('/')))" class="remove-img"/>
+                </div>
+            </div>
+        </template>
+        <CommonButton @click="addImage" class="add-img-button">添加图片附件</CommonButton>
         <br/>
         <div v-for="(question, questionIndex) in section.questions" :key="questionIndex" class="question">
             <Spacer style="margin-bottom: 10px; margin-top: 10px;"/>
@@ -322,13 +411,26 @@ function deleteSection_()
         </div>
 
         <Spacer style="margin-bottom: 10px; margin-top: 10px;"/>
+        <div style="display: flex;" class="small-title">
+            <Switch :on="section.available" @click="section.available = !section.available"/>
+            {{ section.available ? ' 题目可用' : ' 题目不可用' }}
+        </div>
+        <p class="title">权重</p>
+        <div style="width: 280px;">
+            <Input :area="false" placeholder="Section Weight" type="number" v-model="section.weight"/>
+            <Slider :min-value="0" :max-value="100" :step="1" v-model="section.weight"/>
+        </div>
         <div class="button-box">
             <CommonButton @click="addQuestion" class="add-button"><PlusIcon/></CommonButton>
             <CommonButton @click="deleteQuestion" class="add-button"><MinusIcon/></CommonButton>
             <StatusButton @click="saveSection" class="add-button"><ContentSaveIcon/></StatusButton>
-            <StatusButton v-if="!isNewSection" @click="deleteSection_" class="add-button"><TrashCanIcon/></StatusButton>
+            <StatusButton @click="deleteSection_" class="add-button"><TrashCanIcon/></StatusButton>
         </div>
     </Card>
+    <template v-else>
+        <StatusButton @click="preview = false">返回编辑</StatusButton>
+        <QuizView :quiz="{ sections: [section], correct: null }" :editable="false"/>
+    </template>
 </template>
 
 <style scoped lang="scss">
@@ -354,6 +456,10 @@ function deleteSection_()
 .small-title {
     margin: 10px;
     font-size: 16px;
+
+    display: flex;
+    align-items: center;
+    white-space: pre;
 }
 
 .section-description {
@@ -451,5 +557,37 @@ function deleteSection_()
     min-width: 50px;
     max-width: 50px;
     padding: 10px;
+}
+
+
+///// img
+
+.img-sources {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.img {
+    --img-url: ;
+    background-image: var(--img-url);
+    min-width: 200px;
+    max-width: 200px;
+    min-height: 200px;
+    max-height: 200px;
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-clip: content-box;
+    border-radius: 10px;
+    position: relative;
+
+    .remove-img {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        color: red;
+        cursor: pointer;
+    }
 }
 </style>

@@ -2,7 +2,7 @@
 
 import Loading from "../../components/Loading.vue";
 import {useRoute, useRouter} from "vue-router";
-import {ref} from "vue";
+import {ref, type Ref} from "vue";
 import type {Slice} from "../../dataClasses/Slice.ts";
 import Card from "../../components/Card.vue";
 import Pagination from "../../components/Pagination.vue";
@@ -42,7 +42,7 @@ function getStart()
     return (page.value - 1) * count;
 }
 
-const data = ref(void 0 as undefined | null | Slice<Section<AnswerType, null, string>>)
+const data: Ref<(undefined | null | Slice<Section<AnswerType, null, string>>)> = ref(void 0)
 
 function handlePageChange(newPage: number)
 {
@@ -80,6 +80,23 @@ function deleteSectionType()
 {
     router.push('/admin/section/type/delete/' + sectionType + '?subject=' + subjectInfo.value.id)
 }
+
+function getSectionBrief(section: Section<AnswerType, null, string>)
+{
+    const qBrief = section
+        .questions
+        .map((q, i) => ({description: q.description, i}))
+        .filter(q => q.description.trimStart().trimEnd() !== '')
+        .map(q => `第${q.i + 1}题：${q.description}`)
+        .join('\n');
+    
+    if (section.description.trimStart().trimEnd() === '')
+    {
+        if (qBrief.trimStart().trimEnd() === '') return '暂无描述';
+        return qBrief;
+    }
+    return section.description + '\n' + qBrief;
+}
 </script>
 
 <template>
@@ -110,13 +127,13 @@ function deleteSectionType()
         </div>
         <Spacer/>
         <div class="sections">
-            <template v-for="q in data.list">
-                <Card class="section" @click="editSection(q.id)">
-                    <p class="title">ID: {{ q.id }}</p>
-                    <Spacer/>
-                    <p class="description" :title="q.description">{{ q.description }}</p>
-                </Card>
-            </template>
+            <Card v-for="q in data.list" class="section" @click="editSection(q.id)">
+                <p class="title">ID: {{ q.id }}</p>
+                <Spacer/>
+                <p style="margin-bottom: 0;">状态：{{ q.available ? '可用' : '不可用' }}</p>
+                <p style="margin: 0;">小题数量：{{ q.questions.length }}</p>
+                <p class="description" :title="getSectionBrief(q)">{{ getSectionBrief(q) }}</p>
+            </Card>
             <Text v-if="data.list.length === 0" class="no-sections">该题目类型暂无题目</Text>
         </div>
         <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" class="pagination"/>
@@ -180,7 +197,7 @@ function deleteSectionType()
 
 .section {
     padding: 15px 30px 30px 30px;
-    height: 200px;
+    height: 240px;
     max-width: 400px;
     display: flex;
     flex-direction: column;
@@ -188,6 +205,7 @@ function deleteSectionType()
     cursor: pointer;
 
     .description {
+        margin-bottom: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;

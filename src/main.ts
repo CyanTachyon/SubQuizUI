@@ -24,6 +24,8 @@ import { App as CapacitorApp } from '@capacitor/app';
 import LoginApp from './pages/_app/LoginDone.vue';
 import SSO from './pages/_app/SSO.vue';
 import { Capacitor } from '@capacitor/core';
+import './katex.css';
+import { vMarkdown } from './utils/markdown';
 
 if (Capacitor.getPlatform() === 'web') {
     import('./font_cdn.css');
@@ -76,4 +78,5 @@ CapacitorApp.addListener('appUrlOpen', (data) => {
 createApp(App)
     .use(createPinia())
     .use(router)
+    .directive('markdown', vMarkdown)
     .mount('#app')

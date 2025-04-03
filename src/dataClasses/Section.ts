@@ -1,11 +1,14 @@
 import type {Question, AnswerType} from "./Question.ts";
 import type {SectionId} from "./Ids.ts";
 
-export interface Section<Answer extends AnswerType | null, UserAnswer extends AnswerType | null, Analysis extends string | null>
+export interface Section<Answer extends (AnswerType | null), UserAnswer extends (AnswerType | null), Analysis extends (string | null)>
 {
     id: SectionId,
     subject: number,
     type: number,
     description: string,
+    weight: number,
+    available: boolean,
+    markdown: boolean,
     questions: Question<Answer, UserAnswer, Analysis>[]
 }

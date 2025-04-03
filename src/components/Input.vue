@@ -127,6 +127,10 @@ onMounted(() => {
 
 const element = area ? 'textarea' : 'input';
 
+defineExpose({
+    element: input,
+})
+
 </script>
 
 <template>
@@ -200,6 +204,11 @@ textarea {
     justify-content: start;
     overflow: auto;
     scrollbar-width: none;
+    position: relative;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 .align-start {

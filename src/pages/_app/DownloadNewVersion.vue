@@ -75,13 +75,13 @@ const download = async () => {
 </script>
 <template>
    <div class="main">
-        <Card class="card">
+        <div class="card">
             <h1>新版本可用</h1>
             <p>Version: {{ info.version }}</p>
             <CommonButton class="btn" @click="download" :disabled="downloading"> 
                 {{ downloading ? `下载中... ${downloadProgress}` : '下载更新' }} 
             </CommonButton>
-        </Card>
+        </div>
     </div>  
 </template>
 

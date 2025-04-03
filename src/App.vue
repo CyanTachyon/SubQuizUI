@@ -77,7 +77,7 @@ let versionInfo = ref(null as AndroidVersion | null);
 if (Capacitor.getPlatform() === 'android')
 {
     (async () => {
-        let r1 = await fetch(environment.androidLatestInfo + `?timestamp=${Date.now()}`, {cache: "reload",});
+        let r1 = await fetch(environment.frontend + '/android_latest.json' + `?timestamp=${Date.now()}`, {cache: "reload",});
         let res = (await r1.json()) as AndroidVersion;
         if (isLagcyAndroidApp() || res.versionCode > currentVersion.versionCode)
         {
@@ -142,28 +142,28 @@ main {
     background-color: #dbeafe;
     border-color: #93c5fd;
     color: #1e40af;
-    box-shadow: 0px 0px 9px 2px #93c5fd;
+    box-shadow: 0 0 9px 2px #93c5fd;
 }
 
 .notification-item.success {
     background-color: #dcfce7;
     border-color: #86efac;
     color: #166534;
-    box-shadow: 0px 0px 9px 2px #86efac;
+    box-shadow: 0 0 9px 2px #86efac;
 }
 
 .notification-item.warning {
     background-color: #fef3c7;
     border-color: #fcd34d;
     color: #854d0e;
-    box-shadow: 0px 0px 9px 2px #fcd34d;
+    box-shadow: 0 0 9px 2px #fcd34d;
 }
 
 .notification-item.error {
     background-color: #fee2e2;
     border-color: #fca5a5;
     color: #991b1b;
-    box-shadow: 0px 0px 9px 2px #fca5a5;
+    box-shadow: 0 0 9px 2px #fca5a5;
 }
 
 .notification-move {

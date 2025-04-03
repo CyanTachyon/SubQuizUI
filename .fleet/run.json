@@ -1,0 +1,28 @@
+{
+    "configurations": [
+        {
+            "type": "npm",
+            "name": "development",
+            "command": "run",
+            "scripts": "dev"
+        },
+        {
+            "type": "npm",
+            "name": "build-web",
+            "command": "run",
+            "scripts": "build-web"
+        },
+        {
+            "type": "npm",
+            "name": "build-android",
+            "command": "run",
+            "scripts": "build-android"
+        },
+        {
+            "type": "npm",
+            "name": "build",
+            "command": "run",
+            "scripts": "build"
+        }
+    ]
+}

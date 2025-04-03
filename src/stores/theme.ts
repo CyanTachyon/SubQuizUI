@@ -18,8 +18,7 @@ export const useThemeStore = defineStore('theme', {
             else
             {
                 const updateTheme = () => {
-                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-                    this.isDark = prefersDark
+                    this.isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
                     this.applyTheme();
                 }
                 updateTheme()

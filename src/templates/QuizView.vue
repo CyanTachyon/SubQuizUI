@@ -14,8 +14,8 @@ import CheckboxMarkedCircleOutline from "vue-material-design-icons/CheckboxMarke
 import CloseIcon from "vue-material-design-icons/Close.vue";
 import CheckIcon from "vue-material-design-icons/Check.vue";
 import { useNotificationStore } from "../stores/notification.ts";
-const {quiz, editable, submit} = defineProps<{ quiz: Quiz<any, any, any>, editable: boolean, submit?: () => void }>();
-
+import { sectionMarkdownToHtml } from "../utils/markdown.ts";
+const {quiz, editable, submit} = defineProps<{ quiz: Pick<Quiz<any, any, any>, 'sections' | 'correct'>, editable: boolean, submit?: () => void }>();
 const subjectNames = ref(new Map<SubjectId, string>());
 const sectionTypeNames = ref(new Map<SectionTypeId, string>());
 const loading = ref(true);
@@ -145,17 +145,14 @@ function trySubmit()
 <template>
     <Loading v-if="loading" class="loading"/>
     <template v-else>
-        <Card v-for="(section, sectionIndex) in quiz.sections" class="section">
+        <Card v-for="(section, sectionIndex) in quiz.sections" class="section" :key="sectionIndex">
             <div class="section-info">
                 <p class="title">
                     {{ `学科：${subjectNames.get(section.subject)} 类型：${sectionTypeNames.get(section.type)}` }}
                 </p>
                 <br/>
             </div>
-            <div class="section-description-wrapper" v-if="section.description">
-                <Input :area="true" placeholder="Section Description" type="text" v-model="section.description" class="section-description-input" disabled/>
-            </div>
-            <br/>
+            <Card v-if="section.description" class="section-description-input" v-markdown="{markdown: section.markdown, content: section.description, section: section.id}"/>
             <Spacer/>
             <br/>
             <div v-for="(question, questionIndex) in section.questions" :id="`q-${sectionIndex}-${questionIndex}`" class="question">
@@ -163,7 +160,7 @@ function trySubmit()
                     <p class="title">
                         {{ questionIndex + 1 }}.
                     </p>
-                    {{ question.description }}
+                    <div class="question-description-content" v-html="section.markdown ? sectionMarkdownToHtml(section.id, question.description) : question.description"/>
                 </div>
                 <div v-if="question.options" v-for="(option, optionIndex) in question.options" class="option-box">
                     <StatusButton 
@@ -178,7 +175,7 @@ function trySubmit()
                         <div class="option-title" style="height: 100%;">
                             {{ getName(optionIndex) }}
                         </div>
-                        {{ option }}
+                        <div class="option-content" v-html="section.markdown ? sectionMarkdownToHtml(section.id, option) : option"/>
                     </StatusButton>
                     <Text 
                         v-if="optionIndex === question.answer || (question.answer?.length && question.answer.includes(optionIndex))" 
@@ -223,13 +220,15 @@ function trySubmit()
                     {{ question.type === 'fill' || question.type === 'essay' ? '*AI' : '' }}
                 </Text>
                 <Text v-if="(question.type === 'fill' || question.type === 'essay') && question.answer" class="answer analysis">
-                    {{ '答案/评标：\n' + question.answer }}
+                    {{ '答案/评标：' }}
+                    <div v-html="section.markdown ? sectionMarkdownToHtml(section.id, question.answer) : question.answer"/>
                 </Text>
                 <Text 
                     v-if="question.analysis" 
                     class="analysis"
                 >
-                    {{ '解析：\n' + question.analysis }}
+                    {{ '解析：' }}
+                    <div v-html="section.markdown ? sectionMarkdownToHtml(section.id, question.analysis) : question.analysis"/>
                 </Text>
                 <br v-if="questionIndex < section.questions.length - 1"/>
             </div>
@@ -249,18 +248,19 @@ function trySubmit()
     margin-bottom: 5px;
 }
 
-.section-description-wrapper {
-    background: var(--bgcolor);
-    display: flex;
+.section-description-input {
+    background-color: var(--bgcolor);
     position: -webkit-sticky;
     position: sticky;
     top: 0;
-    
-    .section-description-input {
-        width: 100%;
-        height: calc(min(300px, fit-content));
-        line-height: 1.5;
-    }
+    width: auto;
+    height: 10vh;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    resize: vertical;
+    overflow:auto;
+    scrollbar-width: none;
+    display: flex;
 }
 
 .question-description {
@@ -270,6 +270,10 @@ function trySubmit()
     margin-bottom: 5px;
     width: 60%;
     white-space: pre-wrap;
+
+    .question-description-content {
+        display: flex;
+    }
 }
 
 .title {
@@ -318,6 +322,13 @@ $answer-color-duration: 0.4s;
         font-weight: bold;
         width: 30px;
         display: flex;
+    }
+
+    .option-content {
+        display: flex;
+        flex-grow: 1;
+        text-align: left;
+        white-space: pre-wrap;
     }
 }
 
