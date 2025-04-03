@@ -28,3 +28,4 @@ dist-ssr
 .env.*
 capacitor.config.ts
 subquiz.jks
+public/android_latest.json
