@@ -33,7 +33,7 @@ import currentVersion from "../public/android_latest.json";
 import { ref } from "vue";
 import { Capacitor } from "@capacitor/core";
 import DownloadNewVersion from "./pages/_app/DownloadNewVersion.vue";
-import { isLagcyAndroidApp } from "./utils/utils.ts";
+import { isLegacyAndroidApp } from "./utils/utils.ts";
 import type { AndroidVersion } from "./dataClasses/AndroidVersion.ts";
 
 const router = useRouter();
@@ -79,7 +79,7 @@ if (Capacitor.getPlatform() === 'android')
     (async () => {
         let r1 = await fetch(environment.frontend + '/android_latest.json' + `?timestamp=${Date.now()}`, {cache: "reload",});
         let res = (await r1.json()) as AndroidVersion;
-        if (isLagcyAndroidApp() || res.versionCode > currentVersion.versionCode)
+        if (isLegacyAndroidApp() || res.versionCode > currentVersion.versionCode)
         {
             versionInfo.value = res;
         }

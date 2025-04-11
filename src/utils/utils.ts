@@ -61,7 +61,7 @@ export function replaceUrl(url: string = location.pathname, query: Record<string
 }
 
 
-export function isLagcyAndroidApp()
+export function isLegacyAndroidApp()
 {
     // 是否是老版本的安卓app，即1.0.2及以下的版本
     return Capacitor.getPlatform() === 'android' && window.location.hostname !== environment.androidHostname

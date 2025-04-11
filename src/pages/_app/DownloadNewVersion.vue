@@ -6,7 +6,7 @@ import { ref } from "vue";
 import { FileOpener } from '@capacitor-community/file-opener';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { useNotificationStore } from "../../stores/notification";
-import { isLagcyAndroidApp } from "../../utils/utils";
+import { isLegacyAndroidApp } from "../../utils/utils";
 import type { AndroidVersion } from "../../dataClasses/AndroidVersion";
 
 const { info } = defineProps<{info: AndroidVersion;}>();
@@ -17,7 +17,7 @@ const downloading = ref(false);
 document.title = '下载新版本 - SubQuiz';
 
 const download = async () => {
-    if (Capacitor.getPlatform() !== 'android' || isLagcyAndroidApp())
+    if (Capacitor.getPlatform() !== 'android' || isLegacyAndroidApp())
     {
         safeRedirect(info.url);
         return;
