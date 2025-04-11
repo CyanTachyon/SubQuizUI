@@ -5,10 +5,10 @@
  * @param immediate 首次调用是否立即执行(默认为false)
  * @returns 防抖后的函数
  */
-export default function<T extends any[]>(fn: (...args: T) => void, delay: number, immediate: boolean = false)
+export default function<T extends any[]>(fn: (...args: T) => any, delay: number, immediate: boolean = false): (...args: T) => void
 {
     let timer: number | null = null;
-    return function (...args: T)
+    return (...args: T) =>
     {
         if (timer) clearTimeout(timer);
         if (immediate)
@@ -16,11 +16,10 @@ export default function<T extends any[]>(fn: (...args: T) => void, delay: number
             immediate = false;
             fn(...args);
         }
-        timer = setTimeout(() =>
+        else timer = setTimeout(() =>
         {
             fn(...args);
             timer = null;
         }, delay);
-
     }
 }
