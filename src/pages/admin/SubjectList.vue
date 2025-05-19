@@ -60,7 +60,7 @@ const user = useUser();
 
 <template>
     <Loading v-if="data === null" class="loading"/>
-    <div v-else class="subjects-container">
+    <quiz-subjects-container v-else>
         <StatusButton
             v-if="user.hasAdmin()"
             class="create-subject"
@@ -68,19 +68,17 @@ const user = useUser();
         >
             创建新科目
         </StatusButton>
-        <div class="subjects">
-            <template v-for="q in data.list">
-                <Card class="subject" @click="gotoSubject(q)">
-                    <p class="title">{{ q.name }}</p>
-                    <Spacer/>
-                    <p>ID: {{ q.id }}</p>
-                    <p class="description">{{ q.description }}</p>  <!-- 添加class -->
-                </Card>
-            </template>
+        <quiz-subjects>
+            <Card v-for="q in data.list" @click="gotoSubject(q)">
+                <p class="title">{{ q.name }}</p>
+                <Spacer/>
+                <p>ID: {{ q.id }}</p>
+                <p class="description">{{ q.description }}</p>  <!-- 添加class -->
+            </Card>
             <Text v-if="data.list.length === 0" class="no-subjects">暂无科目</Text>
-        </div>
-        <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" class="pagination"/>
-    </div>
+        </quiz-subjects>
+        <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange"/>
+    </quiz-subjects-container>
 </template>
 
 <style scoped lang="scss">
@@ -93,7 +91,7 @@ const user = useUser();
     width: 30%;
 }
 
-.subjects-container {
+quiz-subjects-container {
     display: flex;
     flex-direction: column;
     max-height: 100%;
@@ -110,20 +108,20 @@ const user = useUser();
     }
 }
 
-.subjects {
+quiz-subjects {
     margin: 20px 0 0 0;
     display: grid;
-    flex-grow: 1;
+    // flex-grow: 1;
     grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
     justify-content: start;
     overflow-y: auto;
     scrollbar-width: none;
 }
 
-.subject {
+quiz-card {
     padding: 15px 30px 30px 30px;
     cursor: pointer;
-    height: 200px;
+    max-height: 220px;
     max-width: 400px;
     display: flex;
     flex-direction: column;
@@ -142,8 +140,8 @@ const user = useUser();
     font-weight: bold;
 }
 
-.pagination {
+quiz-pagination {
     width: calc(min(100%, 800px));
-    margin: 20px auto;
+    margin: auto auto 20px auto;
 }
 </style>

@@ -26,14 +26,10 @@ const { onClick, icon, title, iconLocation } = defineProps({
 
 <template>
     <CommonButton class="item" @click="onClick()">
-        <div class="wrap" :style="{'flex-direction': iconLocation === 'left' ? 'row' : 'row-reverse'}">
-            <div class="icon-wrap">
-                <component :is="icon" :size="36"></component>
-            </div>
-            <div class="content-wrap">
-                {{ title }}
-            </div>
-        </div>
+        <quiz-sidebar-item-wrapper :style="{ 'flex-direction': iconLocation === 'left' ? 'row' : 'row-reverse' }">
+            <quiz-sidebar-item-icon-wrapper><component :is="icon" :size="36"/></quiz-sidebar-item-icon-wrapper>
+            <quiz-sidebar-item-content-wrapper>{{ title }}</quiz-sidebar-item-content-wrapper>
+        </quiz-sidebar-item-wrapper>
     </CommonButton>
 </template>
 
@@ -46,7 +42,7 @@ $close-width: 69px;
     margin: 5px;
 }
 
-.wrap {
+quiz-sidebar-item-wrapper {
     margin: -11px;
     min-width: 196px;
     max-width: 196px;
@@ -55,7 +51,7 @@ $close-width: 69px;
     max-height: $close-width;
 }
 
-.icon-wrap {
+quiz-sidebar-item-icon-wrapper {
     min-width: $close-width;
     max-width: $close-width;
     min-height: $close-width;
@@ -65,7 +61,7 @@ $close-width: 69px;
     align-items: center;
 }
 
-.content-wrap {
+quiz-sidebar-item-content-wrapper {
     min-width: 120px;
     max-width: 120px;
     display: flex;

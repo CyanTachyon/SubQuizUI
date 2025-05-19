@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import {connectUrl, Target} from "../networks/utils/sendRequest.ts";
-import {getToken} from "../utils/utils.ts";
-import {useRouter} from "vue-router";
-import {onBeforeUnmount, onMounted, ref, watch} from "vue";
-import {AnsiUp} from "ansi_up/ansi_up";
+import { connectUrl, Target } from "../networks/utils/sendRequest.ts";
+import { getToken } from "../utils/utils.ts";
+import { useRouter } from "vue-router";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { AnsiUp } from "ansi_up/ansi_up";
 import Input from "../components/Input.vue";
 import { createAnimationsController } from "../utils/AnimationsController.ts";
 import { sleep } from "../utils/sleep.ts";
@@ -14,7 +14,7 @@ document.title = '控制台 - SubQuiz';
 const router = useRouter();
 const ansi_up = new AnsiUp();
 const inputCommand = ref('');
-const messages = ref<HTMLDivElement | null>(null);
+const messages = ref<HTMLElement | null>(null);
 const url = connectUrl(Target.BACKEND, '/terminal/api').replace('https://', 'wss://').replace('http://', 'ws://');
 let timer: number | null = null;
 
@@ -23,14 +23,14 @@ let select = undefined;
 
 function setLastWord(word: string)
 {
-    let message = inputCommand.value
-    let index = message.lastIndexOf(' ')
+    let message = inputCommand.value;
+    let index = message.lastIndexOf(' ');
     if (index === -1)
     {
-        inputCommand.value = word
-        return
+        inputCommand.value = word;
+        return;
     }
-    inputCommand.value = message.substring(0, index) + ' ' + word
+    inputCommand.value = message.substring(0, index) + ' ' + word;
 }
 
 function socketListener(event: MessageEvent)
@@ -59,11 +59,11 @@ function socketListener(event: MessageEvent)
     }
     data.data.split('\n').forEach((line: string) =>
     {
-        const messageDiv = document.createElement('pre');
-        messageDiv.style.margin = '0';
-        messageDiv.style.lineHeight = '1.3';
-        messageDiv.innerHTML = ansi_up.ansi_to_html(line);
-        messages.value.appendChild(messageDiv);
+        const messagePre = document.createElement('pre');
+        messagePre.style.margin = '0';
+        messagePre.style.lineHeight = '1.3';
+        messagePre.innerHTML = ansi_up.ansi_to_html(line);
+        messages.value.appendChild(messagePre);
     });
     messages.value.scrollTop = messages.value.scrollHeight;
 }
@@ -109,7 +109,7 @@ function openSocket(): WebSocket
         timer = null;
     }, 1000);
     const socket_ = new WebSocket(url, ['Bearer', getToken()]);
-    socket_.addEventListener('message', socketListener)
+    socket_.addEventListener('message', socketListener);
     socket_.addEventListener('close', socketCloseListener);
     return socket_;
 }
@@ -210,7 +210,7 @@ function onDisappearChange(value: boolean, oldValue: boolean)
         () => className.value = value ? 'messages-disappear' : 'messages-appear',
         () => sleep($appearDuration),
         () => className.value = value ? 'disappeared-messages' : 'appeared-messages'
-    ])
+    ]);
 }
 function onTransitionChange(value: State, oldValue: State | undefined)
 {
@@ -219,35 +219,28 @@ function onTransitionChange(value: State, oldValue: State | undefined)
     else onDisappearChange(true, false);
 }
 let transitionStore = useTransitionStore();
-watch(() => transitionStore.state, onTransitionChange, {immediate: true});
+watch(() => transitionStore.state, onTransitionChange, { immediate: true });
 
 </script>
 
 <template>
-    <div class="main">
-        <div id="messages" ref="messages" :class="className"/>
+    <quiz-main>
+        <quiz-messages id="messages" ref="messages" :class="className" />
         <form @submit="submit">
-            <Input 
-                class="messageInput"
-                :area="false" 
-                placeholder="输入命令..." 
-                @keydown="keyDownListener" 
-                v-model="inputCommand"
-                align="left"
-            />
+            <Input class="messageInput" :area="false" placeholder="输入命令..." @keydown="keyDownListener"
+                v-model="inputCommand" align="left" />
         </form>
         <Input 
             align="left" 
-            :area="true" 
+            :area="true"
             :value="tabs.map((tab, index) => tab + (index === tabs.length - 1 ? '' : ' ')).join(' ')" 
             class="tips"
-            disabled
+            disabled 
         />
-    </div>
+    </quiz-main>
 </template>
 
 <style scoped lang="scss">
-
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -261,11 +254,18 @@ h1 {
     margin-bottom: 20px;
 }
 
-#messages {
+@import url("https://fontsapi.zeoseven.com/442/main/result.css");
+
+quiz-messages * {
+    font-family: 'Maple Mono NF CN';
+}
+
+quiz-messages {
+    display: block;
     height: calc(100% - 100px);
     overflow-y: auto;
     flex-grow: 1;
-    border: 1px solid #ccc;
+    border: none;
     border-radius: 4px;
     padding: 10px;
     overflow-y: auto;
@@ -274,12 +274,14 @@ h1 {
     height: calc(100vh - 250px);
     background: black;
     color: white;
+
     ::-webkit-scrollbar {
         display: none;
     }
+
     -ms-overflow-style: none;
     scrollbar-width: none;
-    
+
     -webkit-user-select: text;
     user-select: text;
 }
@@ -297,13 +299,16 @@ h1 {
         0% {
             opacity: 1;
         }
+
         50% {
             opacity: 0;
         }
+
         100% {
             opacity: 0;
         }
     }
+
     & {
         animation: messages-disappear 1s ease-in-out;
     }
@@ -314,13 +319,16 @@ h1 {
         0% {
             opacity: 0;
         }
+
         50% {
             opacity: 0;
         }
+
         100% {
             opacity: 1;
         }
     }
+
     & {
         animation: messages-appear 1s ease-in-out;
     }
@@ -353,7 +361,7 @@ h1 {
     text-align: right;
 }
 
-.main {
+quiz-main {
     height: 100%;
     width: 100%;
     display: flex;

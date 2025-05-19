@@ -68,8 +68,8 @@ function onTransitionChange(value: State, oldValue: State | undefined)
 
 let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
-const slider = ref<HTMLDivElement | null>(null);
-const sliderTrack = ref<HTMLDivElement | null>(null);
+const slider = ref<HTMLElement | null>(null);
+const sliderTrack = ref<HTMLElement | null>(null);
 onMounted(() => {
     if (slider.value && window.getComputedStyle(slider.value).getPropertyValue('--transition') !== 'static')
     {
@@ -154,36 +154,23 @@ watch(value, (newVal, oldValue) =>
 </script>
 
 <template>
-    <div :class="['slider-wrapper', className]" ref="slider">
-        <div
-                class="slider-container"
-                @mousedown="startDrag"
-                @touchstart.passive="startDrag"
-        >
-            <div class="slider-track" ref="sliderTrack">
-                <div class="slider-progress" :style="{ '--w': progressPercentage + '%' }"></div>
+    <quiz-slider :class="className" ref="slider">
+        <quiz-slider-container @mousedown="startDrag" @touchstart.passive="startDrag">
+            <quiz-slider-track ref="sliderTrack">
+                <quiz-slider-progress :style="{ '--w': progressPercentage + '%' }"/>
+                <quiz-slider-thumb :class="thumbClassName" :style="{ left: progressPercentage + '%' }"/>
+                <quiz-slider-step-markers v-if="showStep">
+                    <quiz-slider-step-marker v-for="(marker, index) in markers" :key="index" :style="{ left: marker.position + '%' }"/>
+                </quiz-slider-step-markers>
+            </quiz-slider-track>
 
-                <div
-                        class="slider-thumb"
-                        :class="thumbClassName"
-                        :style="{ left: progressPercentage + '%' }"
-                ></div>
-                <div v-if="showStep" class="step-markers">
-                    <div
-                            v-for="(marker, index) in markers"
-                            :key="index"
-                            class="step-marker"
-                            :style="{ left: marker.position + '%' }"
-                    ></div>
-                </div>
-            </div>
-
-        </div>
-    </div>
+        </quiz-slider-container>
+    </quiz-slider>
 </template>
 
 <style scoped lang="scss">
-.slider-wrapper {
+quiz-slider {
+    display: block;
     border-radius: 2rem;
     overflow: hidden;
     margin: 10px;
@@ -197,8 +184,9 @@ watch(value, (newVal, oldValue) =>
     border: 3px solid var(--border-color);
 }
 
-.slider-container {
+quiz-slider-container {
     position: relative;
+    display: block;
     width: 100%;
     height: 16px;
     padding: 0 8px;
@@ -206,7 +194,8 @@ watch(value, (newVal, oldValue) =>
     user-select: none;
     -webkit-user-drag: none;
 
-    .slider-track {
+    quiz-slider-track {
+        display: block;
         position: relative;
         width: 100%;
         height: 16px;
@@ -214,7 +203,7 @@ watch(value, (newVal, oldValue) =>
         cursor: pointer;
         touch-action: none;
 
-        .slider-progress {
+        quiz-slider-progress {
             position: absolute;
             height: 100%;
             border-radius: 4px;
@@ -222,7 +211,8 @@ watch(value, (newVal, oldValue) =>
             width: calc(var(--w) + 8px);
         }
 
-        .slider-thumb {
+        quiz-slider-thumb {
+            display: block;
             position: absolute;
             width: 16px;
             height: 16px;
@@ -230,11 +220,11 @@ watch(value, (newVal, oldValue) =>
             top: 50%;
             transform: translate(-50%, -50%);
             cursor: grab;
-            transition: box-shadow 0.5s ease, border 0.5s ease;
         }
     }
 
-    .step-markers {
+    quiz-slider-step-markers {
+        display: block;
         position: absolute;
         top: 50%;
         left: 0;

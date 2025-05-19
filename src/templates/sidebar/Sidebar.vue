@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Card from "../../components/Card.vue";
-import {ref} from "vue";
+import { ref } from "vue";
 import MenuOpenIcon from "vue-material-design-icons/MenuOpen.vue";
 import MenuCloseIcon from "vue-material-design-icons/MenuClose.vue";
 import LogoutIcon from "vue-material-design-icons/Logout.vue";
@@ -10,18 +10,18 @@ import HistoryIcon from "vue-material-design-icons/History.vue";
 import BookshelfIcon from "vue-material-design-icons/Bookshelf.vue";
 import InfoMationOutlineIcon from "vue-material-design-icons/InformationOutline.vue";
 import ShieldCrownOutlineIcon from "vue-material-design-icons/ShieldCrownOutline.vue";
-import {createAnimationsController} from "../../utils/AnimationsController.ts";
+import { createAnimationsController } from "../../utils/AnimationsController.ts";
 import StatusButton from "../../components/StatusButton.vue";
 import Image from "../../components/Image.vue";
-import {safeRedirect} from "../../utils/redirect.ts";
-import {useUser} from "../../stores/user.ts";
-import {sleep} from "../../utils/sleep.ts";
-import {tryLogin} from "../../utils/utils.ts";
-import {useRouter} from "vue-router";
+import { safeRedirect } from "../../utils/redirect.ts";
+import { useUser } from "../../stores/user.ts";
+import { sleep } from "../../utils/sleep.ts";
+import { tryLogin } from "../../utils/utils.ts";
+import { useRouter } from "vue-router";
 import SidebarItem from "./SidebarItem.vue";
-import {Permission} from "../../dataClasses/Permission.ts";
+import { Permission } from "../../dataClasses/Permission.ts";
 import ThemeIcon from "vue-material-design-icons/ThemeLightDark.vue";
-import {useThemeStore} from "../../stores/theme";
+import { useThemeStore } from "../../stores/theme";
 import Spacer from "../../components/Spacer.vue";
 import { Capacitor } from "@capacitor/core";
 
@@ -43,66 +43,66 @@ function changeSidebarState()
         () => sleep(800),
         () => sidebarClassName.value = open.value ? 'sidebar-opened' : 'sidebar-closed',
 
-    ], false)
+    ], false);
 }
 
 function goto(path: string)
 {
-    router.push(path)
+    router.push(path);
 }
 
 let user = useUser();
 
 function gotoSSO()
 {
-    if (user.userId()) safeRedirect(environment.ssoFrontend)
+    if (user.userId()) safeRedirect(environment.ssoFrontend);
     else tryLogin();
 }
 
 </script>
 
 <template>
-    <div class="sidebar-container">
+    <quiz-sidebar-container>
         <Card :class="sidebarClassName" class="sidebar">
-            <div class="box menu-title-box">
+            <quiz-menu-title-box class="box">
                 <StatusButton @click="changeSidebarState" class="menu-btn">
-                    <MenuOpenIcon v-if="open"/>
-                    <MenuCloseIcon v-else/>
+                    <MenuOpenIcon v-if="open" />
+                    <MenuCloseIcon v-else />
                 </StatusButton>
-                <div class="title" @click="goto('/')">SubQuiz</div>
-            </div>
+                <quiz-menu-title @click="goto('/')">SubQuiz</quiz-menu-title>
+            </quiz-menu-title-box>
 
-            <div id="center"/>
+            <quiz-center/>
 
-            <SidebarItem @click="goto('/admin/subject/list')" :icon="BookshelfIcon" title="学科列表"/>
-            <SidebarItem @click="goto('/history')" :icon="HistoryIcon" title="答题记录"/>
-            <SidebarItem v-if="user.hasAdmin()" @click="goto('/admin/admins')" :icon="ShieldCrownOutlineIcon" title="全局管理"/>
-            <SidebarItem v-if="user.user?.permission === Permission.ROOT" @click="goto('/terminal')" :icon="ConsoleIcon" title="控制台"/>
-            <SidebarItem v-if="Capacitor.getPlatform() === 'web'" @click="themeStore.toggleTheme" :icon="ThemeIcon" title="切换主题"/>
-            <SidebarItem @click="goto('/about')" :icon="InfoMationOutlineIcon" title="关于项目"/>
+            <SidebarItem @click="goto('/admin/subject/list')" :icon="BookshelfIcon" title="学科列表" />
+            <SidebarItem @click="goto('/history')" :icon="HistoryIcon" title="答题记录" />
+            <SidebarItem v-if="user.hasAdmin()" @click="goto('/admin/admins')" :icon="ShieldCrownOutlineIcon"
+                title="全局管理" />
+            <SidebarItem v-if="user.user?.permission === Permission.ROOT" @click="goto('/terminal')" :icon="ConsoleIcon"
+                title="控制台" />
+            <SidebarItem v-if="Capacitor.getPlatform() === 'web'" @click="themeStore.toggleTheme" :icon="ThemeIcon"
+                title="切换主题" />
+            <SidebarItem @click="goto('/about')" :icon="InfoMationOutlineIcon" title="关于项目" />
 
             <Spacer/>
-            <div class="box user-box">
-                <Image class="avatar" :src="user.avatar()" @click="gotoSSO"/>
-                <div class="username-box">
-                    <div class="username">{{ user.userName() }}</div>
-                    <div class="user-id">{{ user.userId() ?? 'unknown' }}</div>
-                </div>
-                <div class="logout-button">
-                    <LogoutIcon v-if="user.userId()" class="logout-icon" @click="user.logout()"/>
-                    <LoginIcon v-else class="logout-icon" @click="tryLogin"/>
-                </div>
-            </div>
+            <quiz-user-box class="box">
+                <Image class="avatar" :src="user.avatar()" @click="gotoSSO" />
+                <quiz-username-box>
+                    <quiz-username>{{ user.userName() }}</quiz-username>
+                    <quiz-user-id>{{ user.userId() ?? 'unknown' }}</quiz-user-id>
+                </quiz-username-box>
+                <quiz-logout-button>
+                    <LogoutIcon v-if="user.userId()" class="logout-icon" @click="user.logout()" />
+                    <LoginIcon v-else class="logout-icon" @click="tryLogin" />
+                </quiz-logout-button>
+            </quiz-user-box>
         </Card>
 
-        <div class="main-content">
-            <slot></slot>
-        </div>
-    </div>
+        <quiz-main-content><slot/></quiz-main-content>
+    </quiz-sidebar-container>
 </template>
 
 <style scoped lang="scss">
-
 /*** sidebar ***/
 
 .sidebar {
@@ -113,7 +113,7 @@ function gotoSSO()
     --sidebar-open-width: 200px;
 }
 
-.main-content {
+quiz-main-content {
     width: 100%;
     height: 100%;
     overflow: auto;
@@ -122,7 +122,7 @@ function gotoSSO()
     --transition:default;
 }
 
-.sidebar-container {
+quiz-sidebar-container {
     height: 100%;
     width: 100%;
     display: flex;
@@ -135,6 +135,7 @@ function gotoSSO()
         min-width: var(--sidebar-close-width);
         max-width: var(--sidebar-close-width);
     }
+
     to {
         width: var(--sidebar-open-width);
         min-width: var(--sidebar-open-width);
@@ -162,7 +163,7 @@ function gotoSSO()
     animation: open-sidebar 0.8s ease-in-out reverse forwards;
 }
 
-#center {
+quiz-center {
     flex-grow: 1;
 }
 
@@ -174,7 +175,7 @@ function gotoSSO()
     height: fit-content;
 }
 
-.menu-title-box {
+quiz-menu-title-box {
     margin-left: -6px;
     margin-right: -6px;
     margin-top: -6px;
@@ -194,7 +195,7 @@ function gotoSSO()
         padding-left: 1.4rem;
     }
 
-    .title {
+    quiz-menu-title {
         min-width: 125px;
         max-width: 125px;
         margin-top: auto;
@@ -208,7 +209,8 @@ function gotoSSO()
     }
 }
 
-.user-box {
+quiz-user-box {
+    display: block;
     margin-left: -6px;
     margin-right: -6px;
 
@@ -219,14 +221,15 @@ function gotoSSO()
         max-height: 50px;
     }
 
-    .username-box {
+    quiz-username-box {
         width: 85px;
         min-width: 85px;
         max-width: 85px;
         display: flex;
         flex-direction: column;
 
-        .username {
+        quiz-username {
+            display: block;
             margin-top: 15px;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -234,7 +237,8 @@ function gotoSSO()
             flex-grow: 1;
         }
 
-        .user-id {
+        quiz-user-id {
+            display: block;
             margin-top: -2px;
             margin-bottom: 15px;
             opacity: 0.4;
@@ -246,7 +250,8 @@ function gotoSSO()
         }
     }
 
-    .logout-button {
+    quiz-logout-button {
+        display: block;
         margin-top: auto;
         margin-bottom: auto;
 

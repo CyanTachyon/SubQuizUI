@@ -56,7 +56,7 @@ function onTransitionChange(value: State, oldValue: State | undefined)
 
 let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
-const statusButton = ref<HTMLDivElement | null>(null);
+const statusButton = ref<HTMLElement | null>(null);
 onMounted(() => {
     if (statusButton.value && window.getComputedStyle(statusButton.value).getPropertyValue('--transition') !== 'static')
     {
@@ -73,14 +73,15 @@ function click()
 </script>
 
 <template>
-    <div @click="click" class="btn" :class="className" ref="statusButton" :disabled="disabled">
+    <quiz-button @click="click" :class="className" ref="statusButton" :disabled="disabled">
         <slot/>
-    </div>
+    </quiz-button>
 </template>
 
 <style scoped lang="scss">
 
-.btn {
+quiz-button {
+    display: block;
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
     margin: 10px;
@@ -91,7 +92,7 @@ function click()
     justify-content: start;
     align-items: center;
     text-align: center;
-    vertical-align: middle;
+    // vertical-align: middle;
     max-width: fit-content;
 }
 

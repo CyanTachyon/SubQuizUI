@@ -19,14 +19,14 @@ safeRedirect(url, true);
 
 <template>
     <a :href="url">
-        <StatusButton class="status-button">
+        <StatusButton>
             返回应用
         </StatusButton>
     </a>
 </template>
 
 <style scoped lang="scss">
-.status-button {
+quiz-button {
     position: absolute;
     top: 50%;
     left: 50%;

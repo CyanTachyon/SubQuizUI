@@ -126,36 +126,30 @@ watch(() => ({count, current}), (newVal, oldVal) =>
 </script>
 
 <template>
-    <div ref="containerRef" class="pagination-container">
+    <quiz-pagination ref="containerRef">
         <template v-for="page in pages" :key="page">
-            <template v-if="page === -1">
-                <StatusButton
-                        class="ellipsis"
-                        @click="handleEllipsisClick(-1)"
-                >...
-                </StatusButton>
-            </template>
-            <template v-else-if="page === -2">
-                <StatusButton
-                        class="ellipsis"
-                        @click="handleEllipsisClick(1)"
-                >...
-                </StatusButton>
-            </template>
-            <template v-else>
-                <StatusButton
-                        :down="page === current"
-                        class="page-button"
-                        @click="handlePageClick(page)"
-                >{{ page }}
-                </StatusButton>
-            </template>
+            <StatusButton v-if="page === -1"
+                    class="ellipsis"
+                    @click="handleEllipsisClick(-1)"
+            >...
+            </StatusButton>
+            <StatusButton v-else-if="page === -2"
+                    class="ellipsis"
+                    @click="handleEllipsisClick(1)"
+            >...
+            </StatusButton>
+            <StatusButton v-else
+                    :down="page === current"
+                    class="page-button"
+                    @click="handlePageClick(page)"
+            >{{ page }}
+            </StatusButton>
         </template>
-    </div>
+    </quiz-pagination>
 </template>
 
 <style scoped lang="scss">
-.pagination-container {
+quiz-pagination {
     display: flex;
     justify-content: center;
     gap: 0;

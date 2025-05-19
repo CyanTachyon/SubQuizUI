@@ -33,7 +33,7 @@ function onTransitionChange(value: State, oldValue: State | undefined)
 
 let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
-const card = ref<HTMLDivElement | null>(null);
+const card = ref<HTMLElement | null>(null);
 onMounted(() => {
     if (card.value && window.getComputedStyle(card.value).getPropertyValue('--transition') !== 'static')
     {
@@ -44,14 +44,15 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="card" :class="className" ref="card">
+    <quiz-card :class="className" ref="card">
         <slot/>
-    </div>
+    </quiz-card>
 </template>
 
 <style scoped lang="scss">
 
-.card {
+quiz-card {
+    display: block;
     padding: 0.25rem 0.5rem;
     border-radius: 0.5rem;
     margin: 13px;

@@ -1,45 +1,17 @@
 <script setup lang="ts">
 import type {Quiz} from "../dataClasses/Quiz.ts";
-import type { SectionTypeId, SubjectId } from "../dataClasses/Ids.ts";
 import StatusButton from "../components/StatusButton.vue";
 import Card from "../components/Card.vue";
 import Text from "../components/Text.vue";
-import { ref } from "vue";
-import Loading from "../components/Loading.vue";
-import { getSubject } from "../networks/backend/subject.ts";
-import { getSectionType } from "../networks/backend/section.ts";
 import Spacer from "../components/Spacer.vue";
 import Input from "../components/Input.vue";
 import CheckboxMarkedCircleOutline from "vue-material-design-icons/CheckboxMarkedCircleOutline.vue";
+import CloseCircleOutlineIcon from "vue-material-design-icons/CloseCircleOutline.vue";
 import CloseIcon from "vue-material-design-icons/Close.vue";
 import CheckIcon from "vue-material-design-icons/Check.vue";
 import { useNotificationStore } from "../stores/notification.ts";
 import { sectionMarkdownToHtml } from "../utils/markdown.ts";
 const {quiz, editable, submit} = defineProps<{ quiz: Pick<Quiz<any, any, any>, 'sections' | 'correct'>, editable: boolean, submit?: () => void }>();
-const subjectNames = ref(new Map<SubjectId, string>());
-const sectionTypeNames = ref(new Map<SectionTypeId, string>());
-const loading = ref(true);
-
-function init(): Promise<any>
-{
-    let promises = [];
-    for (const section of quiz.sections)
-    {
-        if (!subjectNames.value.has(section.subject))
-        {
-            promises.push(getSubject(section.subject).then(value => subjectNames.value.set(section.subject, value.name)));
-        }
-        if (!sectionTypeNames.value.has(section.type))
-        {
-            promises.push(getSectionType(section.type).then(value => sectionTypeNames.value.set(section.type, value.name)));
-        }
-    }
-    return Promise.all(promises);
-}
-
-init().then(() => {
-    loading.value = false;
-});
 
 
 function onOptionClick(sectionIndex: number, questionIndex: number, optionIndex: number)
@@ -118,8 +90,6 @@ function trySubmit()
                 // 获取未完成题目的索引
                 const incompleteSection = index;
                 const incompleteQuestion = questionIndex;
-                
-                console.log(incompleteSection, incompleteQuestion);
                 // 使用DOM选择器找到对应的题目元素
                 const questionElement = document.querySelector(`#q-${incompleteSection}-${incompleteQuestion}`);
                 
@@ -143,26 +113,19 @@ function trySubmit()
 </script>
 
 <template>
-    <Loading v-if="loading" class="loading"/>
-    <template v-else>
-        <Card v-for="(section, sectionIndex) in quiz.sections" class="section" :key="sectionIndex">
-            <div class="section-info">
+    <Card v-for="(section, sectionIndex) in quiz.sections" class="section" :key="sectionIndex">
+        <Card v-if="section.description" class="section-description-input" v-markdown="{markdown: section.markdown, content: section.description, section: section.id}"/>
+        <Spacer v-if="section.description" />
+        <br/>
+        <div v-for="(question, questionIndex) in section.questions" :id="`q-${sectionIndex}-${questionIndex}`" class="question">
+            <div class="question-description">
                 <p class="title">
-                    {{ `学科：${subjectNames.get(section.subject)} 类型：${sectionTypeNames.get(section.type)}` }}
+                    {{ questionIndex + 1 }}.
                 </p>
-                <br/>
+                <div class="question-description-content" v-html="section.markdown ? sectionMarkdownToHtml(section.id, question.description) : question.description"/>
             </div>
-            <Card v-if="section.description" class="section-description-input" v-markdown="{markdown: section.markdown, content: section.description, section: section.id}"/>
-            <Spacer/>
-            <br/>
-            <div v-for="(question, questionIndex) in section.questions" :id="`q-${sectionIndex}-${questionIndex}`" class="question">
-                <div class="question-description">
-                    <p class="title">
-                        {{ questionIndex + 1 }}.
-                    </p>
-                    <div class="question-description-content" v-html="section.markdown ? sectionMarkdownToHtml(section.id, question.description) : question.description"/>
-                </div>
-                <div v-if="question.options" v-for="(option, optionIndex) in question.options" class="option-box">
+            <div v-if="question.options" class="options-wrapper">
+                <div v-for="(option, optionIndex) in question.options" class="option-box">
                     <StatusButton 
                         class="option" 
                         :down="question.userAnswer === optionIndex || (question.userAnswer?.length && question.userAnswer.includes(optionIndex))"
@@ -184,68 +147,69 @@ function trySubmit()
                     >
                         <CheckboxMarkedCircleOutline/>
                     </Text>
-                </div>
-                <div v-else-if="question.type === 'judge'" class="judge-option-box">
-                    <StatusButton 
-                        class="judge-option" 
-                        :down="question.userAnswer === false" 
-                        :class="{ 'choice-answer': question.userAnswer === false }"
-                        @click="onOptionClick(sectionIndex, questionIndex, 0)"
+                    <Text 
+                        v-else-if="question.answer !== null"
+                        class="wrong-answer"
+                        style="margin-top: 17px;"
                     >
-                        <CloseIcon/>
-                    </StatusButton>
-                    <StatusButton 
-                        class="judge-option" 
-                        :down="question.userAnswer === true" 
-                        :class="{ 'choice-answer': question.userAnswer === true }"
-                        @click="onOptionClick(sectionIndex, questionIndex, 1)"
-                    >
-                        <CheckIcon/>
-                    </StatusButton>
+                        <CloseCircleOutlineIcon/>
+                    </Text>
                 </div>
-                <div v-else-if="question.type === 'fill'" class="option-box">
-                    <Input :area="false" placeholder="请输入答案" type="text" :value="question.userAnswer" @input="fillAnswer(sectionIndex, questionIndex, $event.target.value)" class="fill-option-input" :disabled="!editable"/>
-                </div>
-                <div v-else-if="question.type === 'essay'">
-                    <Input :area="true" placeholder="请输入答案" type="text" :value="question.userAnswer" @input="fillAnswer(sectionIndex, questionIndex, $event.target.value)" class="essay-option-input" :disabled="!editable"/>
-                </div>
-                <Text v-if="rightAnswer(sectionIndex, questionIndex) !== undefined" class="analysis" :class="rightAnswer(sectionIndex, questionIndex) ? 'right-answer' : 'wrong-answer'">
-                    {{ 
-                        '结果：' + (
-                            rightAnswer(sectionIndex, questionIndex) === true ? '正确' : 
-                            rightAnswer(sectionIndex, questionIndex) === false ? '错误' : 
-                            '判定失败'
-                        ) 
-                    }}
-                    {{ question.type === 'fill' || question.type === 'essay' ? '*AI' : '' }}
-                </Text>
-                <Text v-if="(question.type === 'fill' || question.type === 'essay') && question.answer" class="answer analysis">
-                    {{ '答案/评标：' }}
-                    <div v-html="section.markdown ? sectionMarkdownToHtml(section.id, question.answer) : question.answer"/>
-                </Text>
-                <Text 
-                    v-if="question.analysis" 
-                    class="analysis"
-                >
-                    {{ '解析：' }}
-                    <div v-html="section.markdown ? sectionMarkdownToHtml(section.id, question.analysis) : question.analysis"/>
-                </Text>
-                <br v-if="questionIndex < section.questions.length - 1"/>
             </div>
-        </Card>
-        <StatusButton v-if="editable" class="submit" @click="trySubmit">Submit</StatusButton>
-    </template>
+            <div v-else-if="question.type === 'judge'" class="judge-option-box">
+                <StatusButton 
+                    class="judge-option" 
+                    :down="question.userAnswer === false" 
+                    :class="{ 'choice-answer': question.userAnswer === false }"
+                    @click="onOptionClick(sectionIndex, questionIndex, 0)"
+                >
+                    <CloseIcon/>
+                </StatusButton>
+                <StatusButton 
+                    class="judge-option" 
+                    :down="question.userAnswer === true" 
+                    :class="{ 'choice-answer': question.userAnswer === true }"
+                    @click="onOptionClick(sectionIndex, questionIndex, 1)"
+                >
+                    <CheckIcon/>
+                </StatusButton>
+            </div>
+            <div v-else-if="question.type === 'fill'" class="option-box">
+                <Input :area="false" placeholder="请输入答案" type="text" :value="question.userAnswer" @input="fillAnswer(sectionIndex, questionIndex, $event.target.value)" class="fill-option-input" :disabled="!editable"/>
+            </div>
+            <div v-else-if="question.type === 'essay'">
+                <Input :area="true" placeholder="请输入答案" type="text" :value="question.userAnswer" @input="fillAnswer(sectionIndex, questionIndex, $event.target.value)" class="essay-option-input" :disabled="!editable"/>
+            </div>
+            <Text v-if="rightAnswer(sectionIndex, questionIndex) !== undefined" class="analysis" :class="rightAnswer(sectionIndex, questionIndex) ? 'right-answer' : 'wrong-answer'">
+                {{ 
+                    '结果：' + (
+                        rightAnswer(sectionIndex, questionIndex) === true ? '正确' : 
+                        rightAnswer(sectionIndex, questionIndex) === false ? '错误' : 
+                        '判定失败'
+                    ) 
+                }}
+                {{ question.type === 'fill' || question.type === 'essay' ? '*AI' : '' }}
+            </Text>
+            <Text v-if="(question.type === 'fill' || question.type === 'essay') && question.answer" class="answer analysis">
+                {{ '答案/评标：' }}
+                <div v-html="section.markdown ? sectionMarkdownToHtml(section.id, question.answer) : question.answer"/>
+            </Text>
+            <Text 
+                v-if="question.analysis" 
+                class="analysis"
+            >
+                {{ '解析：' }}
+                <div v-html="section.markdown ? sectionMarkdownToHtml(section.id, question.analysis) : question.analysis"/>
+            </Text>
+            <br v-if="questionIndex < section.questions.length - 1"/>
+        </div>
+    </Card>
+    <StatusButton v-if="editable" class="submit" @click="trySubmit">Submit</StatusButton>
 </template>
 
 <style scoped lang="scss">
 .section {
     margin-top: 20px;
-}
-
-.section-info {
-    margin-top: 10px;
-    margin-left: 13px;
-    margin-bottom: 5px;
 }
 
 .section-description-input {
@@ -261,6 +225,7 @@ function trySubmit()
     overflow:auto;
     scrollbar-width: none;
     display: flex;
+    z-index: 1;
 }
 
 .question-description {
@@ -268,7 +233,6 @@ function trySubmit()
     margin-top: 5px;
     margin-left: 13px;
     margin-bottom: 5px;
-    width: 60%;
     white-space: pre-wrap;
 
     .question-description-content {
@@ -304,31 +268,36 @@ $answer-color-duration: 0.4s;
     transition: color $answer-color-duration ease;
 }
 
-.option-box {
+.options-wrapper {
     display: flex;
-    flex-direction: row;
-}
+    flex-wrap: wrap;
+    column-gap: 20px;
 
-.option {
-    display: flex;
-    width: 30%;
-    max-width: 30%;
-    text-align: left;
-    white-space: pre-wrap;
-
-    .option-title {
-        top: 0;
-        margin: 0 10px 0 0;
-        font-weight: bold;
-        width: 30px;
+    .option-box {
         display: flex;
-    }
+        flex-direction: row;
+        width: fit-content;
 
-    .option-content {
-        display: flex;
-        flex-grow: 1;
-        text-align: left;
-        white-space: pre-wrap;
+        .option {
+            display: flex;
+            text-align: left;
+            white-space: pre-wrap;
+
+            .option-title {
+                top: 0;
+                margin: 0 10px 0 0;
+                font-weight: bold;
+                width: 30px;
+                display: flex;
+            }
+
+            .option-content {
+                display: flex;
+                flex-grow: 1;
+                text-align: left;
+                white-space: pre-wrap;
+            }
+        }
     }
 }
 

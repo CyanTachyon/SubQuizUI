@@ -4,11 +4,12 @@ import debounce from "../utils/debounce.ts";
 import {createAnimationsController} from "../utils/AnimationsController.ts";
 import {sleep} from "../utils/sleep.ts";
 import {$appearDuration, State, useTransitionStore} from "../stores/transition.ts";
+import { nextTick } from "vue";
 
 const count = ref(6)
 const size = ref(200)
-const loaderEl = ref<HTMLDivElement | null>(null)
-const loaderClass = ref('loader')
+const loaderEl = ref<HTMLElement | null>(null)
+const reload = ref(false);
 let observer: ResizeObserver;
 
 const updateSize = (entries: ResizeObserverEntry[]) =>
@@ -21,8 +22,8 @@ const updateSize = (entries: ResizeObserverEntry[]) =>
     if (count0 !== count.value)
     {
         count.value = count0;
-        loaderClass.value = 'loader-reload'
-        setTimeout(() => loaderClass.value = 'loader', 10)
+        reload.value = true;
+        nextTick(() => reload.value = false)
     }
 }
 
@@ -74,22 +75,23 @@ onMounted(() => {
 </script>
 
 <template>
-    <div ref="loaderEl" :class="[loaderClass, className]">
-        <div v-for="i in count" :style="{ '--x': i - 1, '--size': size + 'px' }"></div>
-    </div>
+    <quiz-loading ref="loaderEl" :class="className">
+        <quiz-loading-element v-if="!reload" v-for="i in count" :style="'--x:' + (i - 1) + ';' + '--size:' + size + 'px;'"></quiz-loading-element>
+    </quiz-loading>
 </template>
 
 <style scoped lang="scss">
 
-.loader {
+quiz-loading {
     display: flex;
     flex-direction: row;
 }
 
-.loader div {
+quiz-loading-element {
     --x: 0;
     --size: 200;
 
+    display: block;
     position: relative;
     width: calc(var(--size) * 0.2);
     min-width: calc(var(--size) * 0.2);
@@ -108,7 +110,7 @@ onMounted(() => {
     inset calc(var(--size) / 40) calc(var(--size) / 40) calc(var(--size) / 40) var(--up-shadow);
 }
 
-.loader div::before {
+quiz-loading-element::before {
     content: "";
     position: absolute;
     top: 0;

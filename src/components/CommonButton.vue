@@ -7,9 +7,7 @@ import StatusButton from "./StatusButton.vue";
 const {onClick, disappear, disabled } = defineProps({
     onClick: {
         type: Function,
-        default()
-        {
-        }
+        default() {}
     },
     disappear: {
         type: Boolean,
@@ -32,13 +30,12 @@ function click()
 {
     if (disappear) return;
     controller.push([
-        () =>
-        {
-            down.value = true;
-            (onClick as unknown as (() => void))();
-        },
+        () => down.value = true,
         () => sleep(400),
-        () => down.value = false,
+        () => {
+            (onClick as unknown as (() => void))();
+            down.value = false;
+        },
         () => sleep(400),
     ], false)
 }

@@ -6,7 +6,7 @@ document.title = '404 - SubQuiz';
 </script>
 
 <template>
-    <Card class="card">
+    <Card>
         <Text>
             (╥﹏╥) 很抱歉，您访问的内容不存在
         </Text>
@@ -14,7 +14,7 @@ document.title = '404 - SubQuiz';
 </template>
 
 <style scoped lang="scss">
-.card {
+quiz-card {
     position: absolute;
     top: 45%;
     left: 50%;

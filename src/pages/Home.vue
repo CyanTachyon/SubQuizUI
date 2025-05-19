@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import StatusButton from "../components/StatusButton.vue";
-import {useRouter, useRoute} from "vue-router";
-import {useNotificationStore} from "../stores/notification.ts";
+import { useRouter, useRoute } from "vue-router";
+import { useNotificationStore } from "../stores/notification.ts";
 import type { SubjectId } from '../dataClasses/Ids.ts';
 import Loading from '../components/Loading.vue';
 import Card from '../components/Card.vue';
@@ -21,9 +21,12 @@ const count = ref(10);
 
 document.title = 'SubQuiz';
 
-if (subject) getSubject(subject).then(value => {
+if (subject) getSubject(subject).then(value =>
+{
     subjectName.value = value.name;
-}, () => {
+}, 
+() =>
+{
     subjectName.value = '';
     notFound.value = true;
 });
@@ -58,24 +61,25 @@ function gotoSubject()
 
 <template>
     <NotFound v-if="notFound"/>
-    <Loading v-else-if="subject && subjectName === ''" class="loading"/>
-    <div v-else class="container">
-        <Card class="main-card">
+    <Loading v-else-if="subject && subjectName === ''"/>
+    <quiz-main-container v-else>
+        <Card>
             <p class="main-title">开始新的测试</p>
             <p class="title">学科</p>
-            <Input :area="false" placeholder="Subject Name" type="text" v-model="subjectName" readonly @click="gotoSubject"/>
+            <Input :area="false" placeholder="Subject Name" type="text" v-model="subjectName" readonly
+                @click="gotoSubject" />
             <p class="title">题目数量</p>
-            <Input :area="false" placeholder="Section Count" type="number" v-model="count"/>
+            <Input :area="false" placeholder="Section Count" type="number" v-model="count" />
             <Slider :min-value="0" :max-value="100" :step="1" v-model="count"/>
-            <div class="button-container">
+            <quiz-main-button-container>
                 <StatusButton @click="startQuiz">开始测试</StatusButton>
-            </div>
+            </quiz-main-button-container>
         </Card>
-    </div>
+    </quiz-main-container>
 </template>
 
 <style scoped lang="scss">
-.loading {
+quiz-loading {
     position: relative;
     top: 50%;
     left: 50%;
@@ -84,7 +88,7 @@ function gotoSubject()
     width: 30%;
 }
 
-.container {
+quiz-main-container {
     display: flex;
     height: 100%;
     width: 100%;
@@ -108,7 +112,7 @@ function gotoSubject()
     margin: 20px 0;
 }
 
-.button-container {
+quiz-main-button-container {
     display: flex;
     justify-content: center;
     margin-top: 20px;

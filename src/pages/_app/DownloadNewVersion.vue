@@ -8,10 +8,11 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { useNotificationStore } from "../../stores/notification";
 import { isLegacyAndroidApp } from "../../utils/utils";
 import type { AndroidVersion } from "../../dataClasses/AndroidVersion";
+import Slider from "../../components/Slider.vue";
 
 const { info } = defineProps<{info: AndroidVersion;}>();
 
-const downloadProgress = ref("0%");
+const downloadProgress = ref(0);
 const downloading = ref(false);
 
 document.title = '下载新版本 - SubQuiz';
@@ -27,7 +28,7 @@ const download = async () => {
         downloading.value = true;
         const fileName = `subquiz_${info.version}.apk`;
         const updateProgress = (progress) => {
-            downloadProgress.value = `${(progress * 100).toFixed(1)}%`;
+            downloadProgress.value = progress;
         };
         
         await Filesystem.addListener('progress', (progress) => {
@@ -74,19 +75,21 @@ const download = async () => {
 }
 </script>
 <template>
-   <div class="main">
-        <div class="card">
+    <quiz-main>
+        <quiz-card>
             <h1>新版本可用</h1>
             <p>Version: {{ info.version }}</p>
             <CommonButton class="btn" @click="download" :disabled="downloading"> 
-                {{ downloading ? `下载中... ${downloadProgress}` : '下载更新' }} 
+                {{ downloading ? `下载中... ${(downloadProgress * 100).toFixed(1)}%` : '下载更新' }} 
             </CommonButton>
-        </div>
-    </div>  
+            <Slider v-if="downloading" :min-value="0" :max-value="1" :step="0.001" v-model:model-value="downloadProgress"/>
+        </quiz-card>
+    </quiz-main>  
 </template>
 
 <style scoped lang="scss">
-.main {
+quiz-main {
+    display: block;
     position: absolute;
     top: 45%;
     left: 50%;
@@ -99,7 +102,7 @@ const download = async () => {
     margin-left: 0;
 }
 
-.card {
+quiz-card {
     height: fit-content;
     padding: 10px 30px;
     margin-left: 15px;
@@ -108,5 +111,10 @@ const download = async () => {
 h1 {
     font-size: 2em;
     margin-bottom: 20px;
+}
+
+quiz-slider {
+    margin-top: 10px;
+    width: 100%;
 }
 </style>

@@ -1,4 +1,3 @@
-import { Capacitor } from "@capacitor/core";
 import type {ResponseBody} from "../../dataClasses/ResponseBody.ts";
 export enum Target
 {
@@ -21,7 +20,7 @@ export function connectUrl(target: Target | undefined, url: string, params: Reco
         if (target === Target.SSO_BACKEND) rUrl = environment.ssoBackend + url;
         else if (target === Target.SSO_FRONTEND) rUrl = environment.ssoFrontend + url;
         else if (target === Target.CDN) rUrl = environment.cdn + url;
-        else if (target === Target.BACKEND) rUrl = Capacitor.getPlatform() === 'web' ? environment.backend + url : environment.androidBackend + url;
+        else if (target === Target.BACKEND) rUrl = environment.backend + url;
         else /*if (target === Target.FRONTEND)*/ rUrl = environment.frontend + url;
     }
 
@@ -66,7 +65,6 @@ export async function sendRequest<DATA>(data: RequestData): Promise<ResponseBody
         data.method,
         {
             'Authorization': data.withToken ? `Bearer ${localStorage.getItem('token')}` : '',
-            'Content-Type': 'application/json',
             'Accept': '*/*',
         },
         data.data
@@ -84,6 +82,10 @@ export async function request<T>(
         method: method,
         headers: headers,
     }
-    if (body) data.body = JSON.stringify(body);
+    if (body !== undefined) 
+    {
+        data.body = JSON.stringify(body);
+        data.headers['Content-Type'] = 'application/json';
+    }
     return fetch(url, data).then(response => response.json() as Promise<T>);
 }

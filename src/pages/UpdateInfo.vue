@@ -2,7 +2,8 @@
 import Card from '../components/Card.vue';
 import Spacer from "../components/Spacer.vue";
 
-interface UpdateInfo {
+interface UpdateInfo
+{
     date?: string;
     description: string;
     version: string;
@@ -28,98 +29,106 @@ const updateInfo: UpdateInfo[] = ([
         date: '2025-03-24',
         version: '1.0.1',
         description: '' +
-        '- 优化UI细节\n' + 
-        '- 安卓端正式发布\n'
+            '- 优化UI细节\n' +
+            '- 安卓端正式发布\n'
     },
     {
         date: '2025-03-24',
         version: '1.0.2',
         description: '' +
-        '- 修复安卓端无法完成SSO授权的BUG\n' +
-        '- 优化安卓端细节\n'
+            '- 修复安卓端无法完成SSO授权的BUG\n' +
+            '- 优化安卓端细节\n'
     },
     {
         date: '2025-03-25',
         version: '1.0.3',
         description: '' +
-        '- 修复安卓端的一些bug\n'
+            '- 修复安卓端的一些bug\n'
     },
     {
         date: '2025-03-25',
         version: '1.0.4',
         description: '' +
-        '- Markdown支持\n'
+            '- Markdown支持\n'
     },
     {
         date: '2025-03-30',
         version: '1.0.5',
         description: '' +
-        '- 题目插入图片支持\n'
+            '- 题目插入图片支持\n'
     },
     {
         date: '2025-03-31',
         version: '1.0.6',
         description: '' +
-        '- 修复markdown和katex渲染相关bug\n'
+            '- 修复markdown和katex渲染相关bug\n'
     },
     {
         date: '2025-04-01',
         version: '1.0.7',
         description: '' +
-        '- 支持设置题目权重\n'
+            '- 支持设置题目权重\n'
     },
     {
         date: '2025-04-02',
         version: '1.0.8',
         description: '' +
-        '- 修复在某些旧版浏览器上渲染markdown失败的bug\n'
+            '- 修复在某些旧版浏览器上渲染markdown失败的bug\n'
+    },
+    {
+        date: '2025-05-11',
+        version: '2.0.0',
+        description: '' +
+            '- 添加备课组、知识点相关功能\n' +
+            '- 重新设计了部分UI\n' +
+            '- 支持按知识点开始测试\n' +
+            '- 优化及已知错误的修复\n'
     },
     {
         version: 'TODO LIST',
         description: '以下是预计添加的新功能，但我开发速度有限，所以别急^v^\n' +
-        "1. 简答/填空允许提交图片\n" +
-        "2. 支持给题目设置难度系数\n" +
-        "3. 支持给题目设置标签/知识点\n" +
-        "4. 支持按照题目类型/难度/标签/知识点过滤题目\n"
+            "1. 简答/填空允许提交图片\n" +
+            "2. 支持给题目设置难度系数\n" +
+            "3. 添加批量题目导入导出功能\n"
         ,
     }
 ] as UpdateInfo[]).reverse();
 </script>
 
 <template>
-    <div class="update-info-container">
-        <Card class="update-info-item" v-for="item in updateInfo" :key="item.version">
-            <div class="update-info-item-version">{{ item.version }}</div>
-            <Spacer/>
-            <div v-if="item.date" class="update-info-item-date">发布时间：{{ item.date }}</div>
-            <div class="update-info-item-description" v-markdown="{content: item.description}"></div>
+    <quiz-update-info-container>
+        <Card v-for="item in updateInfo" :key="item.version">
+            <quiz-update-info-item-version>{{ item.version }}</quiz-update-info-item-version>
+            <Spacer />
+            <quiz-update-info-item-date v-if="item.date">发布时间：{{ item.date }}</quiz-update-info-item-date>
+            <quiz-update-info-item-description v-markdown="{ content: item.description }"></quiz-update-info-item-description>
         </Card>
-    </div>
+    </quiz-update-info-container>
 </template>
 
 <style scoped lang="scss">
-.update-info-item {
+quiz-card {
     padding: 20px;
 }
 
-.update-info-item-version {
+quiz-update-info-item-version {
+    display: block;
     font-size: 30px;
     font-weight: bold;
     margin-top: 10px;
     margin-bottom: 10px;
 }
 
-.update-info-item-date {
+quiz-update-info-item-date {
+    display: block;
     font-size: 16px;
     margin-top: 10px;
     margin-bottom: 10px;
 }
 
-.update-info-item-description {
+quiz-update-info-item-description {
+    display: block;
     font-size: 16px;
     margin-top: 20px;
 }
-
 </style>
-
-

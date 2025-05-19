@@ -3,168 +3,100 @@
 import Loading from "../../components/Loading.vue";
 import {useRoute, useRouter} from "vue-router";
 import {ref} from "vue";
-import type {Slice} from "../../dataClasses/Slice.ts";
 import Card from "../../components/Card.vue";
-import Pagination from "../../components/Pagination.vue";
-import {pushUrl} from "../../utils/utils.ts";
 import {getSubject} from "../../networks/backend/subject.ts";
 import type {Subject} from "../../dataClasses/Subject.ts";
 import StatusButton from "../../components/StatusButton.vue";
 import {useUser} from "../../stores/user.ts";
 import Text from "../../components/Text.vue";
-import type { SectionType } from "../../dataClasses/SectionType.ts";
-import { getSectionTypeList } from "../../networks/backend/section.ts";
-import type { SectionTypeId, SubjectId } from "../../dataClasses/Ids.ts";
+import type { SubjectId } from "../../dataClasses/Ids.ts";
 import NotFound from "../NotFound.vue";
-import { getUserPermissionInSubject } from "../../networks/backend/admin.ts";
-import { isAdmin } from "../../dataClasses/Permission.ts";
 import Spacer from "../../components/Spacer.vue";
+import type { PreparationGroup } from "../../dataClasses/PreparationGroup.ts";
+import { getPreparationGroupList } from "../../networks/backend/preparationGroup.ts";
 
 const user = useUser();
 const route = useRoute();
 const router = useRouter();
-const page = ref(Number(route.query.page) || 1);
-const count = 30;
 const subject = Number(route.params.id) as SubjectId;
 const subjectInfo = ref(void 0 as undefined | null | Subject);
-const hasPermission = ref(undefined as undefined | boolean);
+const groups = ref(void 0 as PreparationGroup[] | undefined);
 
 document.title = '学科列表 - SubQuiz';
 
 (async () => {
-    if (!user.hasAdmin()) 
-    {
-        try
-        {
-            let value = await getUserPermissionInSubject(subject, 0);
-            hasPermission.value = isAdmin(value);
-        }
-        catch (e)
-        {
-            hasPermission.value = false;
-        }
-    }
-    else hasPermission.value = true;
-
-    if (!hasPermission.value) 
-    {
-        router.push('/?subject=' + subject)
-        return;
-    }
 
     try
     {
         let value = await getSubject(subject);
         subjectInfo.value = value;
+        groups.value = await getPreparationGroupList(value.id);
     }
     catch (e)
     {
         subjectInfo.value = null;
+        groups.value = null;
     }
-
-    handlePageChange(page.value)
 })()
-
-
-function getStart()
-{
-    return (page.value - 1) * count;
-}
-
-const data = ref(void 0 as undefined | null | Slice<SectionType>)
-
-function handlePageChange(newPage: number)
-{
-    if (page.value !== newPage)
-    {
-        page.value = newPage;
-        pushUrl('/admin/subject/' + subject, {page: newPage.toString()});
-    }
-    getSectionTypeList(getStart(), count, subject).then(value => data.value = value);
-}
-
-function getTotalPage()
-{
-    return Math.ceil(data.value.totalSize / count) || 1;
-}
-
-function createSectionType()
-{
-    router.push('/admin/section/type/edit/new?subject=' + subject)
-}
 
 function editSubject()
 {
     router.push('/admin/subject/edit/' + subject)
 }
 
-function startQuiz()
+function createGroup()
 {
-    router.push('/?subject=' + subject)
+    router.push('/admin/group/edit/new?subject=' + subject)
 }
 
-function editSectionType(id: SectionTypeId)
+function gotoGroup(q: PreparationGroup)
 {
-    if (hasPermission.value)
-    {
-        router.push('/admin/section/type/' + id)
-    }
+    router.push('/admin/group/' + q.id)
 }
 
-function gotoAdmins()
+function timeToString(time: number)
 {
-    router.push('/admin/admins?subject=' + subject)
+    const date = new Date(time);
+    const padZero = (num: number) => num.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ${padZero(date.getHours())}:${padZero(date.getMinutes())}:${padZero(date.getSeconds())}`;
 }
+
 </script>
 
 <template>
     <NotFound v-if="subjectInfo === null"/>
-    <Loading v-else-if="data === undefined || subjectInfo === undefined" class="loading"/>
+    <Loading v-else-if="groups === undefined || subjectInfo === undefined" class="loading"/>
     <div v-else class="section-types-container">
         <Text class="main-title">{{ subjectInfo.name }}</Text>
         <Text class="main-description">{{ subjectInfo.description }}</Text>
         <div class="section-types-container-header">
             <StatusButton
-                v-if="hasPermission"
+                v-if="user.hasAdmin()"
                 class="create-subject"
                 @click="editSubject"
             >
-                修改该学科信息
+                修改学科信息
             </StatusButton>
             <StatusButton
-                v-if="hasPermission"
+                v-if="user.hasAdmin()"
                 class="create-subject"
-                @click="createSectionType"
+                @click="createGroup"
             >
-                创建新题目类型
-            </StatusButton>
-            <StatusButton
-                v-if="hasPermission"
-                class="create-subject"
-                @click="gotoAdmins"
-            >
-                查看学科管理员
-            </StatusButton>
-            <StatusButton
-                class="create-subject"
-                @click="startQuiz"
-            >
-                开始一次新测验
+                创建新备课组
             </StatusButton>
         </div>
         <Spacer/>
         <div class="section-types">
-            <template v-for="q in data.list">
-                <Card class="section-type" @click="editSectionType(q.id)" :class="{'clickable': hasPermission}">
+            <template v-for="q in groups">
+                <Card class="section-type clickable" @click="gotoGroup(q)">
                     <p class="title">{{ q.name }}</p>
                     <Spacer/>
-                    <p>ID: {{ q.id }}</p>
+                    <p>创建时间: {{ timeToString(q.time) }}</p>
                     <p class="description">{{ q.description }}</p>
                 </Card>
             </template>
-            <Text v-if="data.list.length === 0" class="no-section-types">该学科暂无题目类型</Text>
+            <Text v-if="groups.length === 0" class="no-section-types">该学科暂无备课组</Text>
         </div>
-        <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" class="pagination"/>
     </div>
 </template>
 

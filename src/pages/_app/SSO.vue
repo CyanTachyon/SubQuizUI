@@ -11,11 +11,11 @@ const url = connectUrl(Target.SSO_FRONTEND, oUrl.join('/'), params as Record<str
 </script>
 
 <template>
-    <iframe :src="url" class="sso-iframe"/>
+    <iframe :src="url"/>
 </template>
 
 <style scoped lang="scss">
-.sso-iframe {
+iframe {
     width: 100%;
     height: 100%;
     border: none;

@@ -1,9 +1,8 @@
-import type {SectionTypeId, SubjectId} from "./Ids.ts";
+import type {KnowledgePointId, SectionTypeId} from "./Ids.ts";
 
 export interface SectionType
 {
     id: SectionTypeId,
-    subject: SubjectId,
+    knowledgePoint: KnowledgePointId,
     name: string,
-    description: string,
 }

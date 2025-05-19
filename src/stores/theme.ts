@@ -1,5 +1,5 @@
-import {Capacitor} from '@capacitor/core'
-import {defineStore} from 'pinia'
+import { Capacitor } from '@capacitor/core';
+import { defineStore } from 'pinia';
 
 export const useThemeStore = defineStore('theme', {
     state: () => ({
@@ -10,28 +10,29 @@ export const useThemeStore = defineStore('theme', {
         {
             if (Capacitor.getPlatform() === 'web')
             {
-                const savedTheme = localStorage.getItem('theme')
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-                this.isDark = savedTheme ? savedTheme === 'dark' : prefersDark
-                this.applyTheme()
+                const savedTheme = localStorage.getItem('theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                this.isDark = savedTheme ? savedTheme === 'dark' : prefersDark;
+                this.applyTheme();
             }
             else
             {
-                const updateTheme = () => {
-                    this.isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+                const updateTheme = () =>
+                {
+                    this.isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                     this.applyTheme();
-                }
-                updateTheme()
-                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTheme)
+                };
+                updateTheme();
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTheme);
             }
         },
         toggleTheme()
         {
-            this.isDark = !this.isDark
-            this.applyTheme()
+            this.isDark = !this.isDark;
+            this.applyTheme();
             if (Capacitor.getPlatform() === 'web')
             {
-                localStorage.setItem('theme', this.isDark ? 'dark' : 'light')
+                localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
             }
         },
         applyTheme()
@@ -46,4 +47,4 @@ export const useThemeStore = defineStore('theme', {
             }
         }
     }
-})
+});

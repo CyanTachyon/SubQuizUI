@@ -20,7 +20,7 @@ const subjectName = ref('');
 const subjectDescription = ref('');
 const router = useRouter();
 const notification = useNotificationStore();
-const submited = ref(false);
+const submitted = ref(false);
 const notFound = ref(false);
 let subject: SubjectId | null;
 const subjectInfo = ref(null as null | Subject);
@@ -47,8 +47,8 @@ if (subject !== null) getSubject(subject).then(value => {
 
 function submit()
 {
-    if (submited.value) return;
-    submited.value = true;
+    if (submitted.value) return;
+    submitted.value = true;
     if (subjectName.value === '')
     {
         notification.addError('学科名称不能为空');
@@ -56,11 +56,11 @@ function submit()
     }
     if (subject === null)
     {
-        newSubject(subjectName.value, subjectDescription.value).then(subject => router.push(`/admin/subject/${subject}`), () => submited.value = false);
+        newSubject(subjectName.value, subjectDescription.value).then(subject => router.push(`/admin/subject/${subject}`), () => submitted.value = false);
     }
     else
     {
-        modifySubject(subject, subjectName.value, subjectDescription.value).then(() => router.push(`/admin/subject/${subject}`), () => submited.value = false);
+        modifySubject(subject, subjectName.value, subjectDescription.value).then(() => router.push(`/admin/subject/${subject}`), () => submitted.value = false);
     }
 }
 </script>

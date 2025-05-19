@@ -25,7 +25,7 @@ function onTransitionChange(value: State, oldValue: State | undefined)
 }
 
 let transitionStore = useTransitionStore();
-const text = ref<HTMLDivElement | null>(null);
+const text = ref<HTMLElement | null>(null);
 onMounted(() => {
     if (text.value && window.getComputedStyle(text.value).getPropertyValue('--transition') !== 'static')
     {
@@ -36,9 +36,9 @@ onMounted(() => {
 </script>
 
 <template>
-    <div :class="className" ref="text">
+    <quiz-text :class="className" ref="text">
         <slot/>
-    </div>
+    </quiz-text>
 </template>
 
 <style scoped lang="scss">
@@ -64,6 +64,9 @@ onMounted(() => {
     100% {
         opacity: 1;
     }
+}
+quiz-text {
+    display: block;
 }
 
 .disappear {

@@ -66,9 +66,9 @@ onMounted(() => {
 </script>
 
 <template>
-    <div @click="(onClick as unknown as () => void)" :class="{'clickable': onClick, [borderClassName]: true} " ref="image">
+    <quiz-img-wrapper @click="(onClick as unknown as () => void)" :class="{'clickable': onClick, [borderClassName]: true} " ref="image">
         <img :src="src" :alt="alt" :class="imgClassName"/>
-    </div>
+    </quiz-img-wrapper>
 </template>
 
 <style scoped lang="scss">
@@ -112,7 +112,8 @@ img {
     margin: 0;
 }
 
-div {
+quiz-img-wrapper {
+    display: block;
     border-radius: 50%;
     border-width: 0;
     padding: 0.25rem 0.20rem 0.20rem 0.25rem;

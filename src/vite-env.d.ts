@@ -3,7 +3,6 @@
 interface Environment
 {
     version: string;
-    androidBackend: string;
     cdn: string;
     backend: string;
     frontend: string;

@@ -1,35 +1,49 @@
 import SparkMD5 from 'spark-md5';
 import { addSectionImage } from '../networks/backend/section';
+import { addExamImage } from '../networks/backend/exam';
 
-async function getFileMD5(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
+async function getFileMD5(file: File): Promise<string>
+{
+    return new Promise((resolve, reject) =>
+    {
         const reader = new FileReader();
         const spark = new SparkMD5.ArrayBuffer();
-  
+
         reader.onload = (event) => 
         {
             if (event.target?.result) 
             {
                 spark.append(event.target.result as ArrayBuffer);
                 const hashBinary = spark.end(true);
-                const base64 = btoa(hashBinary); 
+                const base64 = btoa(hashBinary);
                 resolve(base64);
-            } 
+            }
             else 
             {
                 reject(new Error('Failed to read file.'));
             }
         };
-  
+
         reader.onerror = () => reject(new Error('File read error.'));
         reader.readAsArrayBuffer(file);
     });
 }
 
-export async function uploadSectionImage(file: File, sectionId: number) 
+export async function uploadSectionImage(file: File, sectionId: number)
+{
+    return uploadImage(file, sectionId, false);
+}
+
+export async function uploadExamImage(file: File, examId: number) 
+{
+    return uploadImage(file, examId, true);
+}
+
+export async function uploadImage(file: File, id: number, exam: boolean)
 {
     let contentType: 'GIF' | 'JPEG' | 'PNG' | 'SVG' | 'XIcon';
-    switch (file.type) {
+    switch (file.type)
+    {
         case 'image/gif':
             contentType = 'GIF';
             break;
@@ -50,25 +64,30 @@ export async function uploadSectionImage(file: File, sectionId: number)
             return;
     }
     const md5 = await getFileMD5(file);
-    const url = await addSectionImage(sectionId, contentType, md5);
+    const url = exam ? await addExamImage(id, contentType, md5) : await addSectionImage(id, contentType, md5);
     if (!url) return;
     var xhr = new XMLHttpRequest();
     xhr.open('PUT', url, true);
     xhr.setRequestHeader('Content-MD5', md5);
-    let res = new Promise((resolve, reject) => {
-        xhr.onload = () => {
+    let res = new Promise((resolve, reject) =>
+    {
+        xhr.onload = () =>
+        {
             resolve(void 0);
         };
-        xhr.onerror = () => {
+        xhr.onerror = () =>
+        {
             reject(new Error('Failed to upload image.'));
-        }
-        xhr.upload.onprogress = (event) => {
-            if (event.lengthComputable) {
-                const percentComplete = (event.loaded / event.total) * 100;
-                console.log(`Upload progress: ${percentComplete}%`);
+        };
+        xhr.upload.onprogress = (event) =>
+        {
+            if (event.lengthComputable)
+            {
+                const percentComplete = (event.loaded / event.total);
+                console.log(`Upload progress: ${percentComplete}`);
             }
         };
     });
-    xhr.send(file); // file 是要上传的文件对象
+    xhr.send(file);
     await res;
 }

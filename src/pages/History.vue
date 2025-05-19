@@ -1,11 +1,11 @@
 <script setup lang="ts">
 
 import Loading from "../components/Loading.vue";
-import {useRoute, useRouter} from "vue-router";
-import {ref} from "vue";
-import type {Slice} from "../dataClasses/Slice.ts";
-import type {Quiz} from "../dataClasses/Quiz.ts";
-import {getQuizHistories} from "../networks/backend/quiz.ts";
+import { useRoute, useRouter } from "vue-router";
+import { ref } from "vue";
+import type { Slice } from "../dataClasses/Slice.ts";
+import type { Quiz } from "../dataClasses/Quiz.ts";
+import { getQuizHistories } from "../networks/backend/quiz.ts";
 import Card from "../components/Card.vue";
 import Pagination from "../components/Pagination.vue";
 import { pushUrl } from "../utils/utils.ts";
@@ -25,12 +25,12 @@ function getStart()
     return (page.value - 1) * count;
 }
 
-const data = ref(null as null | Slice<Quiz<AnswerType | null, AnswerType | null, string>>)
+const data = ref(null as null | Slice<Quiz<AnswerType | null, AnswerType | null, string>>);
 
 function gotoQuiz(q: Quiz<AnswerType | null, AnswerType | null, string>)
 {
-    if (q.finished) router.push('/analysis/' + q.id)
-    else router.push('/quiz')
+    if (q.finished) router.push('/analysis/' + q.id);
+    else router.push('/quiz');
 }
 
 function durationToString(duration: number | null)
@@ -70,12 +70,12 @@ function handlePageChange(newPage: number)
 {
     if (page.value !== newPage)
     {
-        pushUrl('/history', {page: newPage.toString()});
+        pushUrl('/history', { page: newPage.toString() });
         page.value = newPage;
     }
     getQuizHistories(getStart(), count).then(value => data.value = value);
 }
-handlePageChange(page.value)
+handlePageChange(page.value);
 
 function getTotalPage()
 {
@@ -84,29 +84,25 @@ function getTotalPage()
 </script>
 
 <template>
-    <Loading v-if="data === null" class="loading"/>
-    <div v-else class="quizzes-container">
-        <div class="quizzes-container">
-            <div class="quizzes">
-                <template v-for="q in data.list">
-                    <Card class="quiz" @click="gotoQuiz(q)">
-                        <p class="title">{{ startTimeToString(q.time) }}</p>
-                        <Spacer/>
-                        <p>测试ID：{{ q.id }}</p>
-                        <p>题目数量：{{ q.sections.length }}</p>
-                        <p>测试状态：{{ q.finished ? '已完成' : '进行中' }}</p>
-                        <p>答题用时：{{ durationToString(q.duration) }}</p>
-                    </Card>
-                </template>
-                <Text v-if="data.list.length === 0" class="no-quizzes">暂无测试记录</Text>
-            </div>
-            <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" class="pagination"/>
-        </div>
-    </div>
+    <Loading v-if="data === null"/>
+    <quiz-quizzes-container v-else>
+        <Text v-if="data.list.length === 0" class="no-quizzes">暂无测试记录</Text>
+        <quiz-quizzes>
+            <Card v-for="q in data.list" @click="gotoQuiz(q)">
+                <p class="title">{{ startTimeToString(q.time) }}</p>
+                <Spacer />
+                <p>测试ID：{{ q.id }}</p>
+                <p>题目数量：{{ q.sections.length }}</p>
+                <p>测试状态：{{ q.finished ? '已完成' : '进行中' }}</p>
+                <p>答题用时：{{ durationToString(q.duration) }}</p>
+            </Card>
+        </quiz-quizzes>
+        <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange"/>
+    </quiz-quizzes-container>
 </template>
 
 <style scoped lang="scss">
-.loading {
+quiz-loading {
     position: relative;
     top: 50%;
     left: 50%;
@@ -115,7 +111,8 @@ function getTotalPage()
     width: 30%;
 }
 
-.quizzes-container {
+quiz-quizzes-container {
+    display: block;
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -126,23 +123,20 @@ function getTotalPage()
     }
 }
 
-.quizzes {
+quiz-quizzes {
+    display: block;
     margin: 20px 0 0 0;
     display: grid;
-    flex-grow: 1;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     justify-content: start;
-    /* align-items: start; */
-    /* align-content: start; */
     overflow-y: auto;
     scrollbar-width: none;
-    /* justify-content:space-between */
 }
 
-.quiz {
+quiz-card {
     padding: 15px 30px 30px 30px;
     cursor: pointer;
-    height: 255px;
+    max-height: 300px;
     max-width: 400px;
 }
 
@@ -152,8 +146,8 @@ function getTotalPage()
     font-weight: bold;
 }
 
-.pagination {
+quiz-pagination {
     width: calc(min(100%, 800px));
-    margin: 20px auto;
+    margin: auto auto 20px auto;
 }
 </style>

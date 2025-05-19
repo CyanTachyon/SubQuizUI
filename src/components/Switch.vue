@@ -44,7 +44,7 @@ function onTransitionChange(value: State, oldValue: State | undefined)
     else onDisappearChange(true, false);
 }
 
-const wrapper = ref<HTMLDivElement | null>(null);
+const wrapper = ref<HTMLElement | null>(null);
 let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
 onMounted(() => {
@@ -56,13 +56,14 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="switch-wrapper" @click="onClick()" ref="wrapper" :disabled="disabled" :class="className">
-        <div class="switch-thumb" :class="{ on: on }"></div>
-    </div>
+    <quiz-switch @click="onClick()" ref="wrapper" :disabled="disabled" :class="className">
+        <quiz-switch-thumb :class="{ on: on }"></quiz-switch-thumb>
+    </quiz-switch>
 </template>
 
 <style scoped lang="scss">
-.switch-wrapper {
+quiz-switch {
+    display: block;
     width: 54px;
     height: 27px;
     background-color: transparent;
@@ -81,7 +82,8 @@ onMounted(() => {
     
 }
 
-.switch-thumb {
+quiz-switch-thumb {
+    display: block;
     width: 25px;
     height: 25px;
     border-radius: 50%;

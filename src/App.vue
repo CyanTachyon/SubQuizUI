@@ -1,33 +1,24 @@
 <template>
-    <TransitionGroup
-            name="notification"
-            tag="div"
-            class="notifications-wrapper"
-    >
-        <div
-                v-for="notification in notificationStore.notifications"
-                :key="notification.id"
-                class="notification-item"
-                :class="[notification.type || 'info']"
-        >
+    <TransitionGroup name="notification" tag="quiz-notifications-wrapper">
+        <quiz-notification-item v-for="notification in notificationStore.notifications" :key="notification.id" :class="[notification.type || 'info']">
             {{ notification.message }}
-        </div>
+        </quiz-notification-item>
     </TransitionGroup>
 
     <main>
-        <DownloadNewVersion v-if="versionInfo" :info="versionInfo"/>
+        <DownloadNewVersion v-if="versionInfo" :info="versionInfo" />
         <Sidebar v-else-if="$route.meta.sidebar">
-            <RouterView/>
+            <RouterView />
         </Sidebar>
-        <RouterView v-else/>
+        <RouterView v-else />
     </main>
 </template>
 <script setup lang="ts">
-import {isNavigationFailure, useRouter} from "vue-router";
-import {$appearDuration, useTransitionStore} from "./stores/transition.ts";
-import {useUser} from "./stores/user.ts";
-import {useNotificationStore} from "./stores/notification.ts";
-import {useThemeStore} from './stores/theme'
+import { isNavigationFailure, useRouter } from "vue-router";
+import { $appearDuration, useTransitionStore } from "./stores/transition.ts";
+import { useUser } from "./stores/user.ts";
+import { useNotificationStore } from "./stores/notification.ts";
+import { useThemeStore } from './stores/theme';
 import Sidebar from "./templates/sidebar/Sidebar.vue";
 import currentVersion from "../public/android_latest.json";
 import { ref } from "vue";
@@ -41,7 +32,7 @@ const store = useTransitionStore();
 
 router.beforeEach((_, __, next) =>
 {
-    store.onLeave()
+    store.onLeave();
     return new Promise((resolve) =>
     {
         setTimeout(() =>
@@ -69,15 +60,16 @@ let user = useUser();
 user.reload();
 
 const notificationStore = useNotificationStore();
-const themeStore = useThemeStore()
-themeStore.initialize()
+const themeStore = useThemeStore();
+themeStore.initialize();
 
 let versionInfo = ref(null as AndroidVersion | null);
 
 if (Capacitor.getPlatform() === 'android')
 {
-    (async () => {
-        let r1 = await fetch(environment.frontend + '/android_latest.json' + `?timestamp=${Date.now()}`, {cache: "reload",});
+    (async () =>
+    {
+        let r1 = await fetch(environment.frontend + '/android_latest.json' + `?timestamp=${Date.now()}`, { cache: "reload", });
         let res = (await r1.json()) as AndroidVersion;
         if (isLegacyAndroidApp() || res.versionCode > currentVersion.versionCode)
         {
@@ -87,7 +79,6 @@ if (Capacitor.getPlatform() === 'android')
 }
 </script>
 <style lang="scss">
-
 body {
     -webkit-user-select: none;
     user-select: none;
@@ -102,14 +93,15 @@ main {
     width: 100%;
 }
 
-#app {
+quiz-app {
+    display: block;
     position: fixed;
     inset: 0;
     height: 100%;
     width: 100%;
 }
 
-.notifications-wrapper {
+quiz-notifications-wrapper {
     flex-direction: column-reverse;
     position: fixed;
     top: 1rem;
@@ -125,7 +117,8 @@ main {
     overflow: visible;
 }
 
-.notification-item {
+quiz-notification-item {
+    display: block;
     position: relative;
     padding: 0.5rem 1rem;
     min-width: 200px;
@@ -138,28 +131,28 @@ main {
 }
 
 /* 通知类型颜色 */
-.notification-item.info {
+quiz-notification-item.info {
     background-color: #dbeafe;
     border-color: #93c5fd;
     color: #1e40af;
     box-shadow: 0 0 9px 2px #93c5fd;
 }
 
-.notification-item.success {
+quiz-notification-item.success {
     background-color: #dcfce7;
     border-color: #86efac;
     color: #166534;
     box-shadow: 0 0 9px 2px #86efac;
 }
 
-.notification-item.warning {
+quiz-notification-item.warning {
     background-color: #fef3c7;
     border-color: #fcd34d;
     color: #854d0e;
     box-shadow: 0 0 9px 2px #fcd34d;
 }
 
-.notification-item.error {
+quiz-notification-item.error {
     background-color: #fee2e2;
     border-color: #fca5a5;
     color: #991b1b;

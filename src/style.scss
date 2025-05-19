@@ -30,7 +30,7 @@ svg {
     --border-color: #{$dark-border-color};
 }
 
-.markdown-body {
+quiz-markdown-body {
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -40,9 +40,11 @@ svg {
     padding: 0;
     height: fit-content;
 }
-.markdown-body > :last-child {
+
+quiz-markdown-body> :last-child {
     margin-bottom: 0;
 }
-.markdown-body > :first-child {
+
+quiz-markdown-body> :first-child {
     margin-top: 0;
 }

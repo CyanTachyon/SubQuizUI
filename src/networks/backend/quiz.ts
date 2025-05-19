@@ -3,8 +3,9 @@ import type {Quiz} from "../../dataClasses/Quiz.ts";
 import {sendRequest, Target} from "../utils/sendRequest.ts";
 import type {Slice} from "../../dataClasses/Slice.ts";
 import type {AnswerType} from "../../dataClasses/Question.ts";
+import type { KnowledgePointId } from "../../dataClasses/Ids.ts";
 const newQuizUrl = '/quiz/new';
-export async function newQuiz(count: number, subjectId?: number)
+export async function newQuiz(count: number, knowledgePoints: KnowledgePointId[] | null)
 {
     try
     {
@@ -12,7 +13,8 @@ export async function newQuiz(count: number, subjectId?: number)
             target: Target.BACKEND,
             url: newQuizUrl,
             method: 'POST',
-            params: {count, subjectId},
+            params: {count},
+            data: knowledgePoints,
         }));
     }
     catch (e)

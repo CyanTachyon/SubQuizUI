@@ -1,10 +1,10 @@
-import {defineStore} from 'pinia';
-import {setToken, token} from "../utils/utils.ts";
-import type {UserInfo} from "../dataClasses/User.ts";
-import {getUserInfo} from "../networks/backend/user.ts";
-import {avatarUrl} from "../networks/sso/avatar.ts";
+import { defineStore } from 'pinia';
+import { setToken, token } from "../utils/utils.ts";
+import type { UserInfo } from "../dataClasses/User.ts";
+import { getUserInfo } from "../networks/backend/user.ts";
+import { avatarUrl } from "../networks/sso/avatar.ts";
 import SubIT_icon from '../assets/icon.svg';
-import {isAdmin} from "../dataClasses/Permission.ts";
+import { isAdmin } from "../dataClasses/Permission.ts";
 
 export const useUser = defineStore('user', {
     state: () => ({
@@ -39,7 +39,7 @@ export const useUser = defineStore('user', {
         userName()
         {
             if (this.user === null) return '未登录';
-            return this.user.username as string
+            return this.user.username as string;
         },
         hasAdmin()
         {

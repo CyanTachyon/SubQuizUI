@@ -1,4 +1,4 @@
-import {defineConfig, loadEnv} from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import inspect from "vite-plugin-inspect";
 import { fileURLToPath, URL } from 'node:url'
@@ -22,25 +22,36 @@ function getEnv(env_: any)
 }
 
 // https://vite.dev/config/
-export default defineConfig(({mode}) => ({
-    plugins: [vue(), inspect()],
+export default defineConfig(({ mode }) => ({
+    plugins: [
+        vue({
+            template: {
+                compilerOptions: {
+                    isCustomElement: (tag) => {
+                        return tag.startsWith('quiz-');
+                    }
+                }
+            }
+        }), 
+        inspect(),
+    ],
     define: {
         'environment': getEnv(loadEnv(mode, process.cwd())),
     },
     css: {
         preprocessorOptions: {
-          scss: {
-            additionalData: `
+            scss: {
+                additionalData: `
                 @use "@/scss/_variables.scss" as *;
                 @use "@/scss/_mixins.scss" as *;
             `
-          }
+            }
         }
-      },
+    },
     resolve: {
-      alias: {
-        '@': fileURLToPath(new URL('./src', import.meta.url))
-      }
+        alias: {
+            '@': fileURLToPath(new URL('./src', import.meta.url))
+        }
     },
     build: {
         minify: 'terser',
@@ -57,10 +68,10 @@ export default defineConfig(({mode}) => ({
             output: {
                 manualChunks: {
                     "libs": [
-                        'vue', 
-                        'vue-router', 
-                        'pinia', 
-                        '@headlessui/vue', 
+                        'vue',
+                        'vue-router',
+                        'pinia',
+                        '@headlessui/vue',
                         '@heroicons/vue',
                         'ansi_up'
                     ]

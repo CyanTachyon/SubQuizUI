@@ -38,7 +38,7 @@ class AnimationQueue
     public push(actions: Func[], appendIfHasPromise = true): boolean
     {
         if (this.promise && !appendIfHasPromise) return false;
-        this.animations.push({actions});
+        this.animations.push({ actions });
         if (!this.promise) this.startResolve();
         return true;
     }

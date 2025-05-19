@@ -1,4 +1,4 @@
-import type {SectionTypeId, SubjectId} from "../../dataClasses/Ids.ts";
+import type {KnowledgePointId, SectionTypeId} from "../../dataClasses/Ids.ts";
 import {checkResponse} from "../utils/checkResponse.ts";
 import {sendRequest, Target} from "../utils/sendRequest.ts";
 import type {SectionType} from "../../dataClasses/SectionType.ts";
@@ -7,13 +7,13 @@ import type {Slice} from "../../dataClasses/Slice.ts";
 import type { AnswerType } from "../../dataClasses/Question.ts";
 
 const newSectionTypeUrl = "/section/type"
-export function newSectionType(subject: SubjectId, name: string, description: string)
+export function newSectionType(knowledgePoint: KnowledgePointId, name: string)
 {
     return checkResponse<SectionTypeId>(sendRequest({
         target: Target.BACKEND,
         url: newSectionTypeUrl,
         method: 'POST',
-        data: {subject, name, description},
+        data: {knowledgePoint, name},
     }));
 }
 
@@ -28,15 +28,14 @@ export function getSectionType(id: number)
     }));
 }
 
-const modifySectionTypeUrl = "/section/type/{id}"
-export function modifySectionType(id: number, subject: SubjectId, name: string, description: string)
+const modifySectionTypeUrl = "/section/type"
+export function modifySectionType(id: number, knowledgePoint: KnowledgePointId, name: string)
 {
     return checkResponse<null>(sendRequest({
         target: Target.BACKEND,
         url: modifySectionTypeUrl,
         method: 'PUT',
-        data: {subject, name, description},
-        params: {id},
+        data: {id, knowledgePoint, name},
     }));
 }
 
@@ -52,13 +51,13 @@ export function deleteSectionType(id: number)
 }
 
 const getSectionTypeListUrl = "/section/type/list"
-export function getSectionTypeList(begin: number, count: number, subject?: SubjectId)
+export function getSectionTypeList(knowledge: KnowledgePointId)
 {
-    return checkResponse<Slice<SectionType>>(sendRequest({
+    return checkResponse<SectionType[]>(sendRequest({
         target: Target.BACKEND,
         url: getSectionTypeListUrl,
         method: 'GET',
-        params: {begin, count, subject},
+        params: {knowledge},
     }));
 }
 
@@ -107,13 +106,13 @@ export function deleteSection(id: number)
 }
 
 const getSectionListUrl = "/section/list"
-export function getSectionList(begin: number, count: number, subject?: SubjectId, type?: SectionTypeId)
+export function getSectionList(begin: number, count: number, knowledge: KnowledgePointId, type?: SectionTypeId)
 {
     return checkResponse<Slice<Section<AnswerType, null, string>>>(sendRequest({
         target: Target.BACKEND,
         url: getSectionListUrl,
         method: 'GET',
-        params: {begin, count, subject, type},
+        params: {begin, count, knowledge, type},
     }));
 }
 

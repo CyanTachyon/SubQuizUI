@@ -1,5 +1,5 @@
 import type {Slice} from "../../dataClasses/Slice.ts";
-import type {SubjectId, UserId} from "../../dataClasses/Ids.ts";
+import type {PreparationGroupId, UserId} from "../../dataClasses/Ids.ts";
 import {checkResponse} from "../utils/checkResponse.ts";
 import {sendRequest, Target} from "../utils/sendRequest.ts";
 import type {Permission} from "../../dataClasses/Permission.ts";
@@ -10,38 +10,38 @@ export interface AdminInfo
     permission: Permission;
 }
 
-const subjectAdminListUrl = '/admin/subject/{sid}/list';
+const subjectAdminListUrl = '/admin/group/{group}/list';
 
-export async function getSubjectAdminList(sid: SubjectId, begin: number, count: number)
+export async function getGroupAdminList(group: PreparationGroupId, begin: number, count: number)
 {
     return await checkResponse<Slice<AdminInfo>>(sendRequest({
         target: Target.BACKEND,
         url: subjectAdminListUrl,
         method: 'GET',
-        params: {begin, count, sid},
+        params: {begin, count, group},
     }));
 }
 
-const userPermissionInSubjectUrl = '/admin/subject/{sid}/user/{uid}';
+const userPermissionInGroupUrl = '/admin/group/{group}/user/{uid}';
 
-export async function getUserPermissionInSubject(sid: SubjectId, uid: UserId)
+export async function getUserPermissionInGroup(group: PreparationGroupId, uid: UserId)
 {
     return await checkResponse<Permission>(sendRequest({
         target: Target.BACKEND,
-        url: userPermissionInSubjectUrl,
+        url: userPermissionInGroupUrl,
         method: 'GET',
-        params: {sid, uid},
+        params: {group, uid},
     }));
 }
 
-export async function changeUserPermissionInSubject(sid: SubjectId, uid: UserId, permission: Permission)
+export async function changeUserPermissionInGroup(group: PreparationGroupId, uid: UserId, permission: Permission)
 {
     return await checkResponse(sendRequest({
         target: Target.BACKEND,
-        url: userPermissionInSubjectUrl,
+        url: userPermissionInGroupUrl,
         method: 'PUT',
         data: {'data': permission},
-        params: {sid, uid},
+        params: {group, uid},
     }));
 }
 

@@ -3,13 +3,13 @@
 </script>
 
 <template>
-  <div class="frosted-glass">
+  <quiz-frosted-glass>
     <slot></slot>
-  </div>
+  </quiz-frosted-glass>
 </template>
 
 <style scoped lang="scss">
-.frosted-glass {
+quiz-frosted-glass {
   width: 400px;
   padding: 20px;
   border-radius: 15px;
@@ -24,7 +24,7 @@
   isolation: isolate;
 }
 
-.frosted-glass::before {
+quiz-frosted-glass::before {
   content: '';
   position: absolute;
   top: 0;
