@@ -112,7 +112,7 @@
         }
 
         #{$x} {
-            @if $direction ==down {
+            @if $direction == down {
                 @include neumorphism-down-shadow;
             }
 
@@ -121,10 +121,14 @@
             }
 
             color: var(--color);
+
+            img {
+                opacity: 1;
+            }
         }
 
         50% {
-            @if $direction ==down {
+            @if $direction == down {
                 @include neumorphism-down-shadow;
             }
 
@@ -139,6 +143,10 @@
             box-shadow: none;
             border: 2px solid transparent;
             color: transparent;
+
+            img {
+                opacity: 0;
+            }
         }
     }
 }

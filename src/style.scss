@@ -7,6 +7,13 @@
     tab-size: 4;
 }
 
+:focus,
+:focus-within,
+:focus-visible
+{
+    outline: none;
+}
+
 svg {
     display: inline-block;
     vertical-align: middle;

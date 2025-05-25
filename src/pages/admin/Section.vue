@@ -29,6 +29,8 @@ import Slider from "../../components/Slider.vue";
 import type { SectionType } from "../../dataClasses/SectionType.ts";
 import { getKnowledgePoint } from "../../networks/backend/knowledgePoint.ts";
 import type { KnowledgePoint } from "../../dataClasses/KnowledgePoint.ts";
+import Text from "../../components/Text.vue";
+
 function getName(index: number)
 {
     if (!index) return 'A.';
@@ -274,24 +276,40 @@ function getImageUrl(key: string)
     return environment.cdn + '/' + key;
 }
 
-const textareaRef = ref<InstanceType<typeof Input>>(null);
+const inputEleRef = ref<InstanceType<typeof Input>>(null);
+
+function onFocus(inputEle: InstanceType<typeof Input>)
+{
+    inputEleRef.value = inputEle;
+    console.log("onFocus", inputEle);
+}
+
+function onFocusOut(inputEle: InstanceType<typeof Input>)
+{
+    if (inputEleRef.value === inputEle) 
+    {
+        inputEleRef.value = null;
+        console.log("onFocusOut", inputEle);
+    }
+}
 
 function onImageClick(name: string)
 {
     section.value.markdown = true;
-    const imgMarkdown = `![](${name} "=x300")`;
-    const textarea = textareaRef.value?.element;
+    const imgMarkdown = `![](${name} "100%x")`;
+    const textarea = inputEleRef.value as InstanceType<typeof Input>;
+    console.log("onImageClick", inputEleRef.value);
     if (!textarea) return;
-    const startPos = textarea.selectionStart;
-    const endPos = textarea.selectionEnd;
-    const originalText = textarea.value;
+    const startPos = textarea.element.selectionStart;
+    const endPos = textarea.element.selectionEnd;
+    const originalText = textarea.value + "";
     const beforeText = originalText.substring(0, startPos);
     const afterText = originalText.substring(endPos);
-    section.value.description = beforeText + imgMarkdown + afterText;
+    textarea.value = beforeText + imgMarkdown + afterText;
     const newPos = startPos + imgMarkdown.length;
-    textarea.selectionStart = newPos;
-    textarea.selectionEnd = newPos;
-    textarea.focus();
+    textarea.element.selectionStart = newPos;
+    textarea.element.selectionEnd = newPos;
+    textarea.element.focus();
 }
 
 function deleteImage(name: string)
@@ -309,123 +327,133 @@ function deleteImage(name: string)
 <template>
     <NotFound v-if="notFound"/>
     <Loading v-else-if="section === null || !sectionTypeInfo" class="main-loading"/>
-    <Card v-else-if="!preview" class="section">
-        <p class="main-title">{{ section.id === 0 ? '新建' : '编辑' }}题目</p>
-        <p class="title">{{ `类型：${sectionTypeInfo.name}` }}</p>
-        <StatusButton @click="preview = true">
-            题目预览
-        </StatusButton>
-        <Spacer/>
-        <p class="small-title">大题描述</p>
-        <quiz-small-title>
-            <Switch :on="section.markdown" @click="section.markdown = !section.markdown"/>
-            {{ section.markdown ? ' markdown' : ' text' }}
-        </quiz-small-title>
-        <div style="display: flex;">
-            <Input ref="textareaRef" :area="true" placeholder="Section Description" type="text" v-model="section.description" class="section-description-input"/>
-        </div>
-        <br/>
-        <Loading v-if="loadingImages"/>
-        <template v-else>
-            <div v-if="images.length" style="margin-left: 10px;">
-                点击图片将图片插入题目
+    <div v-else-if="!preview" class="section-container">
+        <Card class="section">
+            <p class="main-title">{{ section.id === 0 ? '新建' : '编辑' }}题目</p>
+            <p class="title">{{ `类型：${sectionTypeInfo.name}` }}</p>
+            <StatusButton @click="preview = true">
+                题目预览
+            </StatusButton>
+            <Spacer/>
+            <p class="small-title">大题描述</p>
+            <quiz-small-title>
+                <Switch :on="section.markdown" @click="section.markdown = !section.markdown"/>
+                {{ section.markdown ? ' markdown' : ' text' }}
+            </quiz-small-title>
+            <div style="display: flex;">
+                <Input :area="true" placeholder="Section Description" type="text" v-model="section.description" class="section-description-input" @focus="onFocus" @focus-out="onFocusOut"/>
             </div>
-            <div class="img-sources">
-                <div v-for="img in images" class="img" :key="img" :style="'--img-url: url(' + getImageUrl(img) + ');'" @click="onImageClick(img.substring(img.lastIndexOf('/')))">
-                    <TrashCanIcon :size="30" @click.stop="deleteImage(img.substring(img.lastIndexOf('/')))" class="remove-img"/>
+            <br/>
+            <div v-for="(question, questionIndex) in section.questions" :key="questionIndex" class="question">
+                <Spacer style="margin-bottom: 10px; margin-top: 10px;"/>
+                <div class="question-description">
+                    <p class="q-title">
+                        {{ questionIndex + 1 }}.
+                    </p>
+                    <CommonButton 
+                        @click="changeQuestionType(questionIndex)">
+                        {{ getTypeName(question.type) }}
+                    </CommonButton>
                 </div>
-            </div>
-        </template>
-        <CommonButton @click="addImage" class="add-img-button">添加图片附件</CommonButton>
-        <br/>
-        <div v-for="(question, questionIndex) in section.questions" :key="questionIndex" class="question">
-            <Spacer style="margin-bottom: 10px; margin-top: 10px;"/>
-            <div class="question-description">
-                <p class="q-title">
-                    {{ questionIndex + 1 }}.
-                </p>
-                <CommonButton 
-                    @click="changeQuestionType(questionIndex)">
-                    {{ getTypeName(question.type) }}
-                </CommonButton>
-            </div>
-            <Input :area="true" placeholder="Question Description" type="text" v-model="question.description" class="question-description-input"/>
+                <Input :area="true" placeholder="Question Description" type="text" v-model="question.description" class="question-description-input" @focus="onFocus" @focus-out="onFocusOut"/>
 
-            <!-- 单选和多选 -->
+                <!-- 单选和多选 -->
 
-            <div v-if="question.type === 'single' || question.type === 'multiple'" v-for="(_, optionIndex) in question.options" :key="optionIndex" class="option-box">
-                <StatusButton 
-                    class="option-title" 
-                    @click="setAnswer(questionIndex, optionIndex)" 
-                    :down="Array.isArray(question.answer) ? question.answer.includes(optionIndex) : question.answer === optionIndex"
-                    :class="{ 'right-answer': Array.isArray(question.answer) ? question.answer.includes(optionIndex) : question.answer === optionIndex }"
-                >
-                    {{ getName(optionIndex) }}
-                </StatusButton>
-                <Input placeholder="Option Description" type="text" v-model="question.options[optionIndex]" class="option-input"/>
-            </div>
-
-            <div v-if="question.type === 'single' || question.type === 'multiple'" class="option-box">
-                <div class="button-box">
-                    <CommonButton @click="addOption(questionIndex)" class="add-button"><PlusIcon/></CommonButton>
-                    <CommonButton @click="deleteOption(questionIndex)" class="add-button"><MinusIcon/></CommonButton>
+                <div v-if="question.type === 'single' || question.type === 'multiple'" v-for="(_, optionIndex) in question.options" :key="optionIndex" class="option-box">
+                    <StatusButton 
+                        class="option-title" 
+                        @click="setAnswer(questionIndex, optionIndex)" 
+                        :down="Array.isArray(question.answer) ? question.answer.includes(optionIndex) : question.answer === optionIndex"
+                        :class="{ 'right-answer': Array.isArray(question.answer) ? question.answer.includes(optionIndex) : question.answer === optionIndex }"
+                    >
+                        {{ getName(optionIndex) }}
+                    </StatusButton>
+                    <Input placeholder="Option Description" type="text" v-model="question.options[optionIndex]" class="option-input" @focus="onFocus" @focus-out="onFocusOut"/>
                 </div>
-            </div>
 
-            <!-- 判断 -->
-            <div v-else-if="question.type === 'judge'" class="judge-option-box">
-                <StatusButton 
-                    class="judge-option" 
-                    :down="question.answer === false" 
-                    :class="{ 'right-answer': question.answer === false }"
-                    @click="setAnswer(questionIndex, false)"
-                >
-                    <CloseIcon/>
-                </StatusButton>
-                <StatusButton 
-                    class="judge-option" 
-                    :down="question.answer === true" 
-                    :class="{ 'right-answer': question.answer === true }"
-                    @click="setAnswer(questionIndex, true)"
-                >
-                    <CheckIcon/>
-                </StatusButton>
-            </div>
-
-            <!-- 填空/简答 -->
-            <template v-else-if="question.type === 'fill' || question.type === 'essay'">
-                <div class="title">
-                    答案/评标
-                    <span title="简答题和填空题将由AI判卷，因此请尽可能详细描述评分标准，以提高判卷的准确性。"><HelpCircleOutlineIcon/></span>
+                <div v-if="question.type === 'single' || question.type === 'multiple'" class="option-box">
+                    <div class="button-box">
+                        <CommonButton @click="addOption(questionIndex)" class="add-button"><PlusIcon/></CommonButton>
+                        <CommonButton @click="deleteOption(questionIndex)" class="add-button"><MinusIcon/></CommonButton>
+                    </div>
                 </div>
+
+                <!-- 判断 -->
+                <div v-else-if="question.type === 'judge'" class="judge-option-box">
+                    <StatusButton 
+                        class="judge-option" 
+                        :down="question.answer === false" 
+                        :class="{ 'right-answer': question.answer === false }"
+                        @click="setAnswer(questionIndex, false)"
+                    >
+                        <CloseIcon/>
+                    </StatusButton>
+                    <StatusButton 
+                        class="judge-option" 
+                        :down="question.answer === true" 
+                        :class="{ 'right-answer': question.answer === true }"
+                        @click="setAnswer(questionIndex, true)"
+                    >
+                        <CheckIcon/>
+                    </StatusButton>
+                </div>
+
+                <!-- 填空/简答 -->
+                <template v-else-if="question.type === 'fill' || question.type === 'essay'">
+                    <div class="title">
+                        答案/评标
+                        <span title="简答题和填空题将由AI判卷，因此请尽可能详细描述评分标准，以提高判卷的准确性。"><HelpCircleOutlineIcon/></span>
+                    </div>
+                    <div class="analysis-box">
+                        <Input :area="true" placeholder="Answer" type="text" class="analysis-input" :value="question.answer" @input="setAnswer(questionIndex, $event.target.value)" @focus="onFocus" @focus-out="onFocusOut"/>
+                    </div>
+                </template>
+
+                <p class="title">解析</p>
                 <div class="analysis-box">
-                    <Input :area="true" placeholder="Answer" type="text" class="analysis-input" :value="question.answer" @input="setAnswer(questionIndex, $event.target.value)"/>
+                    <Input :area="true" placeholder="Analysis" type="text" v-model="question.analysis" class="analysis-input" @focus="onFocus" @focus-out="onFocusOut"/>
+                </div>
+            </div>
+
+            <Spacer style="margin-bottom: 10px; margin-top: 10px;"/>
+            <quiz-small-title style="display: flex;">
+                <Switch :on="section.available" @click="section.available = !section.available"/>
+                {{ section.available ? ' 题目可用' : ' 题目不可用' }}
+            </quiz-small-title>
+            <p class="title">权重</p>
+            <div style="width: 280px;">
+                <Input :area="false" placeholder="Section Weight" type="number" v-model="section.weight" style="width: 300px;"/>
+                <Slider :min-value="0" :max-value="100" :step="1" v-model="section.weight" style="width: 300px;"/>
+            </div>
+            <div class="button-box">
+                <CommonButton @click="addQuestion" class="add-button"><PlusIcon/></CommonButton>
+                <CommonButton @click="deleteQuestion" class="add-button"><MinusIcon/></CommonButton>
+                <StatusButton @click="saveSection" class="add-button"><ContentSaveIcon/></StatusButton>
+                <StatusButton @click="deleteSection_" class="add-button"><TrashCanIcon/></StatusButton>
+            </div>
+        </Card>
+        <Card>
+            <div style="font-weight: bold; display: flex; flex-direction: row; align-items: center; margin-right: auto;">
+                <p style="margin-left: 10px; cursor: pointer; " @click="addImage">图库</p> 
+                <Text @click="addImage" style="cursor: pointer; "><PlusIcon /></Text>
+            </div>
+            <Loading v-if="loadingImages"/>
+            <template v-else>
+                <div v-if="images.length" style="margin-left: 10px;">
+                    点击图片将其插入光标所在位置
+                </div>
+                <div v-else style="margin: 10px 10px 20px 10px;">
+                    暂无图片
+                </div>
+                <div class="img-sources">
+                    <Text v-for="img in images" class="img" :key="img" :style="'--img-url: url(' + getImageUrl(img) + ');'" @click="onImageClick(img.substring(img.lastIndexOf('/')))">
+                        <TrashCanIcon :size="30" @click.stop="deleteImage(img.substring(img.lastIndexOf('/')))" class="remove-img"/>
+                    </Text>
                 </div>
             </template>
-
-            <p class="title">解析</p>
-            <div class="analysis-box">
-                <Input :area="true" placeholder="Analysis" type="text" v-model="question.analysis" class="analysis-input"/>
-            </div>
-        </div>
-
-        <Spacer style="margin-bottom: 10px; margin-top: 10px;"/>
-        <quiz-small-title style="display: flex;">
-            <Switch :on="section.available" @click="section.available = !section.available"/>
-            {{ section.available ? ' 题目可用' : ' 题目不可用' }}
-        </quiz-small-title>
-        <p class="title">权重</p>
-        <div style="width: 280px;">
-            <Input :area="false" placeholder="Section Weight" type="number" v-model="section.weight" style="width: 300px;"/>
-            <Slider :min-value="0" :max-value="100" :step="1" v-model="section.weight" style="width: 300px;"/>
-        </div>
-        <div class="button-box">
-            <CommonButton @click="addQuestion" class="add-button"><PlusIcon/></CommonButton>
-            <CommonButton @click="deleteQuestion" class="add-button"><MinusIcon/></CommonButton>
-            <StatusButton @click="saveSection" class="add-button"><ContentSaveIcon/></StatusButton>
-            <StatusButton @click="deleteSection_" class="add-button"><TrashCanIcon/></StatusButton>
-        </div>
-    </Card>
+            <!-- <CommonButton  class="add-img-button">添加图片附件</CommonButton> -->
+        </Card>
+    </div> 
     <template v-else>
         <StatusButton @click="preview = false">返回编辑</StatusButton>
         <QuizView :quiz="{ sections: [section], correct: null }" :editable="false"/>
@@ -448,8 +476,16 @@ function deleteImage(name: string)
     font-weight: bold;
 }
 
+.section-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
 .section {
-    margin-top: 20px;
+    overflow: auto;
+    scrollbar-width: none;
 }
 
 quiz-small-title {
@@ -562,10 +598,14 @@ quiz-small-title {
 ///// img
 
 .img-sources {
-    width: 100%;
+    // width: 100%;
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: row;
+    scrollbar-width: none;
+    overflow-x: auto;
     gap: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
 }
 .img {
     --img-url: ;

@@ -10,7 +10,6 @@ import CloseCircleOutlineIcon from "vue-material-design-icons/CloseCircleOutline
 import CloseIcon from "vue-material-design-icons/Close.vue";
 import CheckIcon from "vue-material-design-icons/Check.vue";
 import { useNotificationStore } from "../stores/notification.ts";
-import { sectionMarkdownToHtml } from "../utils/markdown.ts";
 const {quiz, editable, submit} = defineProps<{ quiz: Pick<Quiz<any, any, any>, 'sections' | 'correct'>, editable: boolean, submit?: () => void }>();
 
 
@@ -114,7 +113,7 @@ function trySubmit()
 
 <template>
     <Card v-for="(section, sectionIndex) in quiz.sections" class="section" :key="sectionIndex">
-        <Card v-if="section.description" class="section-description-input" v-markdown="{markdown: section.markdown, content: section.description, section: section.id}"/>
+        <Card v-if="section.description" class="section-description" v-markdown="{markdown: section.markdown, content: section.description, section: section.id}"/> 
         <Spacer v-if="section.description" />
         <br/>
         <div v-for="(question, questionIndex) in section.questions" :id="`q-${sectionIndex}-${questionIndex}`" class="question">
@@ -122,7 +121,7 @@ function trySubmit()
                 <p class="title">
                     {{ questionIndex + 1 }}.
                 </p>
-                <div class="question-description-content" v-html="section.markdown ? sectionMarkdownToHtml(section.id, question.description) : question.description"/>
+                <div class="question-description-content" v-markdown="{markdown: section.markdown, content: question.description, section: section.id}"/>
             </div>
             <div v-if="question.options" class="options-wrapper">
                 <div v-for="(option, optionIndex) in question.options" class="option-box">
@@ -138,7 +137,7 @@ function trySubmit()
                         <div class="option-title" style="height: 100%;">
                             {{ getName(optionIndex) }}
                         </div>
-                        <div class="option-content" v-html="section.markdown ? sectionMarkdownToHtml(section.id, option) : option"/>
+                        <div class="option-content" v-markdown="{markdown: section.markdown, content: option, section: section.id}"/>
                     </StatusButton>
                     <Text 
                         v-if="optionIndex === question.answer || (question.answer?.length && question.answer.includes(optionIndex))" 
@@ -192,14 +191,14 @@ function trySubmit()
             </Text>
             <Text v-if="(question.type === 'fill' || question.type === 'essay') && question.answer" class="answer analysis">
                 {{ '答案/评标：' }}
-                <div v-html="section.markdown ? sectionMarkdownToHtml(section.id, question.answer) : question.answer"/>
+                <div v-markdown="{markdown: section.markdown, content: question.answer, section: section.id}"/>
             </Text>
             <Text 
                 v-if="question.analysis" 
                 class="analysis"
             >
                 {{ '解析：' }}
-                <div v-html="section.markdown ? sectionMarkdownToHtml(section.id, question.analysis) : question.analysis"/>
+                <div v-markdown="{markdown: section.markdown, content: question.analysis, section: section.id}"/>
             </Text>
             <br v-if="questionIndex < section.questions.length - 1"/>
         </div>
@@ -212,7 +211,7 @@ function trySubmit()
     margin-top: 20px;
 }
 
-.section-description-input {
+.section-description {
     background-color: var(--bgcolor);
     position: -webkit-sticky;
     position: sticky;
@@ -226,6 +225,10 @@ function trySubmit()
     scrollbar-width: none;
     display: flex;
     z-index: 1;
+
+    quiz-text {
+        color: white;
+    }
 }
 
 .question-description {

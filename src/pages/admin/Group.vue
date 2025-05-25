@@ -419,7 +419,7 @@ function getTotalPage()
 {
     if (current.value.sections)
     {
-        return Math.ceil(current.value.sections.count / sectionCount);
+        return Math.ceil(current.value.sections.totalSize / sectionCount);
     }
     return 1;
 }
@@ -565,7 +565,7 @@ function startQuiz()
             <!--  文件夹 -->
             <template v-else-if="hasPermission">
                 <div v-if="current.children !== null" style="display: flex;">
-                    <CommonButton  @click="createKP(true)">
+                    <CommonButton @click="createKP(true)">
                         <FolderPlusIcon/>
                     </CommonButton>
                     <CommonButton @click="createKP(false)">

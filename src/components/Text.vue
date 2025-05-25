@@ -65,6 +65,7 @@ onMounted(() => {
         opacity: 1;
     }
 }
+
 quiz-text {
     display: block;
 }

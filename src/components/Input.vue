@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import {onMounted, ref, watch} from 'vue';
+import {onMounted, ref, watch, getCurrentInstance} from 'vue';
 import {createAnimationsController} from '../utils/AnimationsController';
 import {sleep} from '../utils/sleep';
 import {$appearDuration, State, useTransitionStore} from '../stores/transition';
 
 const model = defineModel<string | number>({required: false});
-const {placeholder, type, disappear, area, onBlur, align, readonly} = defineProps({
+const { placeholder, type, disappear, area, align, readonly, onFocus, onFocusOut } = defineProps({
     placeholder: {
         type: String,
         default: ''
@@ -18,10 +18,6 @@ const {placeholder, type, disappear, area, onBlur, align, readonly} = defineProp
         type: Boolean,
         default: false
     },
-    onBlur: {
-        type: Function,
-        default: () => {}
-    },
     area: {
         type: Boolean,
         default: false
@@ -32,6 +28,14 @@ const {placeholder, type, disappear, area, onBlur, align, readonly} = defineProp
     },
     readonly: {
         type: Boolean,
+    },    
+    onFocus: {
+        type: Function,
+        default: () => {}
+    },
+    onFocusOut: {
+        type: Function,
+        default: () => {}
     }
 });
 
@@ -48,6 +52,9 @@ let placeholderClassName = ref(disappear ? 'placeholder-disappear' : 'placeholde
 let controller = createAnimationsController();
 let isFocused = ref(false);
 
+// 获取当前组件实例
+const currentInstance = getCurrentInstance()
+
 function handleFocus() 
 {
     if (isFocused.value || disappear || readonly) return;
@@ -55,6 +62,7 @@ function handleFocus()
         () => {
             className.value = 'down';
             isFocused.value = true;
+            onFocus(currentInstance.exposed);
         },
         () => sleep(400),
         () => className.value = 'down-input'
@@ -68,7 +76,7 @@ function handleFocusOut()
         () => {
             className.value = 'up';
             isFocused.value = false;
-            (onBlur as unknown as () => void)()
+            onFocusOut(currentInstance.exposed);
         },
         () => sleep(400),
         () => className.value = 'up-input'
@@ -129,6 +137,7 @@ const element = area ? 'textarea' : 'input';
 
 defineExpose({
     element: input,
+    value: model,
 })
 
 </script>
