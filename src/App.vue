@@ -71,7 +71,7 @@ if (Capacitor.getPlatform() === 'android')
     {
         let r1 = await fetch(environment.frontend + '/android_latest.json' + `?timestamp=${Date.now()}`, { cache: "reload", });
         let res = (await r1.json()) as AndroidVersion;
-        if (res.versionCode > currentVersion.versionCode) versionInfo.value = res;
+        if (res.minVersionCode > currentVersion.versionCode) versionInfo.value = res;
     })();
 }
 </script>

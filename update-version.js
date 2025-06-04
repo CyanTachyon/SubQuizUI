@@ -4,7 +4,7 @@ import path from "path";
 const packageJson = JSON.parse(readFileSync(path.resolve('package.json'), 'utf-8'))
 const androidLatestVersionJson = path.resolve('public', 'android_latest.json');
 
-function updateAndroidVersion(versionName, versionId)
+function updateAndroidVersion(versionName, versionId, minVersionId)
 {
     console.log(`Updating version to ${versionName} (${versionId})`);
     if (!existsSync(path.resolve('public'))) 
@@ -14,9 +14,10 @@ function updateAndroidVersion(versionName, versionId)
         JSON.stringify({
             version: versionName, 
             versionCode: versionId,
+            minVersionCode: minVersionId,
             url: `https://quiz.bdfzscc.com/SubQuiz.apk`
         })
     )
 }
 
-updateAndroidVersion(packageJson.version, packageJson.versionId);
+updateAndroidVersion(packageJson.version, packageJson.versionId, packageJson.minVersionId);
