@@ -1,6 +1,8 @@
-import type {ResponseBody} from "../../dataClasses/ResponseBody.ts";
-import {tryAuthorize, tryLogin} from "../../utils/utils.ts";
+import type { ResponseBody } from "../../dataClasses/ResponseBody.ts";
+import { tryBindSeiue, tryLogin } from "../../utils/utils.tsx";
 import {useNotificationStore} from "../../stores/notification.ts";
+import type { UserInfo } from "../../dataClasses/User.ts";
+import { useUser } from "../../stores/user.ts";
 
 export class ResponseError extends Error
 {
@@ -20,7 +22,11 @@ export function success<DATA>(response: ResponseBody<DATA>)
 
 function defaultOnFail<T>(response: ResponseBody<T>): T
 {
-    if (response.code === 417) tryAuthorize();
+    if (response.code === 451) 
+    {
+        useUser().user = response.data as UserInfo
+        tryBindSeiue();
+    }
     else if (response.code === 401) tryLogin();
     let error = new ResponseError(response);
     const notifications = useNotificationStore()

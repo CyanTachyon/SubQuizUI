@@ -2,7 +2,8 @@ import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import inspect from "vite-plugin-inspect";
 import { fileURLToPath, URL } from 'node:url'
-import { readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs'
+import vueJSX from '@vitejs/plugin-vue-jsx'
 import path from 'node:path';
 
 const packageJson = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'))
@@ -34,6 +35,7 @@ export default defineConfig(({ mode }) => ({
             }
         }), 
         inspect(),
+        vueJSX(),
     ],
     define: {
         'environment': getEnv(loadEnv(mode, process.cwd())),

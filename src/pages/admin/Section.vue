@@ -22,7 +22,7 @@ import CheckIcon from "vue-material-design-icons/Check.vue";
 import HelpCircleOutlineIcon from "vue-material-design-icons/HelpCircleOutline.vue";
 import Switch from "../../components/Switch.vue";
 import QuizView from "../../templates/QuizView.vue";
-import { pushUrl } from "../../utils/utils.ts";
+import { pushUrl } from "../../utils/utils.tsx";
 import { uploadSectionImage } from "../../utils/sectionImage.ts";
 import { useNotificationStore } from "../../stores/notification.ts";
 import Slider from "../../components/Slider.vue";

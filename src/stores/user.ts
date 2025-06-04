@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { setToken, token } from "../utils/utils.ts";
+import { setToken, token } from "../utils/utils.tsx";
 import type { UserInfo } from "../dataClasses/User.ts";
 import { getUserInfo } from "../networks/backend/user.ts";
 import { avatarUrl } from "../networks/sso/avatar.ts";

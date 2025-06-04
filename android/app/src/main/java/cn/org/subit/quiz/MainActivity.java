@@ -13,6 +13,19 @@ public class MainActivity extends BridgeActivity
     protected void onCreate(Bundle savedInstanceState) 
     {
         super.onCreate(savedInstanceState);
+//        QbSdk.setDownloadWithoutWifi(true);
+//        QbSdk.initX5Environment(this, new QbSdk.PreInitCallback() {
+//            @Override
+//            public void onCoreInitFinished() {}
+//
+//            @Override
+//            public void onViewInitFinished(boolean success) {
+//                if(success) {
+//                    // 初始化成功后设置代理桥接
+//                    X5CapacitorBridge.setup(getBridge());
+//                }
+//            }
+//        });
 
         // 获取当前屏幕宽度和高度
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
@@ -49,4 +62,20 @@ public class MainActivity extends BridgeActivity
             }
         });
     }
+
+//    public class X5WebView extends com.tencent.smtt.sdk.WebView {
+//        public X5WebView(Context context) {
+//            super(context);
+//            initSettings();
+//        }
+//
+//        private void initSettings() {
+//            com.tencent.smtt.sdk.WebSettings settings = this.getSettings();
+//            settings.setJavaScriptEnabled(true);
+//            settings.setDomStorageEnabled(true);         // 启用 DOM 存储
+//            settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+//            settings.setUseWideViewPort(true);           // 适配屏幕
+//            settings.setLoadWithOverviewMode(true);
+//        }
+//    }
 }

@@ -7,14 +7,14 @@
 
     <main>
         <DownloadNewVersion v-if="versionInfo" :info="versionInfo" />
-        <Sidebar v-else-if="$route.meta.sidebar">
+        <Sidebar v-else-if="route.meta.sidebar">
             <RouterView />
         </Sidebar>
         <RouterView v-else />
     </main>
 </template>
 <script setup lang="ts">
-import { isNavigationFailure, useRouter } from "vue-router";
+import { isNavigationFailure, useRoute, useRouter } from "vue-router";
 import { $appearDuration, useTransitionStore } from "./stores/transition.ts";
 import { useUser } from "./stores/user.ts";
 import { useNotificationStore } from "./stores/notification.ts";
@@ -24,10 +24,10 @@ import currentVersion from "../public/android_latest.json";
 import { ref } from "vue";
 import { Capacitor } from "@capacitor/core";
 import DownloadNewVersion from "./pages/_app/DownloadNewVersion.vue";
-import { isLegacyAndroidApp } from "./utils/utils.ts";
 import type { AndroidVersion } from "./dataClasses/AndroidVersion.ts";
 
 const router = useRouter();
+const route = useRoute();
 const store = useTransitionStore();
 
 router.beforeEach((_, __, next) =>
@@ -71,10 +71,7 @@ if (Capacitor.getPlatform() === 'android')
     {
         let r1 = await fetch(environment.frontend + '/android_latest.json' + `?timestamp=${Date.now()}`, { cache: "reload", });
         let res = (await r1.json()) as AndroidVersion;
-        if (isLegacyAndroidApp() || res.versionCode > currentVersion.versionCode)
-        {
-            versionInfo.value = res;
-        }
+        if (res.versionCode > currentVersion.versionCode) versionInfo.value = res;
     })();
 }
 </script>

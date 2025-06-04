@@ -1,6 +1,6 @@
 import {sendRequest, Target} from "../utils/sendRequest.ts";
 import {checkResponse} from "../utils/checkResponse.ts";
-import {setToken} from "../../utils/utils.ts";
+import {setToken} from "../../utils/utils.tsx";
 import {useUser} from "../../stores/user.ts";
 
 const loginUrl = '/oauth/login'

@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import { Capacitor } from "@capacitor/core";
 import CommonButton from "../../components/CommonButton.vue";
 import { safeRedirect } from "../../utils/redirect";
 import { ref } from "vue";
 import { FileOpener } from '@capacitor-community/file-opener';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { useNotificationStore } from "../../stores/notification";
-import { isLegacyAndroidApp } from "../../utils/utils";
 import type { AndroidVersion } from "../../dataClasses/AndroidVersion";
-import Slider from "../../components/Slider.vue";
 
 const { info } = defineProps<{info: AndroidVersion;}>();
 
@@ -18,12 +15,6 @@ const downloading = ref(false);
 document.title = '下载新版本 - SubQuiz';
 
 const download = async () => {
-    if (Capacitor.getPlatform() !== 'android' || isLegacyAndroidApp())
-    {
-        safeRedirect(info.url);
-        return;
-    }
-
     try {
         downloading.value = true;
         const fileName = `subquiz_${info.version}.apk`;
@@ -82,7 +73,9 @@ const download = async () => {
             <CommonButton class="btn" @click="download" :disabled="downloading"> 
                 {{ downloading ? `下载中... ${(downloadProgress * 100).toFixed(1)}%` : '下载更新' }} 
             </CommonButton>
-            <Slider v-if="downloading" :min-value="0" :max-value="1" :step="0.001" v-model:model-value="downloadProgress"/>
+            <quiz-progress v-if="downloading">
+                <quiz-progress-bar :style="{ width: (downloadProgress * 100) + '%' }"/>
+            </quiz-progress>
         </quiz-card>
     </quiz-main>  
 </template>
@@ -113,8 +106,16 @@ h1 {
     margin-bottom: 20px;
 }
 
-quiz-slider {
-    margin-top: 10px;
+quiz-progress {
+    height: 5px;
     width: 100%;
+    display: block;
+    border-radius: 3px;
+    overflow: hidden;
+    quiz-progress-bar {
+        height: 100%;
+        display: block;
+        background-color: #8cd1f0;
+    }
 }
 </style>

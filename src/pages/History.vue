@@ -8,7 +8,7 @@ import type { Quiz } from "../dataClasses/Quiz.ts";
 import { getQuizHistories } from "../networks/backend/quiz.ts";
 import Card from "../components/Card.vue";
 import Pagination from "../components/Pagination.vue";
-import { pushUrl } from "../utils/utils.ts";
+import { pushUrl } from "../utils/utils.tsx";
 import Text from "../components/Text.vue";
 import Spacer from "../components/Spacer.vue";
 import type { AnswerType } from "../dataClasses/Question.ts";

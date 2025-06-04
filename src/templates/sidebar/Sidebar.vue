@@ -16,7 +16,7 @@ import Image from "../../components/Image.vue";
 import { safeRedirect } from "../../utils/redirect.ts";
 import { useUser } from "../../stores/user.ts";
 import { sleep } from "../../utils/sleep.ts";
-import { tryLogin } from "../../utils/utils.ts";
+import { tryLogin } from "../../utils/utils.tsx";
 import { useRouter } from "vue-router";
 import SidebarItem from "./SidebarItem.vue";
 import { Permission } from "../../dataClasses/Permission.ts";

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { connectUrl, Target } from "../networks/utils/sendRequest.ts";
-import { getToken } from "../utils/utils.ts";
+import { getToken } from "../utils/utils.tsx";
 import { useRouter } from "vue-router";
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { AnsiUp } from "ansi_up/ansi_up";

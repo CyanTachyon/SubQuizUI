@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 
 import Loading from "../../components/Loading.vue";
 import { useRoute, useRouter } from "vue-router";
@@ -24,7 +24,6 @@ import type { Section } from "../../dataClasses/Section.ts";
 import type { AnswerType } from "../../dataClasses/Question.ts";
 import { deleteSectionType, getSectionList, getSectionTypeList, modifySectionType, newSectionType } from "../../networks/backend/section.ts";
 import PlusIcon from "vue-material-design-icons/Plus.vue";
-import Dialog from "../../components/Dialog.vue";
 import Input from "../../components/Input.vue";
 import DeleteIcon from "vue-material-design-icons/Delete.vue";
 import FolderPlusIcon from "vue-material-design-icons/FolderPlus.vue";
@@ -33,7 +32,7 @@ import FolderIcon from "vue-material-design-icons/Folder.vue";
 import PlusCircleOutlineIcon from "vue-material-design-icons/PlusCircleOutline.vue";
 import CommonButton from "../../components/CommonButton.vue";
 import TextBoxPlusOutlineIcon from "vue-material-design-icons/TextBoxPlusOutline.vue";
-import { pushUrl } from "../../utils/utils.ts";
+import { inputDialog, pushUrl } from "../../utils/utils.tsx";
 import Pagination from "../../components/Pagination.vue";
 
 import FolderOutlineIcon from "vue-material-design-icons/FolderOutline.vue";
@@ -187,9 +186,9 @@ watch(knowledgePoints, (newValue) => {
 
 function createKP(folder: boolean)
 {
-    dialog.value = {
-        text: `请输入新的${folder ? '文件夹' : '知识点'}名称`,
-        submit: (label: string) => {
+    inputDialog(
+        <>请输入新的${folder ? '文件夹' : '知识点'}名称</>,
+        (label: string) => {
             createKnowledgePoint({
                 name: label,
                 folder: folder,
@@ -198,12 +197,8 @@ function createKP(folder: boolean)
             }).then(() => {
                 reload();
             });
-            dialog.value = null;
-        },
-        cancel: () => {
-            dialog.value = null;
         }
-    };
+    );
 }
 
 interface Node
@@ -236,39 +231,29 @@ watch(() => current.value.knowledgePoint?.id, (newValue) => {
 
 function renameKP()
 {
-    dialog.value = {
-        text: `为知识点${current.value.knowledgePoint?.name}重命名`,
-        submit: (label: string) => {
+    inputDialog(
+        <>为知识点{current.value.knowledgePoint?.name}重命名</>,
+        (label: string) => {
             if (current.value.knowledgePoint)
             {
                 current.value.knowledgePoint.name = label;
                 updateKnowledgePoint(current.value.knowledgePoint).then(() => reload());
-                input.value = null;
             }
-            dialog.value = null;
-        },
-        cancel: () => {
-            dialog.value = null;
         }
-    };
+    );
 }
 
 function deleteKP()
 {
-    if (current.value.knowledgePoint)
+    if (current.value.knowledgePoint) 
     {
-        dialog.value = {
-            text: `警告：<br>将删除知识点及其中的全部子知识点和题目，<br>输入“确认删除${current.value.knowledgePoint.name}”以确认删除`,
-            submit: (value: string) => {
+        inputDialog(
+            <>警告：<br/>将删除知识点及其中的全部子知识点和题目，<br/>输入“确认删除{current.value.knowledgePoint.name}”以确认删除</>,
+            (value: string) => {
                 if (current.value.knowledgePoint && value === `确认删除${current.value.knowledgePoint.name}`)
                     deleteKnowledgePoint(current.value.knowledgePoint.id).then(reload);
-                
-                dialog.value = null;
-            },
-            cancel: () => {
-                dialog.value = null;
             }
-        };
+        );   
     }
 }
 
@@ -326,22 +311,13 @@ function fetchSections()
 
 function addNewSectionType()
 {
-    dialog.value = {
-        text: `请输入新的题目类型名称`,
-        submit: (label: string) => {
+    inputDialog(
+        <>请输入新的题目类型名称</>,
+        (label: string) => {
             newSectionType(current.value.knowledgePoint.id, label).then(updateTypes);
-            dialog.value = null;
         },
-        cancel: () => {
-            dialog.value = null;
-        }
-    };
+    );
 }
-
-const dialog = ref<{ text?: string, submit: (str: string) => void, cancel: () => void } | null>(null);
-const input = ref<string | null>(null);
-watch(() => !!(dialog.value), (newValue) => {if (!newValue) input.value = null;}, { immediate: true });
-
 
 function getSectionBrief(section: Section<AnswerType, any, string>)
 {
@@ -374,9 +350,9 @@ function renameSectionType()
 {
     if (current.value.sectionType)
     {
-        dialog.value = {
-            text: `重命名题目类型${current.value.sectionTypes?.find(type => type.id === current.value.sectionType)?.name}`,
-            submit: (label: string) => {
+        inputDialog(
+            <>重命名题目类型{current.value.sectionTypes?.find(type => type.id === current.value.sectionType)?.name}</>,
+            (label: string) => {
                 if (current.value.sectionType)
                 {
                     const type = current.value.sectionTypes?.find(type => type.id === current.value.sectionType);
@@ -385,14 +361,9 @@ function renameSectionType()
                         updateTypes();
                         changeType(type.id);
                     });
-                    input.value = null;
                 }
-                dialog.value = null;
-            },
-            cancel: () => {
-                dialog.value = null;
             }
-        };
+        );
     }
 }
 
@@ -400,18 +371,17 @@ function removeSectionType()
 {
     if (current.value.sectionType)
     {
-        dialog.value = {
-            text: `警告：<br>将删除题目类型及其中的全部题目，<br>输入“确认删除${current.value.sectionTypes?.find(type => type.id === current.value.sectionType)?.name}”以确认删除`,
-            submit: (value: string) => {
+        inputDialog(
+            <>
+                警告：<br/>
+                将删除题目类型及其中的全部题目，<br/>
+                输入“确认删除{current.value.sectionTypes?.find(type => type.id === current.value.sectionType)?.name}”以确认删除
+            </>,
+            (value: string) => {
                 if (current.value.sectionType && value === `确认删除${current.value.sectionTypes?.find(type => type.id === current.value.sectionType)?.name}`)
                     deleteSectionType(current.value.sectionType).then(updateTypes);
-                
-                dialog.value = null;
             },
-            cancel: () => {
-                dialog.value = null;
-            }
-        };
+        );
     }
 }
 
@@ -473,15 +443,6 @@ function startQuiz()
 </script>
 
 <template>
-
-    <Dialog :open="!!dialog" @close="dialog?.cancel">
-        <form autocomplete="off" @submit="(event) => { event.preventDefault(); dialog?.submit(input); }">
-            <div v-if="dialog?.text" v-html="dialog.text"/>
-            <Input placeholder="Enter here" v-model="input" class="dialog-input"/>
-        </form>
-    </Dialog>
-
-
     <NotFound v-if="groupInfo === null"/>
     <Loading v-else-if="knowledgePoints === undefined || groupInfo === undefined" class="loading"/>
     <div v-else class="section-types-container">

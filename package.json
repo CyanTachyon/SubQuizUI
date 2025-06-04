@@ -1,8 +1,8 @@
 {
   "name": "subquiz",
   "private": true,
-  "version": "2.0.0.14",
-  "versionId": 20000114,
+  "version": "2.0.0.25",
+  "versionId": 20000125,
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -37,6 +37,7 @@
     "@capacitor/cli": "^7.0.1",
     "@types/node": "^22.13.1",
     "@vitejs/plugin-vue": "^5.2.1",
+    "@vitejs/plugin-vue-jsx": "^4.2.0",
     "@vue/tsconfig": "^0.7.0",
     "autoprefixer": "^10.4.20",
     "glob": "^11.0.1",

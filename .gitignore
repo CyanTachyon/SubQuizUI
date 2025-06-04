@@ -28,3 +28,4 @@ dist-ssr
 capacitor.config.ts
 subquiz.jks
 public/android_latest.json
+package-lock.json

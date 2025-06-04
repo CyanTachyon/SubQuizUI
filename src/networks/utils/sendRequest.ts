@@ -24,9 +24,10 @@ export function connectUrl(target: Target | undefined, url: string, params: Reco
         else /*if (target === Target.FRONTEND)*/ rUrl = environment.frontend + url;
     }
 
-    if (params)
+    if (Object.keys(params).length > 0)
     {
-        rUrl += '?';
+        if (rUrl.indexOf('?') !== -1) rUrl += '&';
+        else rUrl += '?';
         for (let key in params)
         {
             let rValue = params[key];

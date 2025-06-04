@@ -1,16 +1,22 @@
 {
-  "files": [],
-  "references": [
-    {
-      "path": "./tsconfig.app.json"
-    },
-    {
-      "path": "./tsconfig.node.json"
-    }
-  ],
-  "compilerOptions": {
-    "types": [
-      "volar-generated.d.ts"
+    "files": [],
+    "references": [
+        {
+            "path": "./tsconfig.app.json"
+        },
+        {
+            "path": "./tsconfig.node.json"
+        }
     ],
-  }
+    "compilerOptions": {
+        "types": [
+            "volar-generated.d.ts",
+            "vite/client",
+            "unplugin-vue-define-options/client"
+        ],
+        "jsx": "preserve",
+        "jsxFactory": "h",
+        "jsxFragmentFactory": "Fragment",
+        "jsxImportSource": "vue"
+    }
 }

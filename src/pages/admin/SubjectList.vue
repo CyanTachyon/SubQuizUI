@@ -6,7 +6,7 @@ import {ref} from "vue";
 import type {Slice} from "../../dataClasses/Slice.ts";
 import Card from "../../components/Card.vue";
 import Pagination from "../../components/Pagination.vue";
-import {pushUrl} from "../../utils/utils.ts";
+import {pushUrl} from "../../utils/utils.tsx";
 import {getSubjectList} from "../../networks/backend/subject.ts";
 import type {Subject} from "../../dataClasses/Subject.ts";
 import StatusButton from "../../components/StatusButton.vue";

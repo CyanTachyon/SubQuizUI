@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from "vue";
 import { ref, watch } from "vue";
 
 const { open, onClose } = defineProps(
@@ -16,13 +17,16 @@ const { open, onClose } = defineProps(
 
 const ele = ref(null as HTMLDialogElement);
 
-watch(() => open, (value) => {
-    if (value) {
-        ele.value.showModal();
-    } else {
-        ele.value.close();
-    }
-});
+onMounted(() =>
+{
+    watch(() => open, (value) => {
+        if (value) {
+            ele.value.showModal();
+        } else {
+            ele.value.close();
+        }
+    }, { immediate: true });
+})
 
 </script>
 
