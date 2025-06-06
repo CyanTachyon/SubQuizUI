@@ -7,9 +7,6 @@ interface Environment
     backend: string;
     frontend: string;
 
-    webHostname: string;
-    androidHostname: string;
-
     ssoBackend: string;
     ssoFrontend: string;
     ssoServiceId: string;
