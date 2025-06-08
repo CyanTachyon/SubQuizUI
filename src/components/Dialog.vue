@@ -55,7 +55,6 @@ dialog::backdrop {
 }
 
 quiz-dialog-wrapper {
-    padding: 1rem;
     width: 100%;
     height: 100%;
     color: var(--color);

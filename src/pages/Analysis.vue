@@ -63,7 +63,7 @@ onUnmounted(() =>
 <template>
     <NotFound v-if="notFound" />
     <Loading v-else-if="data === null"/>
-    <QuizView v-else :quiz="data" :editable="false" />
+    <QuizView v-else :ai="true" :quiz="data" :editable="false" />
 </template>
 
 <style scoped lang="scss">

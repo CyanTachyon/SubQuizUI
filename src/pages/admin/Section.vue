@@ -446,8 +446,8 @@ function deleteImage(name: string)
                     暂无图片
                 </div>
                 <div class="img-sources">
-                    <Text v-for="img in images" class="img" :key="img" :style="'--img-url: url(' + getImageUrl(img) + ');'" @click="onImageClick(img.substring(img.lastIndexOf('/')))">
-                        <TrashCanIcon :size="30" @click.stop="deleteImage(img.substring(img.lastIndexOf('/')))" class="remove-img"/>
+                    <Text v-for="img in images" class="img" :key="img" :style="'--img-url: url(' + getImageUrl(img) + ');'" @click="onImageClick(img)">
+                        <TrashCanIcon :size="30" @click.stop="deleteImage(img)" class="remove-img"/>
                     </Text>
                 </div>
             </template>

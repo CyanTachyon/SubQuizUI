@@ -32,7 +32,7 @@ import FolderIcon from "vue-material-design-icons/Folder.vue";
 import PlusCircleOutlineIcon from "vue-material-design-icons/PlusCircleOutline.vue";
 import CommonButton from "../../components/CommonButton.vue";
 import TextBoxPlusOutlineIcon from "vue-material-design-icons/TextBoxPlusOutline.vue";
-import { inputDialog, pushUrl } from "../../utils/utils.tsx";
+import { getSectionBrief, inputDialog, pushUrl } from "../../utils/utils.tsx";
 import Pagination from "../../components/Pagination.vue";
 
 import FolderOutlineIcon from "vue-material-design-icons/FolderOutline.vue";
@@ -317,23 +317,6 @@ function addNewSectionType()
             newSectionType(current.value.knowledgePoint.id, label).then(updateTypes);
         },
     );
-}
-
-function getSectionBrief(section: Section<AnswerType, any, string>)
-{
-    const qBrief = section
-        .questions
-        .map((q, i) => ({description: q.description, i}))
-        .filter(q => q.description.trimStart().trimEnd() !== '')
-        .map(q => `第${q.i + 1}题：${q.description}`)
-        .join('\n');
-    
-    if (section.description.trimStart().trimEnd() === '')
-    {
-        if (qBrief.trimStart().trimEnd() === '') return '暂无描述';
-        return qBrief;
-    }
-    return section.description + '\n' + qBrief;
 }
 
 function gotoSection(section: Section<AnswerType, any, string>)

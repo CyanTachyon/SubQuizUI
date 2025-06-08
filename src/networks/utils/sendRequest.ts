@@ -61,23 +61,22 @@ export async function sendRequest<DATA>(data: RequestData): Promise<ResponseBody
     if (data.params === undefined) data.params = {};
     if (data.withToken === undefined) data.withToken = true;
 
-    return request<ResponseBody<DATA>>(
+    return request(
         connectUrl(data.target, data.url, data.params),
         data.method,
-        {
-            'Authorization': data.withToken ? `Bearer ${localStorage.getItem('token')}` : '',
-            'Accept': '*/*',
-        },
+        {},
+        data.withToken,
         data.data
-    )
+    ).then(response => response.json() as Promise<ResponseBody<DATA>>)
 }
 
-export async function request<T>(
+export async function request(
     url: string,
     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     headers: Record<string, string>,
+    withToken: boolean = true,
     body: object | undefined
-): Promise<T>
+): Promise<Response>
 {
     let data: RequestInit = {
         method: method,
@@ -88,5 +87,7 @@ export async function request<T>(
         data.body = JSON.stringify(body);
         data.headers['Content-Type'] = 'application/json';
     }
-    return fetch(url, data).then(response => response.json() as Promise<T>);
+    data.headers['Accept'] = '*/*';
+    data.headers['Authorization'] = withToken ? `Bearer ${localStorage.getItem('token')}` : '';
+    return fetch(url, data)
 }

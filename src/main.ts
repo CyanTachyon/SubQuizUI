@@ -82,8 +82,10 @@ CapacitorApp.addListener('appUrlOpen', (data) =>
     }
 });
 
+export const pinia = createPinia();
+
 createApp(App)
-    .use(createPinia())
+    .use(pinia)
     .use(router)
     .directive('markdown', vMarkdown)
     .mount('quiz-app');

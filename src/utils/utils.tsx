@@ -1,12 +1,14 @@
 import { computed, createApp, ref } from "vue";
 import { Capacitor } from '@capacitor/core';
 import { connectUrl, Target } from "../networks/utils/sendRequest.ts";
-import { router } from "../main.ts";
+import { pinia, router } from "../main.ts";
 import { safeRedirect } from "./redirect.ts";
 import Dialog from "@/components/Dialog.vue";
 import Input from "@/components/Input.vue";
 import type { JSX } from "vue/jsx-runtime";
 import RealNameRequired from "@/templates/RealNameRequired.vue";
+import { vMarkdown } from "./markdown.ts";
+import type { Section } from "../dataClasses/Section.ts";
 
 export function getToken()
 {
@@ -79,7 +81,7 @@ export function dialog(
         {
             return <Dialog open={open.value} onClose={onClose}>{innerHtml}</Dialog>;
         }
-    });
+    }).use(pinia).directive('markdown', vMarkdown)
     app.mount(container);
     return () =>
     {
@@ -104,4 +106,35 @@ export function inputDialog(
         cancel ? cancel : (() => close()),
     )
     return close;
+}
+
+export function getOptionName(index: number)
+{
+    if (!index) return 'A.';
+    const base = 26;
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let result = '.';
+    while (index > 0)
+    {
+        result = letters[index % base] + result;
+        index = Math.floor(index / base);
+    }
+    return result;
+}
+
+export function getSectionBrief(section: Section<any, any, any>)
+{
+    const qBrief = section
+        .questions
+        .map((q, i) => ({ i, description: q.description + q.options.map((o, id) => getOptionName(id) + ' ' + o).join(' ') }))
+        .map(q => `第${q.i + 1}题：${q.description}`)
+        .join('')
+        .replace('\n', ' ');
+
+    if (section.description.trimStart().trimEnd() === '')
+    {
+        if (qBrief.trimStart().trimEnd() === '') return '暂无描述';
+        return qBrief;
+    }
+    return section.description + ' ' + qBrief;
 }

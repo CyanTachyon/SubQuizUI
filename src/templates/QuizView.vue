@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import type {Quiz} from "../dataClasses/Quiz.ts";
 import StatusButton from "../components/StatusButton.vue";
 import Card from "../components/Card.vue";
@@ -10,7 +10,17 @@ import CloseCircleOutlineIcon from "vue-material-design-icons/CloseCircleOutline
 import CloseIcon from "vue-material-design-icons/Close.vue";
 import CheckIcon from "vue-material-design-icons/Check.vue";
 import { useNotificationStore } from "../stores/notification.ts";
-const {quiz, editable, submit} = defineProps<{ quiz: Pick<Quiz<any, any, any>, 'sections' | 'correct'>, editable: boolean, submit?: () => void }>();
+import { ref } from "vue";
+import { dialog, getOptionName } from "../utils/utils";
+import type { AiInfo } from "./AiDialog.vue";
+import AiDialog from "./AiDialog.vue";
+
+const { quiz, editable, ai, submit } = defineProps<{ 
+    quiz: Pick<Quiz<any, any, any>, 'sections' | 'correct'>, 
+    editable: boolean, 
+    ai?: boolean, 
+    submit?: () => void; 
+}>();
 
 
 function onOptionClick(sectionIndex: number, questionIndex: number, optionIndex: number)
@@ -62,20 +72,6 @@ function rightAnswer(sectionIndex: number, questionIndex: number)
     return quiz.correct?.[sectionIndex]?.[questionIndex];
 }
 
-function getName(index: number)
-{
-    if (!index) return 'A.';
-    const base = 26;
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let result = '.';
-    while (index > 0)
-    {
-        result = letters[index % base] + result;
-        index = Math.floor(index / base);
-    }
-    return result;
-}
-
 function trySubmit()
 {
     if (!submit) return;
@@ -109,6 +105,24 @@ function trySubmit()
     }
     submit();
 }
+
+
+///// ai
+
+const aiInfo = ref({} as Record<number, AiInfo>);
+
+function openAiDialog(sectionIndex: number)
+{
+    if (!ai) return;
+    if (!aiInfo.value[sectionIndex]) aiInfo.value[sectionIndex] = 
+    {
+        history: [],
+        answering: false
+    };
+    
+    const close = dialog(<AiDialog section={quiz.sections[sectionIndex]} modelValue={aiInfo.value[sectionIndex]} />, () => close());
+}
+
 </script>
 
 <template>
@@ -135,7 +149,7 @@ function trySubmit()
                         }"
                     >
                         <div class="option-title" style="height: 100%;">
-                            {{ getName(optionIndex) }}
+                            {{ getOptionName(optionIndex) }}
                         </div>
                         <div class="option-content" v-markdown="{markdown: section.markdown, content: option, section: section.id}"/>
                     </StatusButton>
@@ -202,6 +216,7 @@ function trySubmit()
             </Text>
             <br v-if="questionIndex < section.questions.length - 1"/>
         </div>
+        <StatusButton v-if="ai" class="ai" @click="openAiDialog(sectionIndex)">AI</StatusButton>
     </Card>
     <StatusButton v-if="editable" class="submit" @click="trySubmit">Submit</StatusButton>
 </template>
@@ -348,5 +363,20 @@ $answer-color-duration: 0.4s;
 .submit {
     display: block;
     margin: 20px auto;
+}
+
+.ai {
+    background-color: var(--bgcolor);
+    position: -webkit-sticky;
+    position: sticky;
+    bottom: 1rem;
+    right: 0;
+    margin-left: auto;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 </style>

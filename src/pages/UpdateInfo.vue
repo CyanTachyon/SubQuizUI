@@ -85,6 +85,13 @@ const updateInfo: UpdateInfo[] = ([
             '- 优化及已知错误的修复\n'
     },
     {
+        date: '2025-06-08',
+        version: '2.0.1',
+        description: '' +
+            '- 增加AI追问功能\n' +
+            '- 修复了已知bug\n'
+    },
+    {
         version: 'TODO LIST',
         description: '以下是预计添加的新功能，但我开发速度有限，所以别急^v^\n' +
             "1. 简答/填空允许提交图片\n" +
