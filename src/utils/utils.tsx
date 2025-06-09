@@ -126,8 +126,11 @@ export function getSectionBrief(section: Section<any, any, any>)
 {
     const qBrief = section
         .questions
-        .map((q, i) => ({ i, description: q.description + q.options.map((o, id) => getOptionName(id) + ' ' + o).join(' ') }))
-        .map(q => `第${q.i + 1}题：${q.description}`)
+        .map((q, i) => ({ i, description: q.description + (q?.options?.map((o, id) => getOptionName(id) + ' ' + o)?.join(' ') || '') }))
+        .map(q => {
+            if (q.description.trim()) return `第${q.i + 1}题：${q.description}`;
+            return '';
+        })
         .join('')
         .replace('\n', ' ');
 

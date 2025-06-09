@@ -126,6 +126,8 @@ function onSubmit(event: KeyboardEvent)
     border-radius: 0.5rem;
     margin: 10px;
     background-color: rgba(127, 120, 154, 0.4);
+    overflow: auto;
+    scrollbar-width: none;
 }
 
 .histories {
