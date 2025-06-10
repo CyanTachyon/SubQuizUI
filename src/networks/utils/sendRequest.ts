@@ -9,7 +9,7 @@ export enum Target
     FRONTEND = 5,
 }
 
-export function connectUrl(target: Target | undefined, url: string, params: Record<string, string> = {})
+export function connectUrl(target: Target | undefined, url: string, params: Record<string, any> = {})
 {
 
     let rUrl: string;
@@ -34,7 +34,7 @@ export function connectUrl(target: Target | undefined, url: string, params: Reco
             if (rValue === undefined) continue;
             if (rUrl.indexOf(`{${key}}`) !== -1)
             {
-                rUrl = rUrl.replace(`{${key}}`, params[key]);
+                rUrl = rUrl.replace(`{${key}}`, encodeURIComponent(`${rValue}`));
                 continue;
             }
             let encodedKey = encodeURIComponent(key);

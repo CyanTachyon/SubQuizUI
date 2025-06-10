@@ -1,33 +1,115 @@
-<script lang="ts" setup>
-import { ref } from 'vue';
+<script lang="tsx" setup>
+import { ref, nextTick } from 'vue';
 import type { AnswerType } from '../dataClasses/Question';
 import type { Section } from '../dataClasses/Section';
-import { ask, type AiHistory } from '../networks/backend/ai';
+import { chatSSE, createChat, getChat, sendContent, type AiHistory, type AiMessage, type Model } from '../networks/backend/ai';
 import Input from '../components/Input.vue';
 import { useNotificationStore } from '../stores/notification';
 import LoadingIcon from 'vue-material-design-icons/Loading.vue';
-import { getSectionBrief } from '../utils/utils';
+import { dialog, getSectionBrief } from '../utils/utils';
 import ChevronRightIcon from 'vue-material-design-icons/ChevronRight.vue';
 import ChevronDownIcon from 'vue-material-design-icons/ChevronDown.vue';
+import type { Chat } from '../dataClasses/Chat';
+import type { ChatId } from '../dataClasses/Ids';
+import Loading from '../components/Loading.vue';
+import QuizView from './QuizView.vue';
+import Text from '../components/Text.vue';
 
-export type AiInfo = {
-    history: (AiHistory & {showReasoning: boolean})[];
+export type AiInfo = Chat & {
+    histories: (AiHistory & { showReasoning: boolean; })[];
     answering: boolean;
 }
 
-const { section } = defineProps<{
-    section: Section<AnswerType, AnswerType, string>;
+const props = defineProps<{
+    info: ChatId | Section<AnswerType, AnswerType, string>;
+    onNewChat: () => void;
 }>();
 
-const info = defineModel<AiInfo>();
+const info = ref<AiInfo>();
+const loading = ref(true);
+const historiesContainer = ref<HTMLElement>();
+const shouldAutoScroll = ref(true);
+
+// 检查是否滚动到底部
+const isScrolledToBottom = () => {
+    if (!historiesContainer.value) return true;
+    const { scrollTop, scrollHeight, clientHeight } = historiesContainer.value;
+    return scrollTop + clientHeight >= scrollHeight - 5; // 5px tolerance
+};
+
+// 滚动到底部
+const scrollToBottom = () => {
+    if (!historiesContainer.value) return;
+    nextTick(() => {
+        historiesContainer.value!.scrollTop = historiesContainer.value!.scrollHeight;
+    });
+};
+
+// 处理滚动事件
+const handleScroll = () => {
+    shouldAutoScroll.value = isScrolledToBottom();
+};
+
+const onMessage = (message: AiMessage) => 
+{
+    if (info.value.histories[info.value.histories.length - 1].role !== 'assistant')
+    {
+        info.value.histories.push({
+            role: 'assistant',
+            reasoning_content: '',
+            content: '',
+            showReasoning: true,
+        });
+    }
+    if (message.content) info.value.histories[info.value.histories.length - 1].content += message.content;
+    if (message.reasoning_content) info.value.histories[info.value.histories.length - 1].reasoning_content += message.reasoning_content;
+    
+    if (shouldAutoScroll.value) {
+        scrollToBottom();
+    }
+}
+
+(async () => {
+    if (typeof props.info === 'number' && props.info > 0)
+    {
+        const chat = await getChat(props.info);
+        info.value = {
+            ...chat,
+            answering: false,
+            histories: chat.histories.map((history) => ({
+                ...history,
+                showReasoning: false,
+            })),
+        }
+    }
+    else
+    {
+        info.value = {
+            id: 0,
+            section: typeof props.info === 'object' ? props.info : null,
+            user: 0,
+            hash: '',
+            histories: [],
+            answering: false,
+        };
+    }
+
+    info.value.answering = true;
+    chatSSE(
+        info.value.id,
+        info.value.hash,
+        onMessage
+    ).finally(() => info.value.answering = false);
+})().then(() => { loading.value = false; nextTick(scrollToBottom); });
 
 const input = ref('');
 
-const model = ref('BDFZ_HELPER' as ('BDFZ_HELPER' | 'QUIZ_AI'));
+const model = ref<Model>(localStorage.getItem('quiz-ai-model') as Model || 'BDFZ_HELPER');
 
-function changeModel(newModel: 'BDFZ_HELPER' | 'QUIZ_AI')
+function changeModel(newModel: Model)
 {
     model.value = newModel;
+    localStorage.setItem('quiz-ai-model', newModel);
 }
 
 function onSubmit(event: KeyboardEvent)
@@ -37,71 +119,101 @@ function onSubmit(event: KeyboardEvent)
     if (input.value.trim() === '' || info.value.answering) return;
     info.value.answering = true;
 
-    const history0 = JSON.parse(JSON.stringify(info.value.history)) as AiHistory[];
-    info.value.history.push({
+(async () => {
+    if (!info.value.id)
+    {
+        const {id, user, hash} = await createChat(info.value.section, input.value, model.value)
+        info.value.id = id;
+        info.value.hash = hash;
+        info.value.histories = [];
+        info.value.user = user;
+        try { props.onNewChat(); } catch (e) {  }
+    }
+    else 
+    {
+        const newHash = await sendContent(info.value.id, input.value, model.value, info.value.hash)
+        if (newHash) 
+        {
+            info.value.hash = newHash;
+        } 
+        else 
+        {
+            useNotificationStore().addError('发生冲突，请刷新页面重试。');
+            info.value.answering = false;
+            return;
+        }
+
+    }
+
+    info.value.histories.push({
         role: 'user',
         reasoning_content: null,
         content: input.value,
         showReasoning: true,
     });
-    info.value.history.push({
+    info.value.histories.push({
         role: 'assistant',
         reasoning_content: '',
         content: '',
         showReasoning: true,
     });
-
-    ask(
-        model.value,
-        section,
-        input.value,
-        history0,
-        (response) => {
-            if (response.content) info.value.history[info.value.history.length - 1].content += response.content;
-            if (response.reasoning_content) info.value.history[info.value.history.length - 1].reasoning_content += response.reasoning_content;
-        },
-    ).catch(() => {
-        useNotificationStore().addError('请求失败，请稍后再试。');
-        info.value.history[info.value.history.length - 1].reasoning_content = '';
-        info.value.history[info.value.history.length - 1].content = '请求失败，请稍后再试。';
-    }).finally(() => {info.value.answering = false;});
     input.value = '';
+
+    // 发送消息后自动滚动到底部
+    shouldAutoScroll.value = true;
+    scrollToBottom();
+
+    await chatSSE(
+        info.value.id,
+        info.value.hash,  
+        onMessage,
+    )
+})().finally(() => { info.value.answering = false; });
+}
+
+function openSection()
+{
+    if (!info.value.section) return;
+    const close = dialog(<div style="overflow: auto; scrollbar-width: none; height: 85vh; width: 85vw;">
+    <QuizView editable={false} quiz={({sections: [info.value.section], correct: null})}></QuizView>
+    </div>, () => {close();});
 }
 
 </script>
 
 <template>
-    <div style="width: calc(85vw); height: calc(85vh); display: flex; flex-direction: column;">
-        <div class="section">
-            {{ getSectionBrief(section) }}
-        </div>
-        <div class="histories" :class="info.history.length === 0 ? 'empty' : ''">
-            <div v-if="info.history.length === 0" class="message empty">
-                <span>题目解析没看懂？向AI提问</span>
-            </div>
-            <div v-for="(item, index) in info.history" :key="index" class="message" :class="item.role">
+    <div v-if="loading">
+        <Loading />
+    </div>
+    <div v-else style="display: flex; flex-direction: column;">
+        <Text class="section" v-if="info.section" @click="openSection">
+            {{ getSectionBrief(info.section) }}
+        </Text>
+        <div @scroll="handleScroll" class="histories" :class="info.histories.length === 0 ? 'empty' : ''" ref="historiesContainer">
+            <Text v-if="info.histories.length === 0" class="message empty">
+                <span>{{ info.section ? "题目解析没看懂？" : "在题目解析页面点击AI标识" }}向AI提问</span>
+            </Text>
+            <Text v-for="(item, index) in info.histories" :key="index" class="message" :class="item.role">
                 <div class="reasoning" v-if="item.reasoning_content">
                     <div class="reasoning-header" @click="item.showReasoning = !item.showReasoning">
                         <ChevronDownIcon v-if="item.showReasoning" class="icon" />
                         <ChevronRightIcon v-else class="icon" />
                         思考过程
                     </div>
-                    <div v-markdown="{ markdown: true, content: item.reasoning_content, section: section.id }"
+                    <div v-markdown="{ markdown: true, content: item.reasoning_content, section: info.section?.id }"
                         class="reasoning-content" v-if="item.showReasoning" />
                 </div>
                 <div class="content" v-if="item.content"
-                    v-markdown="{ markdown: true, content: item.content, section: section.id }" />
-                <div class="loading-icon" v-if="index === info.history.length - 1 && info.answering" :key="index">
+                    v-markdown="{ markdown: true, content: item.content, section: info.section?.id }" />
+                <div class="loading-icon" v-if="index === info.histories.length - 1 && info.answering" :key="index">
                     <LoadingIcon />
                 </div>
-            </div>
-            <div v-if="info.history.length > 0 && !info.answering" class="clear-history">
-                <span @click="info.history = []">清空历史</span>
-            </div>
+            </Text>
         </div>
         <Input v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
-        <div class="bottom-bar">
-            <span @click="changeModel('BDFZ_HELPER')" class="model-name" :class="model === 'BDFZ_HELPER' ? 'active' : ''">
+        <Text class="bottom-bar">
+            <span @click="changeModel('BDFZ_HELPER')" class="model-name"
+                :class="model === 'BDFZ_HELPER' ? 'active' : ''">
                 北大附中问答助手
             </span>
             <span @click="changeModel('QUIZ_AI')" class="model-name" :class="model === 'QUIZ_AI' ? 'active' : ''">
@@ -113,11 +225,20 @@ function onSubmit(event: KeyboardEvent)
             <span class="send" @click="onSubmit(null)">
                 发送
             </span>
-        </div>
+        </Text>
     </div>
 </template>
 
 <style scoped lang="scss">
+quiz-loading {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 20%;
+    width: 30%;
+}
+
 .section {
     display: flex;
     max-height: 20%;
@@ -128,6 +249,9 @@ function onSubmit(event: KeyboardEvent)
     background-color: rgba(127, 120, 154, 0.4);
     overflow: auto;
     scrollbar-width: none;
+    cursor: pointer;
+    top: 0;
+    position: sticky;
 }
 
 .histories {
@@ -173,6 +297,9 @@ function onSubmit(event: KeyboardEvent)
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
     margin: 10px;
+
+    -webkit-user-select: text;
+    user-select: text;
 }
 
 .message.user {

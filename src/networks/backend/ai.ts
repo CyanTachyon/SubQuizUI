@@ -1,7 +1,11 @@
+import type { Chat } from "../../dataClasses/Chat";
+import type { ChatId } from "../../dataClasses/Ids";
 import type { AnswerType } from "../../dataClasses/Question";
 import type { Section } from "../../dataClasses/Section";
+import type { Slice } from "../../dataClasses/Slice";
 import { useNotificationStore } from "../../stores/notification";
-import { connectUrl, request, Target } from "../utils/sendRequest";
+import { checkResponse } from "../utils/checkResponse";
+import { connectUrl, request, sendRequest, Target } from "../utils/sendRequest";
 
 export interface AiMessage 
 {
@@ -10,22 +14,78 @@ export interface AiMessage
 }
 
 export type AiHistory = { role: 'user' | 'assistant'; } & AiMessage;
+export type Model = 'BDFZ_HELPER' | 'QUIZ_AI';
 
-const askUrl = '/ai/ask';
-export async function ask(
-    model: 'BDFZ_HELPER' | 'QUIZ_AI',
-    section: Section<AnswerType, AnswerType, string>,
-    question: string,
-    histories: AiHistory[],
+const getChatUrl = '/ai/chat/{chat}';
+
+export async function getChat(chat: ChatId): Promise<Chat>
+{
+    return checkResponse<Chat>(sendRequest({
+        target: Target.BACKEND,
+        url: getChatUrl,
+        method: 'GET',
+        params: { chat }
+    }));
+}
+
+const chatUrl = '/ai/chat';
+
+export async function getChatList(begin: number, count: number): Promise<Slice<Chat>>
+{
+    return checkResponse(sendRequest({
+        target: Target.BACKEND,
+        url: chatUrl,
+        method: 'GET',
+        params: { begin, count }
+    }));
+}
+
+export async function createChat(section: Section<AnswerType, AnswerType, string> | null, content: string, model: Model)
+{
+    return checkResponse<Chat>(sendRequest({
+        target: Target.BACKEND,
+        url: chatUrl,
+        method: 'POST',
+        data: {
+            section,
+            content,
+            model
+        }
+    }));
+}
+
+export async function sendContent(chatId: number, content: string, model: Model, hash: string): Promise<string | null>
+{
+    return checkResponse<string | null>(
+        sendRequest({
+            target: Target.BACKEND,
+            url: chatUrl,
+            method: 'PUT',
+            data: {
+                chatId,
+                content,
+                model,
+                hash,
+            }
+        }),
+        (res, defaultOnFail) => {
+            if (res.code === 409) return null;
+            return defaultOnFail(res);
+        }
+    );
+}
+
+const sseUrl = '/ai/chat/sse';
+export async function chatSSE(
+    chat: ChatId,
+    hash: string,
     onMessage: (message: AiMessage) => void
 )
 {
-    const req = await request(connectUrl(Target.BACKEND, askUrl), 'POST', {}, true, {
-        section,
-        content: question,
-        history: histories,
-        model
-    })
+    const req = await request(connectUrl(Target.BACKEND, sseUrl, { chat, hash }), 'GET', {}, true, undefined);
+
+    let ok = req.headers.get('Content-Type')?.startsWith('text/event-stream');
+    if (!ok) return checkResponse(req.json());
 
     const reader = req.body.getReader();
     const decoder = new TextDecoder();
@@ -59,3 +119,4 @@ export async function ask(
         });
       }
 }
+/^[GCDZTSPKXLY1-9]\d{1,4}$/

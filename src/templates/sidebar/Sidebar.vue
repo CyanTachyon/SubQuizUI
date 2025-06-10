@@ -10,6 +10,7 @@ import HistoryIcon from "vue-material-design-icons/History.vue";
 import BookshelfIcon from "vue-material-design-icons/Bookshelf.vue";
 import InfoMationOutlineIcon from "vue-material-design-icons/InformationOutline.vue";
 import ShieldCrownOutlineIcon from "vue-material-design-icons/ShieldCrownOutline.vue";
+import RobotExcitedOutlineIcon from "vue-material-design-icons/RobotExcitedOutline.vue";
 import { createAnimationsController } from "../../utils/AnimationsController.ts";
 import StatusButton from "../../components/StatusButton.vue";
 import Image from "../../components/Image.vue";
@@ -76,6 +77,7 @@ function gotoSSO()
 
             <SidebarItem @click="goto('/admin/subject/list')" :icon="BookshelfIcon" title="学科列表" />
             <SidebarItem @click="goto('/history')" :icon="HistoryIcon" title="答题记录" />
+            <SidebarItem @click="goto('/ai-chat')" :icon="RobotExcitedOutlineIcon" title="AI 助手" />
             <SidebarItem v-if="user.hasAdmin()" @click="goto('/admin/admins')" :icon="ShieldCrownOutlineIcon"
                 title="全局管理" />
             <SidebarItem v-if="user.user?.permission === Permission.ROOT" @click="goto('/terminal')" :icon="ConsoleIcon"

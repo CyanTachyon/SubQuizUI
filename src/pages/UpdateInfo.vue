@@ -86,10 +86,17 @@ const updateInfo: UpdateInfo[] = ([
     },
     {
         date: '2025-06-08',
-        version: '2.0.1',
+        version: '2.1.0',
         description: '' +
             '- 增加AI追问功能\n' +
             '- 修复了已知bug\n'
+    },
+    {
+        date: '2025-06-10',
+        version: '2.2.0',
+        description: '' +
+            '- 增加了AI聊天界面\n' +
+            '- 提供更多AI聊天相关功能\n' 
     },
     {
         version: 'TODO LIST',

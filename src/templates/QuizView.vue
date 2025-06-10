@@ -10,10 +10,10 @@ import CloseCircleOutlineIcon from "vue-material-design-icons/CloseCircleOutline
 import CloseIcon from "vue-material-design-icons/Close.vue";
 import CheckIcon from "vue-material-design-icons/Check.vue";
 import { useNotificationStore } from "../stores/notification.ts";
-import { ref } from "vue";
-import { dialog, getOptionName } from "../utils/utils";
-import type { AiInfo } from "./AiDialog.vue";
-import AiDialog from "./AiDialog.vue";
+import { getOptionName } from "../utils/utils";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const { quiz, editable, ai, submit } = defineProps<{ 
     quiz: Pick<Quiz<any, any, any>, 'sections' | 'correct'>, 
@@ -106,21 +106,25 @@ function trySubmit()
     submit();
 }
 
-
-///// ai
-
-const aiInfo = ref({} as Record<number, AiInfo>);
-
-function openAiDialog(sectionIndex: number)
+function gotoAI(sectionIndex: number)
 {
     if (!ai) return;
-    if (!aiInfo.value[sectionIndex]) aiInfo.value[sectionIndex] = 
+    const section = quiz.sections[sectionIndex];
+    if (section.questions.length === 0)
     {
-        history: [],
-        answering: false
-    };
-    
-    const close = dialog(<AiDialog section={quiz.sections[sectionIndex]} modelValue={aiInfo.value[sectionIndex]} />, () => close());
+        useNotificationStore().add({
+            message: '该部分没有题目，无法使用AI',
+            type: 'warning'
+        });
+        return;
+    }
+
+    router.push({
+        path: '/ai-chat',
+        state: {
+            section: JSON.parse(JSON.stringify(section)),
+        }
+    })
 }
 
 </script>
@@ -216,7 +220,7 @@ function openAiDialog(sectionIndex: number)
             </Text>
             <br v-if="questionIndex < section.questions.length - 1"/>
         </div>
-        <StatusButton v-if="ai" class="ai" @click="openAiDialog(sectionIndex)">AI</StatusButton>
+        <StatusButton v-if="ai" class="ai" @click="gotoAI(sectionIndex)">AI</StatusButton>
     </Card>
     <StatusButton v-if="editable" class="submit" @click="trySubmit">Submit</StatusButton>
 </template>

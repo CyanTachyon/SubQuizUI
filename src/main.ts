@@ -25,6 +25,7 @@ import './katex.css';
 import { vMarkdown } from './utils/markdown';
 import EditGroup from './pages/admin/EditGroup.vue';
 import Group from './pages/admin/Group.vue';
+import AiChats from './pages/AiChats.vue';
 
 if (Capacitor.getPlatform() === 'web')
 {
@@ -44,6 +45,7 @@ const routes: Readonly<RouteRecordRaw[]> = [
     { path: '/login', name: 'Login', component: Login },
     { path: '/quiz', name: 'Quiz', component: Quiz, meta: { sidebar: true } },
     { path: '/terminal', name: 'Terminal', component: Terminal, meta: { sidebar: true } },
+    { path: '/ai-chat', name: 'AIChats', component: AiChats, meta: { sidebar: true } },
     { path: '/admin/admins', name: 'Admins', component: Admins, meta: { sidebar: true } },
 
     { path: '/admin/subject/list', component: SubjectList, meta: { sidebar: true } },

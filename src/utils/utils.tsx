@@ -124,6 +124,7 @@ export function getOptionName(index: number)
 
 export function getSectionBrief(section: Section<any, any, any>)
 {
+    if (!section) return '暂无描述';
     const qBrief = section
         .questions
         .map((q, i) => ({ i, description: q.description + (q?.options?.map((o, id) => getOptionName(id) + ' ' + o)?.join(' ') || '') }))
