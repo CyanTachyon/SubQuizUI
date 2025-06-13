@@ -111,6 +111,7 @@ function gotoSSO()
     display: flex;
     flex-direction: column;
     height: calc(100% - 20px);
+    margin-bottom: 7px;
     --sidebar-close-width: 80px;
     --sidebar-open-width: 200px;
 }

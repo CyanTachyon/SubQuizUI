@@ -90,9 +90,7 @@ loadChats(false);
             </div>
 
             <SidebarItem title="新建对话" :icon="PlusIcon" @click="info = -Math.random()" />
-            <br />
-            <Spacer />
-            <br />
+            <Spacer style="margin-top: 10px; margin-bottom: 10px;"/>
             <div class="chats" @scroll="handleScroll">
                 <CommonButton class="item" v-for="chat in chats" :key="chat.id" @click="info = chat.id">
                     {{ getSectionBrief(chat.section) }}
@@ -123,8 +121,10 @@ loadChats(false);
     display: flex;
     flex-direction: column;
     height: calc(100% - 20px);
+    margin-bottom: 7px;
     --sidebar-close-width: 80px;
     --sidebar-open-width: 200px;
+    overflow: hidden;
 
     .sidebar-empty {
         display: flex;

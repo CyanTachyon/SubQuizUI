@@ -22,7 +22,7 @@ import CheckIcon from "vue-material-design-icons/Check.vue";
 import HelpCircleOutlineIcon from "vue-material-design-icons/HelpCircleOutline.vue";
 import Switch from "../../components/Switch.vue";
 import QuizView from "../../templates/QuizView.vue";
-import { pushUrl } from "../../utils/utils.tsx";
+import { getOptionName, pushUrl } from "../../utils/utils.tsx";
 import { uploadSectionImage } from "../../utils/sectionImage.ts";
 import { useNotificationStore } from "../../stores/notification.ts";
 import Slider from "../../components/Slider.vue";
@@ -30,20 +30,7 @@ import type { SectionType } from "../../dataClasses/SectionType.ts";
 import { getKnowledgePoint } from "../../networks/backend/knowledgePoint.ts";
 import type { KnowledgePoint } from "../../dataClasses/KnowledgePoint.ts";
 import Text from "../../components/Text.vue";
-
-function getName(index: number)
-{
-    if (!index) return 'A.';
-    const base = 26;
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let result = '.';
-    while (index > 0)
-    {
-        result = letters[index % base] + result;
-        index = Math.floor(index / base);
-    }
-    return result;
-}
+import { connectUrl, Target } from "../../networks/utils/sendRequest";
 
 const route = useRoute();
 const router = useRouter();
@@ -273,7 +260,7 @@ async function addImage()
 
 function getImageUrl(key: string)
 {
-    return environment.cdn + '/' + key;
+    return connectUrl(Target.CDN, `/section_images/${section.value.id}/${key}`);
 }
 
 const inputEleRef = ref<InstanceType<typeof Input>>(null);
@@ -366,7 +353,7 @@ function deleteImage(name: string)
                         :down="Array.isArray(question.answer) ? question.answer.includes(optionIndex) : question.answer === optionIndex"
                         :class="{ 'right-answer': Array.isArray(question.answer) ? question.answer.includes(optionIndex) : question.answer === optionIndex }"
                     >
-                        {{ getName(optionIndex) }}
+                        {{ getOptionName(optionIndex) }}
                     </StatusButton>
                     <Input placeholder="Option Description" type="text" v-model="question.options[optionIndex]" class="option-input" @focus="onFocus" @focus-out="onFocusOut"/>
                 </div>

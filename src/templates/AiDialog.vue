@@ -212,11 +212,10 @@ function openSection()
         </div>
         <Input v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
         <Text class="bottom-bar">
-            <span @click="changeModel('BDFZ_HELPER')" class="model-name"
-                :class="model === 'BDFZ_HELPER' ? 'active' : ''">
+            <span @click="changeModel('BDFZ_HELPER')" class="model-name bdfz-helper" :class="model === 'BDFZ_HELPER' ? 'active' : ''">
                 北大附中问答助手
             </span>
-            <span @click="changeModel('QUIZ_AI')" class="model-name" :class="model === 'QUIZ_AI' ? 'active' : ''">
+            <span @click="changeModel('QUIZ_AI')" class="model-name quiz-ai" :class="model === 'QUIZ_AI' ? 'active' : ''">
                 Quiz AI
             </span>
             <span class="tip" v-if="model === 'QUIZ_AI'">
@@ -349,6 +348,9 @@ quiz-loading {
     display: flex;
     justify-content: start;
     align-items: center;
+    height: 60px;
+    min-height: 60px;
+    max-height: 60px;
 
     span.model-name {
         cursor: pointer;
@@ -360,14 +362,30 @@ quiz-loading {
         background-color: transparent;
         margin-top: auto;
     }
+    span.model-name.bdfz-helper {
+        width: 165px;
+        min-width: 165px;
+        max-width: 165px;
+    }
+    span.model-name.quiz-ai {
+        width: 105px;
+        min-width: 105px;
+        max-width: 105px;
+    }
     span.model-name.active {
         background-color: rgba(98, 215, 123, 0.4);
     }
     span.tip {
         opacity: 0.7;
-        margin-bottom: 0.5rem;
+        height: 100%;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
     }
     span.send {
+        width: 64px;
+        min-width: 64px;
+        max-width: 64px;
         cursor: pointer;
         bottom: 0;
         padding: 0.5rem 1rem;
