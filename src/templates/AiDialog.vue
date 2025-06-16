@@ -17,7 +17,8 @@ import Text from '../components/Text.vue';
 
 export type AiInfo = Chat & {
     histories: (AiHistory & { showReasoning: boolean; })[];
-    answering: boolean;
+    showAnswering: boolean;
+    inAnswering: boolean;
 }
 
 const props = defineProps<{
@@ -50,7 +51,7 @@ const handleScroll = () => {
     shouldAutoScroll.value = isScrolledToBottom();
 };
 
-const onMessage = (message: AiMessage) => 
+const onMessage = (message: AiMessage & { finished: boolean, banned: boolean; }) => 
 {
     if (info.value.histories[info.value.histories.length - 1].role !== 'assistant')
     {
@@ -63,7 +64,17 @@ const onMessage = (message: AiMessage) =>
     }
     if (message.content) info.value.histories[info.value.histories.length - 1].content += message.content;
     if (message.reasoning_content) info.value.histories[info.value.histories.length - 1].reasoning_content += message.reasoning_content;
-    
+
+    if (message.banned) 
+    {
+        info.value.histories[info.value.histories.length - 1].content = "对不起，该聊天无法继续";
+        info.value.histories[info.value.histories.length - 1].reasoning_content = '';
+    }
+    else if (message.finished) 
+    {
+        info.value.showAnswering = false;
+    }
+
     if (shouldAutoScroll.value) {
         scrollToBottom();
     }
@@ -75,7 +86,8 @@ const onMessage = (message: AiMessage) =>
         const chat = await getChat(props.info);
         info.value = {
             ...chat,
-            answering: false,
+            showAnswering: false,
+            inAnswering: false,
             histories: chat.histories.map((history) => ({
                 ...history,
                 showReasoning: false,
@@ -90,16 +102,30 @@ const onMessage = (message: AiMessage) =>
             user: 0,
             hash: '',
             histories: [],
-            answering: false,
+            showAnswering: false,
+            inAnswering: false,
         };
     }
 
-    info.value.answering = true;
+    if (!info.value.id) return;
+
+    if (info.value.histories[info.value.histories.length - 1].role !== 'assistant')
+    {
+        info.value.histories.push({
+            role: 'assistant',
+            reasoning_content: '',
+            content: '',
+            showReasoning: true,
+        });
+    }
+
+    info.value.showAnswering = true;
+    info.value.inAnswering = true;
     chatSSE(
         info.value.id,
         info.value.hash,
         onMessage
-    ).finally(() => info.value.answering = false);
+    ).finally(() => info.value.inAnswering = info.value.showAnswering = false);
 })().then(() => { loading.value = false; nextTick(scrollToBottom); });
 
 const input = ref('');
@@ -114,10 +140,15 @@ function changeModel(newModel: Model)
 
 function onSubmit(event: KeyboardEvent)
 {
-    if (event && event.shiftKey) return; // 忽略 Shift/Ctrl/Alt 键的 Enter
+    if (event && event.shiftKey) return;
     event?.preventDefault();
-    if (input.value.trim() === '' || info.value.answering) return;
-    info.value.answering = true;
+    if (input.value.trim() === '' || info.value.showAnswering) return;
+    else if (info.value.inAnswering) 
+    {
+        useNotificationStore().addError('请求正在处理中，请稍等片刻。');
+        return;
+    }
+    info.value.inAnswering = true;
 
 (async () => {
     if (!info.value.id)
@@ -139,7 +170,7 @@ function onSubmit(event: KeyboardEvent)
         else 
         {
             useNotificationStore().addError('发生冲突，请刷新页面重试。');
-            info.value.answering = false;
+            info.value.showAnswering = false;
             return;
         }
 
@@ -163,12 +194,20 @@ function onSubmit(event: KeyboardEvent)
     shouldAutoScroll.value = true;
     scrollToBottom();
 
-    await chatSSE(
-        info.value.id,
-        info.value.hash,  
-        onMessage,
-    )
-})().finally(() => { info.value.answering = false; });
+    info.value.showAnswering = true;
+    try 
+    {
+        await chatSSE(
+            info.value.id,
+            info.value.hash,  
+            onMessage,
+        )
+    }
+    finally
+    {
+        info.value.showAnswering = false;
+    }
+})().finally(() => { info.value.inAnswering = false; });
 }
 
 function openSection()
@@ -205,7 +244,7 @@ function openSection()
                 </div>
                 <div class="content" v-if="item.content"
                     v-markdown="{ markdown: true, content: item.content, section: info.section?.id }" />
-                <div class="loading-icon" v-if="index === info.histories.length - 1 && info.answering" :key="index">
+                <div class="loading-icon" v-if="index === info.histories.length - 1 && info.showAnswering" :key="index">
                     <LoadingIcon />
                 </div>
             </Text>

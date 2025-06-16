@@ -79,7 +79,7 @@ const sseUrl = '/ai/chat/sse';
 export async function chatSSE(
     chat: ChatId,
     hash: string,
-    onMessage: (message: AiMessage) => void
+    onMessage: (message: AiMessage & {finished: boolean, banned: boolean}) => void
 )
 {
     const req = await request(connectUrl(Target.BACKEND, sseUrl, { chat, hash }), 'GET', {}, true, undefined);
@@ -116,7 +116,14 @@ export async function chatSSE(
             { 
                 useNotificationStore().addError(`Error parsing AI message`);
             }
+            else if (event === 'finished')
+            {
+                onMessage({ content: null, reasoning_content: null, finished: true, banned: false });
+            }
+            else if (event === 'banned')
+            {
+                onMessage({ content: null, reasoning_content: null, finished: true, banned: true });
+            }
         });
       }
 }
-/^[GCDZTSPKXLY1-9]\d{1,4}$/
