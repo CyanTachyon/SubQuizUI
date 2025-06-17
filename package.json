@@ -1,9 +1,9 @@
 {
   "name": "subquiz",
   "private": true,
-  "version": "2.2.0.4",
-  "versionId": 20200004,
-  "minVersionId": 20200004,
+  "version": "2.2.0.5",
+  "versionId": 20200005,
+  "minVersionId": 20200005,
   "type": "module",
   "scripts": {
     "dev": "vite",

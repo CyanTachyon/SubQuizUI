@@ -43,6 +43,9 @@ dialog {
     background-color: var(--bgcolor);
     border: none;
     border-radius: 0.5rem;
+    --transition:static;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 dialog:focus {

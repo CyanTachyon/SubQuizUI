@@ -243,7 +243,7 @@ function openSection()
                         class="reasoning-content" v-if="item.showReasoning" />
                 </div>
                 <div class="content" v-if="item.content"
-                    v-markdown="{ markdown: true, content: item.content, section: info.section?.id }" />
+                    v-markdown="{ markdown: item.role === 'assistant', content: item.content, section: info.section?.id }" />
                 <div class="loading-icon" v-if="index === info.histories.length - 1 && info.showAnswering" :key="index">
                     <LoadingIcon />
                 </div>
@@ -336,8 +336,39 @@ quiz-loading {
     border-radius: 0.5rem;
     margin: 10px;
 
-    -webkit-user-select: text;
-    user-select: text;
+    .reasoning {
+        .reasoning-header {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            margin: 10px 10px 10px 0;
+            width: fit-content;
+            font-weight: bold;
+            background-color: rgba(125, 125, 125, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+
+            .icon {
+                margin: -3px;
+            }
+        }
+
+        .reasoning-content {
+            border-left: gray 3px solid;
+            margin-left: 3px;
+            margin-bottom: 1rem;
+            padding-left: 1rem;
+
+            -webkit-user-select: text;
+            user-select: text;
+        }
+    }
+    .content {
+        -webkit-user-select: text;
+        user-select: text;
+    }
 }
 
 .message.user {
@@ -346,6 +377,10 @@ quiz-loading {
     right: 0;
     margin-left: auto;
     max-width: 75%;
+
+    .content {
+        white-space: pre-wrap;
+    }
 }
 
 .message.assistant {
@@ -354,33 +389,6 @@ quiz-loading {
     left: 0;
     margin-right: auto;
     max-width: 95%;
-}
-
-.reasoning {
-    .reasoning-header {
-        cursor: pointer;
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        margin: 10px 10px 10px 0;
-        width: fit-content;
-        font-weight: bold;
-        background-color: rgba(125, 125, 125, 0.4);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-
-        .icon {
-            margin: -3px;
-        }
-    }
-
-    .reasoning-content {
-        border-left: gray 3px solid;
-        margin-left: 3px;
-        margin-bottom: 1rem;
-        padding-left: 1rem;
-    }
 }
 
 .bottom-bar {
