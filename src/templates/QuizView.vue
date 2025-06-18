@@ -139,7 +139,7 @@ function gotoAI(sectionIndex: number)
                 <p class="title">
                     {{ questionIndex + 1 }}.
                 </p>
-                <div class="question-description-content" v-markdown="{markdown: section.markdown, content: question.description, section: section.id}"/>
+                <Text class="question-description-content" v-markdown="{markdown: section.markdown, content: question.description, section: section.id}"/>
             </div>
             <div v-if="question.options" class="options-wrapper">
                 <div v-for="(option, optionIndex) in question.options" class="option-box">
@@ -155,7 +155,7 @@ function gotoAI(sectionIndex: number)
                         <div class="option-title" style="height: 100%;">
                             {{ getOptionName(optionIndex) }}
                         </div>
-                        <div class="option-content" v-markdown="{markdown: section.markdown, content: option, section: section.id}"/>
+                        <Text class="option-content" v-markdown="{markdown: section.markdown, content: option, section: section.id}"/>
                     </StatusButton>
                     <Text 
                         v-if="optionIndex === question.answer || (question.answer?.length && question.answer.includes(optionIndex))" 
@@ -209,14 +209,14 @@ function gotoAI(sectionIndex: number)
             </Text>
             <Text v-if="(question.type === 'fill' || question.type === 'essay') && question.answer" class="answer analysis">
                 {{ '答案/评标：' }}
-                <div v-markdown="{markdown: section.markdown, content: question.answer, section: section.id}"/>
+                <Text v-markdown="{markdown: section.markdown, content: question.answer, section: section.id}"/>
             </Text>
             <Text 
                 v-if="question.analysis" 
                 class="analysis"
             >
                 {{ '解析：' }}
-                <div v-markdown="{markdown: section.markdown, content: question.analysis, section: section.id}"/>
+                <Text v-markdown="{markdown: section.markdown, content: question.analysis, section: section.id}"/>
             </Text>
             <br v-if="questionIndex < section.questions.length - 1"/>
         </div>

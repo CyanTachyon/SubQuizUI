@@ -228,7 +228,8 @@ function openSection()
         <Text class="section" v-if="info.section" @click="openSection">
             {{ getSectionBrief(info.section) }}
         </Text>
-        <div @scroll="handleScroll" class="histories" :class="info.histories.length === 0 ? 'empty' : ''" ref="historiesContainer">
+        <div @scroll="handleScroll" class="histories" :class="info.histories.length === 0 ? 'empty' : ''"
+            ref="historiesContainer">
             <Text v-if="info.histories.length === 0" class="message empty">
                 <span>{{ info.section ? "题目解析没看懂？" : "在题目解析页面点击AI标识" }}向AI提问</span>
             </Text>
@@ -239,11 +240,10 @@ function openSection()
                         <ChevronRightIcon v-else class="icon" />
                         思考过程
                     </div>
-                    <div v-markdown="{ markdown: true, content: item.reasoning_content, section: info.section?.id }"
+                    <Text v-markdown="{ markdown: true, content: item.reasoning_content, section: info.section?.id }"
                         class="reasoning-content" v-if="item.showReasoning" />
                 </div>
-                <div class="content" v-if="item.content"
-                    v-markdown="{ markdown: item.role === 'assistant', content: item.content, section: info.section?.id }" />
+                <Text class="content" v-if="item.content" v-markdown="{ markdown: item.role === 'assistant', content: item.content, section: info.section?.id }" />
                 <div class="loading-icon" v-if="index === info.histories.length - 1 && info.showAnswering" :key="index">
                     <LoadingIcon />
                 </div>
@@ -251,10 +251,12 @@ function openSection()
         </div>
         <Input v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
         <Text class="bottom-bar">
-            <span @click="changeModel('BDFZ_HELPER')" class="model-name bdfz-helper" :class="model === 'BDFZ_HELPER' ? 'active' : ''">
+            <span @click="changeModel('BDFZ_HELPER')" class="model-name bdfz-helper"
+                :class="model === 'BDFZ_HELPER' ? 'active' : ''">
                 北大附中问答助手
             </span>
-            <span @click="changeModel('QUIZ_AI')" class="model-name quiz-ai" :class="model === 'QUIZ_AI' ? 'active' : ''">
+            <span @click="changeModel('QUIZ_AI')" class="model-name quiz-ai"
+                :class="model === 'QUIZ_AI' ? 'active' : ''">
                 Quiz AI
             </span>
             <span class="tip" v-if="model === 'QUIZ_AI'">

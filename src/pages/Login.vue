@@ -12,15 +12,11 @@ document.title = '登录 - SubQuiz';
 
 function gotoFrom()
 {
-    useUser().reload();
+    try { useUser().reload(); } catch (e) { /* ignore */ }
     if (from && !from.startsWith("/login")) router.push(from);
     else router.push('/');
 }
-if (code) login(code).then(gotoFrom, (e) =>
-{
-    if (e.response && (e.response.code === 417 || e.response.code === 401)) return;
-    gotoFrom();
-});
+if (code) login(code).finally(gotoFrom);
 else gotoFrom();
 </script>
 

@@ -268,7 +268,6 @@ const inputEleRef = ref<InstanceType<typeof Input>>(null);
 function onFocus(inputEle: InstanceType<typeof Input>)
 {
     inputEleRef.value = inputEle;
-    console.log("onFocus", inputEle);
 }
 
 function onFocusOut(inputEle: InstanceType<typeof Input>)
@@ -276,7 +275,6 @@ function onFocusOut(inputEle: InstanceType<typeof Input>)
     if (inputEleRef.value === inputEle) 
     {
         inputEleRef.value = null;
-        console.log("onFocusOut", inputEle);
     }
 }
 

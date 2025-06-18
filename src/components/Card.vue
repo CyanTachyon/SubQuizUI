@@ -63,7 +63,7 @@ quiz-card {
 }
 
 .disappeared-card {
-    @include neumorphism-down;
+    opacity: 0;
 }
 
 .disappear {

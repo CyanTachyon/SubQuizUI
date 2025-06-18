@@ -1,16 +1,26 @@
 import { marked } from "marked";
-import markedKatex, { type MarkedKatexOptions } from "marked-katex-extension";
+import markedKatex, { type MarkedKatexOptions } from "./katex";
 import { connectUrl, Target } from "../networks/utils/sendRequest";
 import type { Directive } from "vue";
 import type { SectionId } from "../dataClasses/Ids";
+import { common, createStarryNight } from '@wooorm/starry-night';
+import { toHtml } from 'hast-util-to-html'
+import "./markdown-code.scss";
+
+let starryNight: Awaited<ReturnType<typeof createStarryNight>>;
+
+(async () => {
+    starryNight = await createStarryNight(common);
+})()
 
 const katexOptions: MarkedKatexOptions = {
     throwOnError: false,
     output: 'htmlAndMathml',
     nonStandard: true,
+    strict: "ignore",
 };
 
-marked.use(markedKatex(katexOptions));
+marked.use(markedKatex(katexOptions) as any);
 marked.setOptions({ silent: true });
 
 // marked库中会用到at方法，但在某些浏览器中可能不支持，因此手动给Array原型添加at方法
@@ -62,8 +72,14 @@ export function markdownToHtml(markdown: string, imgBaseUrl?: string): string
         }
         return `<img src="${href}" alt="${text || ''}" ${size_} />`;
     };
+    renderer.code = function (info)
+    {
+        const lang = info.lang || 'text';
+        const code = info.raw || info.text || '';
+        return `<code>` + toHtml(starryNight.highlight(code, starryNight.flagToScope(lang))) + ` </code>`;
+    }
     const res = marked.parse(markdown, { renderer }) as string;
-    const html = `<quiz-markdown-body>${res}</quiz-markdown-body>`;
+    const html = `<quiz-markdown-body class="markdown-body">${res}</quiz-markdown-body>`;
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
     if (supportsMathML()) tempDiv.querySelectorAll(".katex-html").forEach((elem) => elem.remove());

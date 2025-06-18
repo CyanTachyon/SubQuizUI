@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Card from '../components/Card.vue';
 import Spacer from "../components/Spacer.vue";
+import Text from '../components/Text.vue';
 
 interface UpdateInfo
 {
@@ -98,6 +99,14 @@ const updateInfo: UpdateInfo[] = ([
             '- 增加了AI聊天界面\n' +
             '- 提供更多AI聊天相关功能\n' 
     },
+     {
+        date: '2025-06-17',
+        version: '2.2.1',
+        description: '' +
+            '- 优化markdown渲染\n' +
+            '- 优化部分UI和相关动画及交互\n' +
+            '- 修复了已知bug\n'
+    },
     {
         version: 'TODO LIST',
         description: '以下是预计添加的新功能，但我开发速度有限，所以别急^v^\n' +
@@ -115,7 +124,7 @@ const updateInfo: UpdateInfo[] = ([
             <quiz-update-info-item-version>{{ item.version }}</quiz-update-info-item-version>
             <Spacer />
             <quiz-update-info-item-date v-if="item.date">发布时间：{{ item.date }}</quiz-update-info-item-date>
-            <quiz-update-info-item-description v-markdown="{ content: item.description }"></quiz-update-info-item-description>
+            <Text v-markdown="{ content: item.description }"></Text>
         </Card>
     </quiz-update-info-container>
 </template>
@@ -140,7 +149,7 @@ quiz-update-info-item-date {
     margin-bottom: 10px;
 }
 
-quiz-update-info-item-description {
+quiz-text {
     display: block;
     font-size: 16px;
     margin-top: 20px;
