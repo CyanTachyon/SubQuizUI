@@ -1,8 +1,9 @@
 import type { ResponseBody } from "../../dataClasses/ResponseBody.ts";
-import { tryBindSeiue, tryLogin } from "../../utils/utils.tsx";
+import { checkUpdate, tryBindSeiue, tryLogin } from "../../utils/utils.tsx";
 import {useNotificationStore} from "../../stores/notification.ts";
 import type { UserInfo } from "../../dataClasses/User.ts";
 import { useUser } from "../../stores/user.ts";
+import { Capacitor } from "@capacitor/core";
 
 export class ResponseError extends Error
 {
@@ -22,13 +23,22 @@ export function success<DATA>(response: ResponseBody<DATA>)
 
 function defaultOnFail<T>(response: ResponseBody<T>): T
 {
+    let error = new ResponseError(response);
     if (response.code === 451) 
     {
         useUser().user = response.data as UserInfo
         tryBindSeiue();
     }
     else if (response.code === 401) tryLogin();
-    let error = new ResponseError(response);
+    else if (response.code === 426)
+    {
+        let message = ''
+        if (Capacitor.getPlatform() === 'android') message = `错误：版本过低，请更新应用程序。`;
+        else message = '错误：请刷新网页并重试。';
+        useNotificationStore().addError(message)
+        checkUpdate();
+        throw error;
+    }
     const notifications = useNotificationStore()
     notifications.addError(`错误：${response.message}`);
     throw error;

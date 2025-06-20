@@ -3,6 +3,7 @@ import {ref} from "vue";
 import {createAnimationsController} from "../utils/AnimationsController.ts";
 import {sleep} from "../utils/sleep.ts";
 import StatusButton from "./StatusButton.vue";
+import { $animateDuration } from "../stores/transition";
 
 const {onClick, disappear, disabled } = defineProps({
     onClick: {
@@ -31,12 +32,12 @@ function click()
     if (disappear) return;
     controller.push([
         () => down.value = true,
-        () => sleep(400),
+        () => sleep($animateDuration),
         () => {
             (onClick as unknown as (() => void))();
             down.value = false;
         },
-        () => sleep(400),
+        () => sleep($animateDuration),
     ], false)
 }
 

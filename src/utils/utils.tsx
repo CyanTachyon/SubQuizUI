@@ -9,6 +9,8 @@ import type { JSX } from "vue/jsx-runtime";
 import RealNameRequired from "@/templates/RealNameRequired.vue";
 import { vMarkdown } from "./markdown.ts";
 import type { Section } from "../dataClasses/Section.ts";
+import type { AndroidVersion } from "../dataClasses/AndroidVersion.ts";
+import currentVersion from "../../public/android_latest.json";
 
 export function getToken()
 {
@@ -141,4 +143,12 @@ export function getSectionBrief(section: Section<any, any, any>)
         return qBrief;
     }
     return section.description + ' ' + qBrief;
+}
+
+export const versionInfo = ref(null as AndroidVersion | null);
+export async function checkUpdate()
+{
+    let r1 = await fetch(environment.frontend + '/android_latest.json' + `?timestamp=${Date.now()}`, { cache: "reload", });
+    let res = (await r1.json()) as AndroidVersion;
+    if (res.minVersionCode > currentVersion.versionCode) versionInfo.value = res;
 }

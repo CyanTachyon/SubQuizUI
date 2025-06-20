@@ -1,4 +1,5 @@
 import type {ResponseBody} from "../../dataClasses/ResponseBody.ts";
+import clientVersion from "../../../public/android_latest.json";
 export enum Target
 {
     EMPTY = 0,
@@ -89,5 +90,6 @@ export async function request(
     }
     data.headers['Accept'] = '*/*';
     data.headers['Authorization'] = withToken ? `Bearer ${localStorage.getItem('token')}` : '';
+    data.headers['X-Client-Version'] = clientVersion.versionCode;
     return fetch(url, data)
 }

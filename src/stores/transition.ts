@@ -7,7 +7,8 @@ export enum State
     LEAVE,
 }
 
-export const $appearDuration = 750;
+export const $appearDuration = 300;
+export const $animateDuration = 300;
 
 export const useTransitionStore = defineStore('transition', {
     state: () => ({

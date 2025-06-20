@@ -74,9 +74,11 @@ export function markdownToHtml(markdown: string, imgBaseUrl?: string): string
     };
     renderer.code = function (info)
     {
-        const lang = info.lang || 'text';
-        const code = info.raw || info.text || '';
-        return `<code>` + toHtml(starryNight.highlight(code, starryNight.flagToScope(lang))) + ` </code>`;
+        const lang = info.lang || '';
+        const code = info.text || '';
+        const scope = starryNight.flagToScope(lang);
+        if (!scope) return `<code>${code}</code>`;
+        return `<code>` + toHtml(starryNight.highlight(code, scope)) + `</code>`;
     }
     const res = marked.parse(markdown, { renderer }) as string;
     const html = `<quiz-markdown-body class="markdown-body">${res}</quiz-markdown-body>`;

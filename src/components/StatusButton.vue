@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {onMounted, ref, watch} from "vue";
 import {createAnimationsController} from "../utils/AnimationsController.ts";
-import {$appearDuration, State, useTransitionStore} from "../stores/transition.ts";
+import {$animateDuration, $appearDuration, State, useTransitionStore} from "../stores/transition.ts";
 import {sleep} from "../utils/sleep.ts";
 
 const {onClick, down, disappear, disabled} = defineProps({
@@ -32,7 +32,7 @@ watch(() => down, (value, oldValue) =>
     if (value === oldValue || disappear) return;
     controller.push([
         () => className.value = value ? 'down' : 'up',
-        () => sleep(400),
+        () => sleep($animateDuration),
         () => className.value = value ? 'down-button' : 'up-button'
     ])
 });

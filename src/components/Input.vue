@@ -2,7 +2,7 @@
 import {onMounted, ref, watch, getCurrentInstance} from 'vue';
 import {createAnimationsController} from '../utils/AnimationsController';
 import {sleep} from '../utils/sleep';
-import {$appearDuration, State, useTransitionStore} from '../stores/transition';
+import {$animateDuration, $appearDuration, State, useTransitionStore} from '../stores/transition';
 
 const model = defineModel<string | number>({required: false});
 const { placeholder, type, disappear, area, align, readonly, onFocus, onFocusOut } = defineProps({
@@ -64,7 +64,7 @@ function handleFocus()
             isFocused.value = true;
             onFocus(currentInstance.exposed);
         },
-        () => sleep(400),
+        () => sleep($animateDuration),
         () => className.value = 'down-input'
     ])
 }
@@ -78,7 +78,7 @@ function handleFocusOut()
             isFocused.value = false;
             onFocusOut(currentInstance.exposed);
         },
-        () => sleep(400),
+        () => sleep($animateDuration),
         () => className.value = 'up-input'
     ])
 }

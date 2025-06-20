@@ -41,7 +41,7 @@ function changeSidebarState()
             localStorage.setItem('sidebar-open', open.value.toString());
             sidebarClassName.value = open.value ? 'sidebar-open' : 'sidebar-close';
         },
-        () => sleep(800),
+        () => sleep(200),
         () => sidebarClassName.value = open.value ? 'sidebar-opened' : 'sidebar-closed',
 
     ], false);
@@ -159,11 +159,11 @@ quiz-sidebar-container {
 }
 
 .sidebar-open {
-    animation: open-sidebar 0.8s ease-in-out forwards;
+    animation: open-sidebar 0.2s ease-in-out forwards;
 }
 
 .sidebar-close {
-    animation: open-sidebar 0.8s ease-in-out reverse forwards;
+    animation: open-sidebar 0.2s ease-in-out reverse forwards;
 }
 
 quiz-center {

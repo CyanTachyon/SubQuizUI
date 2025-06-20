@@ -69,7 +69,7 @@
 @mixin neumorphism-up-to-down {
     color: var(--color);
     @include neumorphism-up-shadow;
-    animation: neumorphism-up-to-down 0.4s forwards;
+    animation: neumorphism-up-to-down $animate-duration forwards;
 }
 
 @keyframes neumorphism-up-to-down {
@@ -86,7 +86,7 @@
 @mixin neumorphism-down-to-up {
     color: var(--color);
     @include neumorphism-down-shadow;
-    animation: neumorphism-down-to-up 0.4s forwards;
+    animation: neumorphism-down-to-up $animate-duration forwards;
 }
 
 //// appear / disappear animation ////
@@ -185,13 +185,13 @@
 @mixin neumorphism-up-to-down {
     color: var(--color);
     @include neumorphism-up-shadow;
-    animation: neumorphism-up-to-down 0.4s forwards;
+    animation: neumorphism-up-to-down $animate-duration forwards;
 }
 
 @mixin neumorphism-down-to-up {
     color: var(--color);
     @include neumorphism-down-shadow;
-    animation: neumorphism-down-to-up 0.4s forwards;
+    animation: neumorphism-down-to-up $animate-duration forwards;
 }
 
 @mixin appear($name, $direction, $appear) {

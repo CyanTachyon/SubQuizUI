@@ -6,7 +6,7 @@
     </TransitionGroup>
 
     <main>
-        <DownloadNewVersion v-if="versionInfo" :info="versionInfo" />
+        <DownloadNewVersion v-if="versionInfo && Capacitor.getPlatform() === 'android'" :info="versionInfo" />
         <Sidebar v-else-if="route.meta.sidebar">
             <RouterView />
         </Sidebar>
@@ -20,11 +20,9 @@ import { useUser } from "./stores/user.ts";
 import { useNotificationStore } from "./stores/notification.ts";
 import { useThemeStore } from './stores/theme';
 import Sidebar from "./templates/sidebar/Sidebar.vue";
-import currentVersion from "../public/android_latest.json";
-import { ref } from "vue";
-import { Capacitor } from "@capacitor/core";
 import DownloadNewVersion from "./pages/_app/DownloadNewVersion.vue";
-import type { AndroidVersion } from "./dataClasses/AndroidVersion.ts";
+import { checkUpdate, versionInfo } from "./utils/utils";
+import { Capacitor } from "@capacitor/core";
 
 const router = useRouter();
 const route = useRoute();
@@ -62,18 +60,7 @@ user.reload();
 const notificationStore = useNotificationStore();
 const themeStore = useThemeStore();
 themeStore.initialize();
-
-let versionInfo = ref(null as AndroidVersion | null);
-
-if (Capacitor.getPlatform() === 'android')
-{
-    (async () =>
-    {
-        let r1 = await fetch(environment.frontend + '/android_latest.json' + `?timestamp=${Date.now()}`, { cache: "reload", });
-        let res = (await r1.json()) as AndroidVersion;
-        if (res.minVersionCode > currentVersion.versionCode) versionInfo.value = res;
-    })();
-}
+checkUpdate();
 </script>
 <style lang="scss">
 body {
