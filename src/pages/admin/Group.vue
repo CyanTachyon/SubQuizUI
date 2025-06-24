@@ -6,7 +6,7 @@ import { markRaw, ref, watch, type Component } from "vue";
 import Card from "../../components/Card.vue";
 import { useUser } from "../../stores/user.ts";
 import Text from "../../components/Text.vue";
-import type { KnowledgePointId, PreparationGroupId, SectionTypeId } from "../../dataClasses/Ids.ts";
+import type { KnowledgePointId, PreparationGroupId, SectionId, SectionTypeId } from "../../dataClasses/Ids.ts";
 import NotFound from "../NotFound.vue";
 import Spacer from "../../components/Spacer.vue";
 import type { PreparationGroup } from "../../dataClasses/PreparationGroup.ts";
@@ -42,14 +42,17 @@ import CheckboxMultipleBlankOutlineIcon from "vue-material-design-icons/Checkbox
 import CheckboxMarkedIcon from "vue-material-design-icons/CheckboxMarked.vue";
 import CheckboxMultipleMarked from "vue-material-design-icons/CheckboxMultipleMarked.vue";
 import Slider from "../../components/Slider.vue";
-import { useNotificationStore } from "../../stores/notification.ts";
+import { useNotification } from "../../stores/notification.ts";
 import ShieldCrownOutlineIcon from "vue-material-design-icons/ShieldCrownOutline.vue";
+import Split from "../../templates/Split.vue";
+
+const { onClickSection, group: rawGroup } = defineProps<{ onClickSection?: (SectionId) => void, group?: PreparationGroupId }>();
 
 const user = useUser();
 const route = useRoute();
 const router = useRouter();
-const notification = useNotificationStore();
-const group = Number(route.params.id) as PreparationGroupId;
+const notification = useNotification();
+const group = rawGroup || Number(route.params.id) as PreparationGroupId;
 const groupInfo = ref(void 0 as undefined | null | PreparationGroup);
 const knowledgePoints = ref(void 0 as KnowledgePointTree[] | undefined);
 const hasPermission = ref(undefined as undefined | boolean);
@@ -223,8 +226,9 @@ const current = ref<Node>({
 });
 
 watch(() => current.value.knowledgePoint?.id, (newValue) => {
-    if (newValue)
+    if (newValue && !rawGroup)
     {
+        console.log(rawGroup)
         pushUrl('/admin/group/' + group, { 'kp': newValue + '' });
     }
 });
@@ -321,7 +325,8 @@ function addNewSectionType()
 
 function gotoSection(section: Section<AnswerType, any, string>)
 {
-    router.push('/admin/section/' + section.id);
+    if (onClickSection) onClickSection(section.id);
+    else router.push('/admin/section/' + section.id);
 }
 
 function createSection(type: SectionTypeId)
@@ -426,123 +431,128 @@ function startQuiz()
 </script>
 
 <template>
-    <NotFound v-if="groupInfo === null"/>
-    <Loading v-else-if="knowledgePoints === undefined || groupInfo === undefined" class="loading"/>
-    <div v-else class="section-types-container">
-        <Card class="sidebar">
-            <Text class="main-title" style="display: flex;">
-                <quiz-empty @click="changeKP(null)" class="clickable"> {{ groupInfo.name }} </quiz-empty>
-                <Text v-if="hasPermission" style="color: darkgray; margin-left: 5px;" @click="editGroup" class="clickable">
-                    <SquareEditOutlineIcon/>
+    <NotFound v-if="groupInfo === null" />
+    <Loading v-else-if="knowledgePoints === undefined || groupInfo === undefined" class="loading" />
+    <Split v-else class="section-types-container">
+        <template #left>
+            <Card class="sidebar">
+                <Text class="main-title" style="display: flex;">
+                    <quiz-empty @click="changeKP(null)" class="clickable"> {{ groupInfo.name }} </quiz-empty>
+                    <Text v-if="hasPermission" style="color: darkgray; margin-left: 5px;" @click="editGroup"
+                        class="clickable">
+                        <SquareEditOutlineIcon />
+                    </Text>
+                    <Text v-if="hasPermission" style="color: darkgray; margin-left: 5px;" @click="gotoAdmin"
+                        class="clickable">
+                        <ShieldCrownOutlineIcon />
+                    </Text>
                 </Text>
-                <Text v-if="hasPermission" style="color: darkgray; margin-left: 5px;" @click="gotoAdmin" class="clickable">
-                    <ShieldCrownOutlineIcon/>
+                <Text class="main-description">{{ groupInfo.description }}</Text>
+                <Spacer />
+                <TreeView v-if="knowledgePoints" v-model="treeNodes" />
+                <div v-if="knowledgePoints?.length === 0" class="no-section-types">
+                    暂无知识点
+                </div>
+            </Card>
+        </template>
+        <template #right>
+            <Card class="content">
+                <Text v-if="current.knowledgePoint && hasPermission" class="main-title" style="display: flex;">
+                    {{ current.knowledgePoint.name }}
+                    <Text v-if="hasPermission" style="color: darkgray; margin-left: 5px;" class="clickable">
+                        <SquareEditOutlineIcon @click="renameKP" class="clickable" />
+                        <DeleteIcon @click="deleteKP" class="clickable" style="margin-left: 5px;" />
+                    </Text>
                 </Text>
-            </Text>
-            <Text class="main-description">{{ groupInfo.description }}</Text>
-            <Spacer/>
-            <TreeView v-if="knowledgePoints" v-model="treeNodes"/>
-            <div v-if="knowledgePoints?.length === 0" class="no-section-types">
-                暂无知识点
-            </div>
-        </Card>
-        <Card class="content">
-            <Text v-if="current.knowledgePoint && hasPermission" class="main-title" style="display: flex;">
-                {{ current.knowledgePoint.name }}
-                <Text v-if="hasPermission" style="color: darkgray; margin-left: 5px;" class="clickable">
-                    <SquareEditOutlineIcon @click="renameKP" class="clickable"/>  
-                    <DeleteIcon @click="deleteKP" class="clickable" style="margin-left: 5px;"/>
+                <Text v-else class="main-title" style="display: flex;">
+                    {{ groupInfo.name }}
                 </Text>
-            </Text>
-            <Text v-else class="main-title" style="display: flex;">
-                {{ groupInfo.name }}
-            </Text>
-            <Spacer/>
+                <Spacer />
 
-            <!-- 题目列表 -->
-            <template v-if="hasPermission && current.sectionTypes !== null">
-                <div style="display: flex; margin-left: 20px;">
-                    <p style="min-width: 110px; margin-top: 20px;">题目类型:</p>
-                    <div style="display: flex; align-items: center; flex-wrap: wrap;">
-                        <StatusButton :down="current.sectionType == null" @click="changeType(null)">全部</StatusButton>
-                        <StatusButton 
-                            v-for="type in current.sectionTypes"
-                            :key="type.id"
-                            :down="current.sectionType == type.id"
-                            @click="changeType(type.id)"
-                        >
-                            {{ type.name }}
-                        </StatusButton>
-                        <PlusIcon class="clickable" @click="addNewSectionType"/>
+                <!-- 题目列表 -->
+                <template v-if="hasPermission && current.sectionTypes !== null">
+                    <div style="display: flex; margin-left: 20px;">
+                        <p style="min-width: 110px; margin-top: 20px;">题目类型:</p>
+                        <div style="display: flex; align-items: center; flex-wrap: wrap;">
+                            <StatusButton :down="current.sectionType == null" @click="changeType(null)">全部
+                            </StatusButton>
+                            <StatusButton v-for="type in current.sectionTypes" :key="type.id"
+                                :down="current.sectionType == type.id" @click="changeType(type.id)">
+                                {{ type.name }}
+                            </StatusButton>
+                            <PlusIcon class="clickable" @click="addNewSectionType" />
+                        </div>
                     </div>
-                </div>
 
-                <quiz-sections-ops v-if="current.sectionType">
-                    <StatusButton @click="createSection(current.sectionType)">
-                        <TextBoxPlusOutlineIcon/>
-                        创建新题目
-                    </StatusButton>
-                    <StatusButton @click="renameSectionType">
-                        <SquareEditOutlineIcon/>
-                        修改题目类型
-                    </StatusButton>
-                    <StatusButton @click="removeSectionType">
-                        <DeleteIcon/>
-                        删除题目类型
-                    </StatusButton>
-                </quiz-sections-ops>
-                <quiz-sections-empty v-if="current.sections && current.sections.list.length === 0">
-                    <p> 此知识点暂无题目 </p>
-                </quiz-sections-empty>
-                <quiz-sections-wrapper v-if="current.sections">
-                    <Card v-for="section in current.sections.list" :key="section.id" @click="gotoSection(section)" class="clickable">
-                        <Text>小题数量：{{ section.questions.length }}</Text>
-                        <Text>题目类型：{{ current.sectionTypes.find(type => type.id === section.type)?.name }}</Text>
-                        <Spacer/>
-                        <p class="description">
-                            {{ getSectionBrief(section) }}
-                        </p>
-                    </Card>
-                </quiz-sections-wrapper>
-                <Pagination v-if="current.sections && current.sections.list.length > 0" :count="getTotalPage()" :current="current.page" @change-page="changePage"/>
-            </template>
-            <!--  文件夹 -->
-            <template v-else-if="hasPermission">
-                <div v-if="current.children !== null" style="display: flex;">
-                    <CommonButton @click="createKP(true)">
-                        <FolderPlusIcon/>
-                    </CommonButton>
-                    <CommonButton @click="createKP(false)">
-                        <PlusCircleOutlineIcon/>
-                    </CommonButton>
-                </div>
+                    <quiz-sections-ops v-if="current.sectionType">
+                        <StatusButton @click="createSection(current.sectionType)">
+                            <TextBoxPlusOutlineIcon />
+                            创建新题目
+                        </StatusButton>
+                        <StatusButton @click="renameSectionType">
+                            <SquareEditOutlineIcon />
+                            修改题目类型
+                        </StatusButton>
+                        <StatusButton @click="removeSectionType">
+                            <DeleteIcon />
+                            删除题目类型
+                        </StatusButton>
+                    </quiz-sections-ops>
+                    <quiz-sections-empty v-if="current.sections && current.sections.list.length === 0">
+                        <p> 此知识点暂无题目 </p>
+                    </quiz-sections-empty>
+                    <quiz-sections-wrapper v-if="current.sections">
+                        <Card v-for="section in current.sections.list" :key="section.id" @click="gotoSection(section)"
+                            class="clickable">
+                            <Text>小题数量：{{ section.questions.length }}</Text>
+                            <Text>题目类型：{{ current.sectionTypes.find(type => type.id === section.type)?.name }}</Text>
+                            <Spacer />
+                            <p class="description">
+                                {{ getSectionBrief(section) }}
+                            </p>
+                        </Card>
+                    </quiz-sections-wrapper>
+                    <Pagination v-if="current.sections && current.sections.list.length > 0" :count="getTotalPage()"
+                        :current="current.page" @change-page="changePage" />
+                </template>
+                <!--  文件夹 -->
+                <template v-else-if="hasPermission">
+                    <div v-if="current.children !== null" style="display: flex;">
+                        <CommonButton @click="createKP(true)">
+                            <FolderPlusIcon />
+                        </CommonButton>
+                        <CommonButton @click="createKP(false)">
+                            <PlusCircleOutlineIcon />
+                        </CommonButton>
+                    </div>
 
-                <quiz-children-wrapper v-if="current.children !== null">
-                    <Card v-for="kp in current.children" :key="kp.info.id" @click="changeKP(kp)" class="clickable">
-                        <FolderIcon v-if="kp.info.folder"/>
-                        <AdjustIcon v-else/>
-                        <Text>{{ kp.info.name }}</Text>
+                    <quiz-children-wrapper v-if="current.children !== null">
+                        <Card v-for="kp in current.children" :key="kp.info.id" @click="changeKP(kp)" class="clickable">
+                            <FolderIcon v-if="kp.info.folder" />
+                            <AdjustIcon v-else />
+                            <Text>{{ kp.info.name }}</Text>
+                        </Card>
+                    </quiz-children-wrapper>
+                    <quiz-children-empty v-if="current.children !== null && current.children.length === 0">
+                        <p> 此文件夹暂无子知识点 </p>
+                    </quiz-children-empty>
+                </template>
+                <!--  没有权限 -->
+                <quiz-main-container v-else>
+                    <Card>
+                        <p class="main-title">开始新的测试</p>
+                        <p style="display: flex; align-items: center; justify-content: center;">在左侧选择知识点以开始测试</p>
+                        <p class="title" style="display: flex; align-items: center; justify-content: center;">题目数量</p>
+                        <Input :area="false" placeholder="Section Count" type="number" v-model="count" />
+                        <Slider :min-value="0" :max-value="100" :step="1" v-model="count" />
+                        <quiz-main-button-container>
+                            <StatusButton @click="startQuiz">开始测试</StatusButton>
+                        </quiz-main-button-container>
                     </Card>
-                </quiz-children-wrapper>
-                <quiz-children-empty v-if="current.children !== null && current.children.length === 0">
-                    <p> 此文件夹暂无子知识点 </p>
-                </quiz-children-empty>
-            </template>
-            <!--  没有权限 -->
-            <quiz-main-container v-else> 
-                <Card>
-                    <p class="main-title">开始新的测试</p>
-                    <p style="display: flex; align-items: center; justify-content: center;">在左侧选择知识点以开始测试</p>
-                    <p class="title" style="display: flex; align-items: center; justify-content: center;">题目数量</p>
-                    <Input :area="false" placeholder="Section Count" type="number" v-model="count" />
-                    <Slider :min-value="0" :max-value="100" :step="1" v-model="count"/>
-                    <quiz-main-button-container>
-                        <StatusButton @click="startQuiz">开始测试</StatusButton>
-                    </quiz-main-button-container>
-                </Card>
-            </quiz-main-container>
-        </Card>
-    </div>
+                </quiz-main-container>
+            </Card>
+        </template>
+    </Split>
 </template>
 
 <style scoped lang="scss">
@@ -630,7 +640,7 @@ function startQuiz()
     display: flex;
     flex-direction: column;
     height: calc(100% - 20px);
-    width: fit-content;
+    width: calc(100% - 26px);
     padding-right: 20px;
 }
 
@@ -638,7 +648,7 @@ function startQuiz()
     display: flex;
     flex-direction: column;
     height: calc(100% - 20px);
-    width: fit-content;
+    width: calc(100% - 26px);
     flex-grow: 1;
 }
 

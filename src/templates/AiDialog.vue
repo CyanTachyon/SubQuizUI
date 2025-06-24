@@ -4,7 +4,7 @@ import type { AnswerType } from '../dataClasses/Question';
 import type { Section } from '../dataClasses/Section';
 import { chatSSE, createChat, getChat, sendContent, type AiHistory, type AiMessage, type Model } from '../networks/backend/ai';
 import Input from '../components/Input.vue';
-import { useNotificationStore } from '../stores/notification';
+import { useNotification } from '../stores/notification';
 import LoadingIcon from 'vue-material-design-icons/Loading.vue';
 import { dialog, getSectionBrief } from '../utils/utils';
 import ChevronRightIcon from 'vue-material-design-icons/ChevronRight.vue';
@@ -145,7 +145,7 @@ function onSubmit(event: KeyboardEvent)
     if (input.value.trim() === '' || info.value.showAnswering) return;
     else if (info.value.inAnswering) 
     {
-        useNotificationStore().addError('请求正在处理中，请稍等片刻。');
+        useNotification().addError('请求正在处理中，请稍等片刻。');
         return;
     }
     info.value.inAnswering = true;
@@ -169,7 +169,7 @@ function onSubmit(event: KeyboardEvent)
         } 
         else 
         {
-            useNotificationStore().addError('发生冲突，请刷新页面重试。');
+            useNotification().addError('发生冲突，请刷新页面重试。');
             info.value.showAnswering = false;
             return;
         }

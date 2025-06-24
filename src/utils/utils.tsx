@@ -1,7 +1,7 @@
 import { computed, createApp, ref } from "vue";
 import { Capacitor } from '@capacitor/core';
 import { connectUrl, Target } from "../networks/utils/sendRequest.ts";
-import { pinia, router } from "../main.ts";
+import { router } from "../main.ts";
 import { safeRedirect } from "./redirect.ts";
 import Dialog from "@/components/Dialog.vue";
 import Input from "@/components/Input.vue";
@@ -83,7 +83,7 @@ export function dialog(
         {
             return <Dialog open={open.value} onClose={onClose}>{innerHtml}</Dialog>;
         }
-    }).use(pinia).directive('markdown', vMarkdown)
+    }).directive('markdown', vMarkdown)
     app.mount(container);
     return () =>
     {
@@ -96,10 +96,11 @@ export function dialog(
 export function inputDialog(
     content: JSX.Element,
     submit: (value: string) => void,
-    cancel?: () => void
+    cancel?: () => void,
+    defaultValue?: string,
 )
 {
-    const input = ref<string | null>(null);
+    const input = ref<string | null>(defaultValue || null);
     const close = dialog(
         <form autocomplete="off" onSubmit={ (event) => { event.preventDefault(); submit(input.value); close(); } }>
             { content }
@@ -131,7 +132,7 @@ export function getSectionBrief(section: Section<any, any, any>)
         .questions
         .map((q, i) => ({ i, description: q.description + (q?.options?.map((o, id) => getOptionName(id) + ' ' + o)?.join(' ') || '') }))
         .map(q => {
-            if (q.description.trim()) return `第${q.i + 1}题：${q.description}`;
+            if (q.description.trim()) return `第${q.i + 1}问：${q.description}`;
             return '';
         })
         .join('')

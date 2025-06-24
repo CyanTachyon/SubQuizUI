@@ -2,7 +2,6 @@ import { createApp } from 'vue';
 import './style.scss';
 import App from './App.vue';
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
-import { createPinia } from "pinia";
 import Login from "./pages/Login.vue";
 import About from "./pages/About.vue";
 import Home from "./pages/Home.vue";
@@ -26,6 +25,8 @@ import { vMarkdown } from './utils/markdown';
 import EditGroup from './pages/admin/EditGroup.vue';
 import Group from './pages/admin/Group.vue';
 import AiChats from './pages/AiChats.vue';
+import Classes from './pages/Classes.vue';
+import Exam from './pages/admin/Exam.vue';
 
 if (Capacitor.getPlatform() === 'web')
 {
@@ -46,6 +47,7 @@ const routes: Readonly<RouteRecordRaw[]> = [
     { path: '/quiz', name: 'Quiz', component: Quiz, meta: { sidebar: true } },
     { path: '/terminal', name: 'Terminal', component: Terminal, meta: { sidebar: true } },
     { path: '/ai-chat', name: 'AIChats', component: AiChats, meta: { sidebar: true } },
+    { path: '/class', name: 'Class', component: Classes, meta: { sidebar: true } },
     { path: '/admin/admins', name: 'Admins', component: Admins, meta: { sidebar: true } },
 
     { path: '/admin/subject/list', component: SubjectList, meta: { sidebar: true } },
@@ -56,6 +58,8 @@ const routes: Readonly<RouteRecordRaw[]> = [
     { path: '/admin/group/:id', component: Group, meta: { sidebar: true } },
     
     { path: '/admin/section/:id', component: EditSection, meta: { sidebar: true } },
+    
+    { path: '/admin/exam/:id', component: Exam, meta: { sidebar: true } },
 
     { path: '/_app/login', name: 'LoginApp', component: LoginApp },
     { path: '/_app/sso/:url*', name: 'SSO', component: SSO },
@@ -84,10 +88,7 @@ CapacitorApp.addListener('appUrlOpen', (data) =>
     }
 });
 
-export const pinia = createPinia();
-
 createApp(App)
-    .use(pinia)
     .use(router)
     .directive('markdown', vMarkdown)
     .mount('quiz-app');

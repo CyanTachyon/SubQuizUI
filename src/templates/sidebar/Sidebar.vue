@@ -9,6 +9,7 @@ import ConsoleIcon from "vue-material-design-icons/Console.vue";
 import HistoryIcon from "vue-material-design-icons/History.vue";
 import BookshelfIcon from "vue-material-design-icons/Bookshelf.vue";
 import InfoMationOutlineIcon from "vue-material-design-icons/InformationOutline.vue";
+import AccountMultipleIcon from "vue-material-design-icons/AccountMultiple.vue";
 import ShieldCrownOutlineIcon from "vue-material-design-icons/ShieldCrownOutline.vue";
 import RobotExcitedOutlineIcon from "vue-material-design-icons/RobotExcitedOutline.vue";
 import { createAnimationsController } from "../../utils/AnimationsController.ts";
@@ -20,9 +21,8 @@ import { sleep } from "../../utils/sleep.ts";
 import { tryLogin } from "../../utils/utils.tsx";
 import { useRouter } from "vue-router";
 import SidebarItem from "./SidebarItem.vue";
-import { Permission } from "../../dataClasses/Permission.ts";
 import ThemeIcon from "vue-material-design-icons/ThemeLightDark.vue";
-import { useThemeStore } from "../../stores/theme";
+import { useTheme } from "../../stores/theme";
 import Spacer from "../../components/Spacer.vue";
 import { Capacitor } from "@capacitor/core";
 
@@ -30,7 +30,7 @@ let open = ref(localStorage.getItem('sidebar-open') !== 'false');
 let sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');
 let controller = createAnimationsController();
 const router = useRouter();
-const themeStore = useThemeStore();
+const themeStore = useTheme();
 
 function changeSidebarState()
 {
@@ -65,7 +65,7 @@ function gotoSSO()
 <template>
     <quiz-sidebar-container>
         <Card :class="sidebarClassName" class="sidebar">
-            <quiz-menu-title-box class="box">
+            <quiz-menu-title-box class="box" style="min-height: 80px; max-height: 80px;">
                 <StatusButton @click="changeSidebarState" class="menu-btn">
                     <MenuOpenIcon v-if="open" />
                     <MenuCloseIcon v-else />
@@ -73,21 +73,21 @@ function gotoSSO()
                 <quiz-menu-title @click="goto('/')">SubQuiz</quiz-menu-title>
             </quiz-menu-title-box>
 
-            <quiz-center/>
+            <quiz-center />
 
-            <SidebarItem @click="goto('/admin/subject/list')" :icon="BookshelfIcon" title="学科列表" />
-            <SidebarItem @click="goto('/history')" :icon="HistoryIcon" title="答题记录" />
-            <SidebarItem @click="goto('/ai-chat')" :icon="RobotExcitedOutlineIcon" title="AI 助手" />
-            <SidebarItem v-if="user.hasAdmin()" @click="goto('/admin/admins')" :icon="ShieldCrownOutlineIcon"
-                title="全局管理" />
-            <SidebarItem v-if="user.user?.permission === Permission.ROOT" @click="goto('/terminal')" :icon="ConsoleIcon"
-                title="控制台" />
-            <SidebarItem v-if="Capacitor.getPlatform() === 'web'" @click="themeStore.toggleTheme" :icon="ThemeIcon"
-                title="切换主题" />
-            <SidebarItem @click="goto('/about')" :icon="InfoMationOutlineIcon" title="关于项目" />
+            <div class="sidebar-items">
+                <SidebarItem @click="goto('/admin/subject/list')" :icon="BookshelfIcon" title="学科列表" />
+                <SidebarItem @click="goto('/class')" :icon="AccountMultipleIcon" title="我的班级" />
+                <SidebarItem @click="goto('/history')" :icon="HistoryIcon" title="答题记录" />
+                <SidebarItem @click="goto('/ai-chat')" :icon="RobotExcitedOutlineIcon" title="AI 助手" />
+                <SidebarItem v-if="user.hasAdmin()" @click="goto('/admin/admins')" :icon="ShieldCrownOutlineIcon" title="全局管理" />
+                <SidebarItem v-if="user.isRoot()" @click="goto('/terminal')" :icon="ConsoleIcon" title="控制台" />
+                <SidebarItem v-if="Capacitor.getPlatform() === 'web'" @click="themeStore.toggleTheme" :icon="ThemeIcon" title="切换主题" />
+                <SidebarItem @click="goto('/about')" :icon="InfoMationOutlineIcon" title="关于项目" />
+            </div>
 
-            <Spacer/>
-            <quiz-user-box class="box">
+            <Spacer />
+            <quiz-user-box class="box" style="min-height: 76px; max-height: 76px;">
                 <Image class="avatar" :src="user.avatar()" @click="gotoSSO" />
                 <quiz-username-box>
                     <quiz-username>{{ user.userName() }}</quiz-username>
@@ -100,7 +100,9 @@ function gotoSSO()
             </quiz-user-box>
         </Card>
 
-        <quiz-main-content><slot/></quiz-main-content>
+        <quiz-main-content>
+            <slot />
+        </quiz-main-content>
     </quiz-sidebar-container>
 </template>
 
@@ -114,6 +116,15 @@ function gotoSSO()
     margin-bottom: 7px;
     --sidebar-close-width: 80px;
     --sidebar-open-width: 200px;
+}
+
+.sidebar-items {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    scrollbar-width: none;
+    margin: 0 -10px 0 -10px;
+    padding: 10px;
 }
 
 quiz-main-content {

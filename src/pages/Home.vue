@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import StatusButton from "../components/StatusButton.vue";
 import { useRouter, useRoute } from "vue-router";
-import { useNotificationStore } from "../stores/notification.ts";
+import { useNotification } from "../stores/notification.ts";
 import type { SubjectId } from '../dataClasses/Ids.ts';
 import Loading from '../components/Loading.vue';
 import Card from '../components/Card.vue';
@@ -10,11 +10,12 @@ import Input from '../components/Input.vue';
 import { getSubject } from '../networks/backend/subject.ts';
 import Slider from '../components/Slider.vue';
 import NotFound from './NotFound.vue';
+import GlassCard from '../components/GlassCard.vue';
 
 const router = useRouter();
 const route = useRoute();
 const subject = Number(route.query.subject) as SubjectId;
-const notifications = useNotificationStore();
+const notifications = useNotification();
 const subjectName = ref('');
 const notFound = ref(false);
 const count = ref(10);
@@ -63,7 +64,7 @@ function gotoSubject()
     <NotFound v-if="notFound"/>
     <Loading v-else-if="subject && subjectName === ''"/>
     <quiz-main-container v-else>
-        <Card>
+        <!-- <Card>
             <p class="main-title">开始新的测试</p>
             <p class="title">学科</p>
             <Input :area="false" placeholder="Subject Name" type="text" v-model="subjectName" readonly
@@ -74,7 +75,10 @@ function gotoSubject()
             <quiz-main-button-container>
                 <StatusButton @click="startQuiz">开始测试</StatusButton>
             </quiz-main-button-container>
-        </Card>
+        </Card> -->
+        <GlassCard>
+            
+        </GlassCard>
     </quiz-main-container>
 </template>
 

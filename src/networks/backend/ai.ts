@@ -3,7 +3,7 @@ import type { ChatId } from "../../dataClasses/Ids";
 import type { AnswerType } from "../../dataClasses/Question";
 import type { Section } from "../../dataClasses/Section";
 import type { Slice } from "../../dataClasses/Slice";
-import { useNotificationStore } from "../../stores/notification";
+import { useNotification } from "../../stores/notification";
 import { checkResponse } from "../utils/checkResponse";
 import { connectUrl, request, sendRequest, Target } from "../utils/sendRequest";
 
@@ -114,7 +114,7 @@ export async function chatSSE(
             } 
             catch (e) 
             { 
-                useNotificationStore().addError(`Error parsing AI message`);
+                useNotification().addError(`Error parsing AI message`);
             }
             else if (event === 'finished')
             {

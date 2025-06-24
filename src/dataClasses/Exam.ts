@@ -1,13 +1,11 @@
-import type { ExamId, PreparationGroupId } from "./Ids";
-import type { AnswerType } from "./Question";
-import type { Section } from "./Section";
+import type { ClassId, ExamId, SectionId } from "./Ids";
 
 export interface Exam 
 {
     id: ExamId;
-    group: PreparationGroupId;
+    clazz: ClassId;
     name: string;
     description: string;
-    sections: Section<AnswerType, null, string>[];
+    sections: SectionId[];
     available: boolean;
 };

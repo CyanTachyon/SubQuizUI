@@ -24,7 +24,7 @@ import Switch from "../../components/Switch.vue";
 import QuizView from "../../templates/QuizView.vue";
 import { getOptionName, pushUrl } from "../../utils/utils.tsx";
 import { uploadSectionImage } from "../../utils/sectionImage.ts";
-import { useNotificationStore } from "../../stores/notification.ts";
+import { useNotification } from "../../stores/notification.ts";
 import Slider from "../../components/Slider.vue";
 import type { SectionType } from "../../dataClasses/SectionType.ts";
 import { getKnowledgePoint } from "../../networks/backend/knowledgePoint.ts";
@@ -252,7 +252,7 @@ async function addImage()
         uploadSectionImage(file, section.value.id).then(() => {
             updateImages();
         }).catch((e) => {
-            useNotificationStore().addError(e);
+            useNotification().addError(e);
         });
     };
     input.click();
@@ -281,7 +281,7 @@ function onFocusOut(inputEle: InstanceType<typeof Input>)
 function onImageClick(name: string)
 {
     section.value.markdown = true;
-    const imgMarkdown = `![](${name} "100%x")`;
+    const imgMarkdown = `![](${name} "51%x")`;
     const textarea = inputEleRef.value as InstanceType<typeof Input>;
     console.log("onImageClick", inputEleRef.value);
     if (!textarea) return;
@@ -303,7 +303,7 @@ function deleteImage(name: string)
         await removeSectionImage(section.value.id, name);
         updateImages();
     })().catch(() => {
-        useNotificationStore().addError('删除图片失败');
+        useNotification().addError('删除图片失败');
     });
 }
 

@@ -3,14 +3,14 @@ import markedKatex, { type MarkedKatexOptions } from "./katex";
 import { connectUrl, Target } from "../networks/utils/sendRequest";
 import type { Directive } from "vue";
 import type { SectionId } from "../dataClasses/Ids";
-import { common, createStarryNight } from '@wooorm/starry-night';
+import { all, createStarryNight } from '@wooorm/starry-night';
 import { toHtml } from 'hast-util-to-html'
 import "./markdown-code.scss";
 
 let starryNight: Awaited<ReturnType<typeof createStarryNight>>;
 
 (async () => {
-    starryNight = await createStarryNight(common);
+    starryNight = await createStarryNight(all);
 })()
 
 const katexOptions: MarkedKatexOptions = {
@@ -32,8 +32,7 @@ if (!arrayProto.at) arrayProto.at = function (index: number)
 
 export function sectionMarkdownToHtml(section: SectionId, markdown: string): string
 {
-    if (section > 0) return markdownToHtml(markdown, connectUrl(Target.CDN, '/section_images/' + section + '/'));
-    else return markdownToHtml(markdown, connectUrl(Target.CDN, '/exam_images/' + (-section) + '/'));
+    return markdownToHtml(markdown, connectUrl(Target.CDN, '/section_images/' + section + '/'));
 }
 
 function supportsMathML()

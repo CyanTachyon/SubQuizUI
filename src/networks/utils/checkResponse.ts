@@ -1,6 +1,6 @@
 import type { ResponseBody } from "../../dataClasses/ResponseBody.ts";
 import { checkUpdate, tryBindSeiue, tryLogin } from "../../utils/utils.tsx";
-import {useNotificationStore} from "../../stores/notification.ts";
+import { useNotification } from "../../stores/notification.ts";
 import type { UserInfo } from "../../dataClasses/User.ts";
 import { useUser } from "../../stores/user.ts";
 import { Capacitor } from "@capacitor/core";
@@ -26,7 +26,7 @@ function defaultOnFail<T>(response: ResponseBody<T>): T
     let error = new ResponseError(response);
     if (response.code === 451) 
     {
-        useUser().user = response.data as UserInfo
+        useUser().setUser(response.data as UserInfo);
         tryBindSeiue();
     }
     else if (response.code === 401) tryLogin();
@@ -35,11 +35,11 @@ function defaultOnFail<T>(response: ResponseBody<T>): T
         let message = ''
         if (Capacitor.getPlatform() === 'android') message = `错误：版本过低，请更新应用程序。`;
         else message = '错误：请刷新网页并重试。';
-        useNotificationStore().addError(message)
+        useNotification().addError(message)
         checkUpdate();
         throw error;
     }
-    const notifications = useNotificationStore()
+    const notifications = useNotification()
     notifications.addError(`错误：${response.message}`);
     throw error;
 }
@@ -59,7 +59,7 @@ export async function checkResponse<DATA>(
     }
     catch (e)
     {
-        const notifications = useNotificationStore()
+        const notifications = useNotification()
         if (e.message) notifications.add({type: 'error', message: `错误：${e.message}`})
         else if (e.stack) notifications.add({type: 'error', message: `错误：${e.stack}`})
         else notifications.add({type: 'error', message: `错误：${e}`})

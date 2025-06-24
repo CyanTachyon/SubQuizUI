@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia';
+import { ref } from 'vue';
 
 export enum State
 {
@@ -10,24 +10,37 @@ export enum State
 export const $appearDuration = 300;
 export const $animateDuration = 300;
 
-export const useTransitionStore = defineStore('transition', {
-    state: () => ({
-        state: State.NONE,
-    }),
-    actions: {
-        onLeave()
-        {
-            this.state = State.LEAVE;
-        },
+const state = ref<State>(State.NONE);
 
-        onEnter()
-        {
-            this.state = State.ENTER;
-        },
-
-        clear()
-        {
-            this.state = State.NONE;
-        },
+const transitionActions = {
+    onLeave: () => 
+    {
+        state.value = State.LEAVE;
+    },
+    onEnter: () =>
+    {
+        state.value = State.ENTER;
+    },
+    clear: () =>
+    {
+        state.value = State.NONE;
     }
-});
+};
+
+export const useTransitionActions = () =>
+{
+    return transitionActions;
+};
+
+const transitionStore = 
+{
+    get state() : State 
+    {
+        return state.value;
+    }
+}
+
+export const useTransitionStore = () =>
+{
+    return transitionStore;
+};

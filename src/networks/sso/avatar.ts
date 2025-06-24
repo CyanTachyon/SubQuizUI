@@ -1,12 +1,7 @@
-import {useUser} from "../../stores/user.ts";
+import icon from '../../assets/icon.svg';
 
 export function avatarUrl(id?: number)
 {
-    if (!id)
-    {
-        let user = useUser();
-        id = user.user?.id;
-    }
     if (id) return environment.ssoBackend + "/avatar/" + id;
-    else return '';
+    else return icon;
 }

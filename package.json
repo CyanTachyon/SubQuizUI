@@ -4,12 +4,13 @@
   "version": "2.2.1.6",
   "versionId": 20201006,
   "minVersionId": 20201006,
+  "downloadUrl": "https://quiz.bdfzscc.com/SubQuiz.apk",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build-web": "node update-version.js && rm -rf dist/* && vue-tsc -b && vite build",
+    "build-web": "ts-node update-version.ts && rm -rf dist/* && vue-tsc -b && vite build",
     "build-android": "npx cap sync && npx cap build android && cp ./android/app/build/outputs/apk/release/app-release-signed.apk ./dist/SubQuiz.apk",
-    "build": "npm run build-web && npm run build-android",
+    "build": "npm run build-web && npm run build-android && rm -rf dist/assets/*.woff2 dist/assets/*.woff dist/assets/*.ttf",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -29,7 +30,6 @@
     "katex": "^0.16.22",
     "marked": "^15.0.7",
     "mathjax": "^3.2.2",
-    "pinia": "^2.3.1",
     "spark-md5": "^3.0.2",
     "vite-plugin-inspect": "^10.1.1",
     "vue": "^3.5.13",

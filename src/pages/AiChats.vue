@@ -43,35 +43,27 @@ history.replaceState({}, '');
 function loadChats(reload: boolean)
 {
     if (isLoading.value || !hasMore.value) return;
-    
+
     isLoading.value = true;
-    if (reload) {
+    if (reload)
+    {
         chats.value = [];
         hasMore.value = true;
     }
-    getChatList(chats.value.length, 20).then((result) => {
+    getChatList(chats.value.length, 20).then((result) => 
+    {
         const { list } = result;
         chats.value.push(...list);
-        
-        // 如果返回的记录少于请求的数量，说明没有更多数据了
-        if (list.length < 20) {
-            hasMore.value = false;
-        }
-        
+        if (list.length < 20) hasMore.value = false;
         isLoading.value = false;
-    }).catch(() => {
-        isLoading.value = false;
-    });
+    }).catch(() => { isLoading.value = false; });
 }
 
-function handleScroll(event: Event) {
+function handleScroll(event: Event) 
+{
     const target = event.target as HTMLElement;
     const { scrollTop, scrollHeight, clientHeight } = target;
-    
-    // 检查是否滚动到底部（允许一点误差）
-    if (scrollHeight - scrollTop - clientHeight < 10) {
-        loadChats(false);
-    }
+    if (scrollHeight - scrollTop - clientHeight < 10) loadChats(false);
 }
 
 loadChats(false);
@@ -90,7 +82,7 @@ loadChats(false);
             </div>
 
             <SidebarItem title="新建对话" :icon="PlusIcon" @click="info = -Math.random()" />
-            <Spacer style="margin-top: 10px; margin-bottom: 10px;"/>
+            <Spacer style="margin-top: 10px; margin-bottom: 10px;" />
             <div class="chats" @scroll="handleScroll">
                 <CommonButton class="item" v-for="chat in chats" :key="chat.id" @click="info = chat.id">
                     {{ getSectionBrief(chat.section) }}
@@ -109,7 +101,8 @@ loadChats(false);
         </Card>
 
         <div class="main-content">
-            <AiDialog :key="typeof info === 'object' ? info.id : info" :info="info" style="height: 100%;" @newChat="loadChats(true)"/>
+            <AiDialog :key="typeof info === 'object' ? info.id : info" :info="info" style="height: 100%;"
+                @newChat="loadChats(true)" />
         </div>
     </quiz-ai-chats>
 </template>
@@ -238,7 +231,7 @@ div.menu-title-box {
     margin-top: -6px;
     padding: 6px;
     flex-direction: row-reverse;
-    
+
     ///
     min-height: 80px;
     max-height: 80px;
@@ -284,7 +277,7 @@ div.menu-title-box {
 .empty-state {
     opacity: 0.5;
     text-align: center;
-    
+
     p {
         font-size: 18px;
         margin: 0;

@@ -72,10 +72,23 @@ export default defineConfig(({ mode }) => ({
                     "libs": [
                         'vue',
                         'vue-router',
-                        'pinia',
                         '@headlessui/vue',
                         '@heroicons/vue',
-                        'ansi_up'
+                        'ansi_up',
+                        'katex',
+                        'mathjax',
+                        '@capacitor-community/file-opener',
+                        '@capacitor/app',
+                        '@capacitor/browser',
+                        '@capacitor/core',
+                        '@capacitor/device',
+                        '@capacitor/filesystem',
+                        'marked',
+                        'spark-md5',
+                        'hast-util-to-html',
+                    ],
+                    "libs-starry-night": [
+                        '@wooorm/starry-night',
                     ]
                 }
             }

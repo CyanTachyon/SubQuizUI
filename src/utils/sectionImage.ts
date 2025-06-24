@@ -1,6 +1,5 @@
 import SparkMD5 from 'spark-md5';
 import { addSectionImage } from '../networks/backend/section';
-import { addExamImage } from '../networks/backend/exam';
 
 async function getFileMD5(file: File): Promise<string>
 {
@@ -31,15 +30,10 @@ async function getFileMD5(file: File): Promise<string>
 
 export async function uploadSectionImage(file: File, sectionId: number)
 {
-    return uploadImage(file, sectionId, false);
+    return uploadImage(file, sectionId);
 }
 
-export async function uploadExamImage(file: File, examId: number) 
-{
-    return uploadImage(file, examId, true);
-}
-
-export async function uploadImage(file: File, id: number, exam: boolean)
+export async function uploadImage(file: File, id: number)
 {
     let contentType: 'GIF' | 'JPEG' | 'PNG' | 'SVG' | 'XIcon';
     switch (file.type)
@@ -64,7 +58,7 @@ export async function uploadImage(file: File, id: number, exam: boolean)
             return;
     }
     const md5 = await getFileMD5(file);
-    const url = exam ? await addExamImage(id, contentType, md5) : await addSectionImage(id, contentType, md5);
+    const url = await addSectionImage(id, contentType, md5);
     if (!url) return;
     var xhr = new XMLHttpRequest();
     xhr.open('PUT', url, true);

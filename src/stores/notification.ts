@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia';
+import { ref } from 'vue';
 
 export interface Notification
 {
@@ -8,53 +8,60 @@ export interface Notification
     timeout?: number;
 }
 
-export const useNotificationStore = defineStore('notification', {
-    state: () => ({
-        notifications: [] as Notification[],
-        nextId: 1n
-    }),
-    actions: {
-        addError(message: string | Error)
-        {
-            this.add({ message: message instanceof Error ? message.message : message, type: 'error' });
-        },
-        addSuccess(message: string)
-        {
-            this.add({ message, type: 'success' });
-        },
-        addWarning(message: string)
-        {
-            this.add({ message, type: 'warning' });
-        },
-        addInfo(message: string)
-        {
-            this.add({ message, type: 'info' });
-        },
-        add(notification: Omit<Notification, 'id'>) 
-        {
-            const id = this.nextId++;
-            this.notifications.push({
-                id,
-                ...notification,
-                timeout: notification.timeout ?? 3000
-            });
+const notifications = ref([] as Notification[]);
+const nextId = ref(1n);
 
-            if (notification.timeout !== -1)
-            {
-                setTimeout(() =>
-                {
-                    this.remove(id);
-                }, notification.timeout ?? 3000);
-            }
-            return id;
-        },
-        remove(id: bigint)
+const actions = {
+    addError: (message: string | Error) =>
+    {
+        actions.add({ message: message instanceof Error ? message.message : message, type: 'error' });
+    },
+    addSuccess: (message: string) =>
+    {
+        actions.add({ message, type: 'success' });
+    },
+    addWarning: (message: string) =>
+    {
+        actions.add({ message, type: 'warning' });
+    },
+    addInfo: (message: string) =>
+    {
+        actions.add({ message, type: 'info' });
+    },
+    add: (notification: Omit<Notification, 'id'>) =>
+    {
+        const id = nextId.value++;
+        notifications.value.push({
+            id,
+            ...notification,
+            timeout: notification.timeout ?? 3000
+        });
+
+        if (notification.timeout !== -1)
         {
-            const index = this.notifications.findIndex(n => n.id === id);
-            if (index !== -1)
+            setTimeout(() =>
             {
-                this.notifications.splice(index, 1);
-            }
+                actions.remove(id);
+            }, notification.timeout ?? 3000);
+        }
+        return id;
+    },
+    remove: (id: bigint) =>
+    {
+        const index = notifications.value.findIndex(n => n.id === id);
+        if (index !== -1)
+        {
+            notifications.value.splice(index, 1);
         }
     }
-});
+}
+
+export const useNotification = () =>
+{
+    return actions;
+}
+
+export const getNotifications = () =>
+{
+    return notifications.value;
+}

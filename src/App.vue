@@ -1,6 +1,6 @@
 <template>
     <TransitionGroup name="notification" tag="quiz-notifications-wrapper">
-        <quiz-notification-item v-for="notification in notificationStore.notifications" :key="notification.id" :class="[notification.type || 'info']">
+        <quiz-notification-item v-for="notification in getNotifications()" :key="notification.id" :class="[notification.type || 'info']">
             {{ notification.message }}
         </quiz-notification-item>
     </TransitionGroup>
@@ -15,10 +15,10 @@
 </template>
 <script setup lang="ts">
 import { isNavigationFailure, useRoute, useRouter } from "vue-router";
-import { $appearDuration, useTransitionStore } from "./stores/transition.ts";
+import { $appearDuration, useTransitionActions } from "./stores/transition.ts";
 import { useUser } from "./stores/user.ts";
-import { useNotificationStore } from "./stores/notification.ts";
-import { useThemeStore } from './stores/theme';
+import { getNotifications } from "./stores/notification.ts";
+import { useTheme } from './stores/theme';
 import Sidebar from "./templates/sidebar/Sidebar.vue";
 import DownloadNewVersion from "./pages/_app/DownloadNewVersion.vue";
 import { checkUpdate, versionInfo } from "./utils/utils";
@@ -26,11 +26,11 @@ import { Capacitor } from "@capacitor/core";
 
 const router = useRouter();
 const route = useRoute();
-const store = useTransitionStore();
+const transition = useTransitionActions();
 
 router.beforeEach((_, __, next) =>
 {
-    store.onLeave();
+    transition.onLeave();
     return new Promise((resolve) =>
     {
         setTimeout(() =>
@@ -43,13 +43,12 @@ router.beforeEach((_, __, next) =>
 router.afterEach((_, __, failure) =>
 {
     if (isNavigationFailure(failure)) return;
-    const store = useTransitionStore();
-    store.onEnter();
+    transition.onEnter();
     return new Promise((resolve) =>
     {
         setTimeout(() =>
         {
-            resolve(store.clear());
+            resolve(transition.clear());
         }, $appearDuration);
     });
 });
@@ -57,9 +56,8 @@ router.afterEach((_, __, failure) =>
 let user = useUser();
 user.reload();
 
-const notificationStore = useNotificationStore();
-const themeStore = useThemeStore();
-themeStore.initialize();
+const theme = useTheme();
+theme.initialize();
 checkUpdate();
 </script>
 <style lang="scss">

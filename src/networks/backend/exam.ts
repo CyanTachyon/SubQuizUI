@@ -1,69 +1,81 @@
 import type { Exam } from "../../dataClasses/Exam";
-import { checkResponse } from "../utils/checkResponse";
+import type { ExamId } from "../../dataClasses/Ids";
+import type { AnswerType } from "../../dataClasses/Question";
+import type { Quiz } from "../../dataClasses/Quiz";
+import { checkResponse, ResponseError } from "../utils/checkResponse";
 import { sendRequest, Target } from "../utils/sendRequest";
 
-const getExamsUrl = "/exam/group/{group}";
+const getExamsUrl = "/exam/class/{class}";
 
-export function getExams(groupId: number)
+export async function getExams(classId: number)
 {
-    return checkResponse<Exam[]>(sendRequest({
+    return await checkResponse<Exam[]>(sendRequest({
         target: Target.BACKEND,
         url: getExamsUrl,
         method: 'GET',
-        params: {group: groupId},
+        params: {class: classId},
     }));
 }
 
-const newExamUrl = "/exam";
+const examUrl = "/exam";
 
-export function newExam(exam: Omit<Exam, 'id'>)
+export async function newExam(exam: Omit<Exam, 'id'>)
 {
-    return checkResponse<Exam>(sendRequest({
+    return await checkResponse<ExamId>(sendRequest({
         target: Target.BACKEND,
-        url: newExamUrl,
+        url: examUrl,
         method: 'POST',
         data: exam,
     }));
 }
 
-export function modifyExam(exam: Exam)
+export async function modifyExam(exam: Exam)
 {
-    return checkResponse<null>(sendRequest({
+    return await checkResponse<null>(sendRequest({
         target: Target.BACKEND,
-        url: newExamUrl,
+        url: examUrl,
         method: 'PUT',
         data: exam,
     }));
 }
 
-const examImageUrl = "/exam/{id}/image"
-
-export function addExamImage(examId: number, type: 'GIF' | 'JPEG' | 'PNG' | 'SVG' | 'XIcon', md5: string)
+const getExamUrl = "/exam/{id}";
+export async function getExam(id: number)
 {
-    return checkResponse<string | null>(sendRequest({
+    return await checkResponse<Exam>(sendRequest({
         target: Target.BACKEND,
-        url: examImageUrl,
-        method: 'POST',
-        params: {id: examId, type, md5},
-    }));
-}
-
-export function removeExamImage(examId: number, md5: string)
-{
-    return checkResponse<null>(sendRequest({
-        target: Target.BACKEND,
-        url: examImageUrl,
-        method: 'DELETE',
-        params: {id: examId, md5},
-    }));
-}
-
-export function getExamImages(examId: number)
-{
-    return checkResponse<string[]>(sendRequest({
-        target: Target.BACKEND,
-        url: examImageUrl,
+        url: getExamUrl,
         method: 'GET',
-        params: {id: examId},
+        params: {id},
     }));
+}
+
+const deleteExamUrl = "/exam/{id}";
+export async function deleteExam(id: number)
+{
+    return await checkResponse<null>(sendRequest({
+        target: Target.BACKEND,
+        url: deleteExamUrl,
+        method: 'DELETE',
+        params: {id},
+    }));
+}
+
+const startExamUrl = "/exam/{id}/start";
+export async function startExam(id: number)
+{
+    try
+    {
+        return await checkResponse<Quiz<null, null, null>>(sendRequest({
+            target: Target.BACKEND,
+            url: `${startExamUrl}`,
+            method: 'POST',
+            params: { id },
+        }));
+    }
+    catch (e)
+    {
+        if (e instanceof ResponseError && e.response.code === 406) return e.response.data as Quiz<null, AnswerType | null, null>;
+        throw e;
+    }
 }

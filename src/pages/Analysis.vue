@@ -7,7 +7,7 @@ import Loading from "../components/Loading.vue";
 import QuizView from "../templates/QuizView.vue";
 import NotFound from "./NotFound.vue";
 import type { AnswerType } from "../dataClasses/Question.ts";
-import { useNotificationStore } from "../stores/notification.ts";
+import { useNotification } from "../stores/notification.ts";
 
 const route = useRoute();
 const id = Number(route.params.id);
@@ -16,7 +16,7 @@ const notFound = ref(false);
 
 document.title = '答题分析 - SubQuiz';
 
-const notificationStore = useNotificationStore();
+const notificationStore = useNotification();
 let quit = false;
 let notificationId = 0n;
 let timeout = 0;

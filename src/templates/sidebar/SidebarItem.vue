@@ -40,6 +40,8 @@ $close-width: 69px;
     overflow: hidden;
     padding: 0 0 0 0;
     margin: 5px;
+    min-height: 51px;
+    max-height: 51px;
 }
 
 quiz-sidebar-item-wrapper {

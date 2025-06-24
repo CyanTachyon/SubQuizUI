@@ -4,7 +4,7 @@ import { safeRedirect } from "../../utils/redirect";
 import { ref } from "vue";
 import { FileOpener } from '@capacitor-community/file-opener';
 import { Filesystem, Directory } from '@capacitor/filesystem';
-import { useNotificationStore } from "../../stores/notification";
+import { useNotification } from "../../stores/notification";
 import type { AndroidVersion } from "../../dataClasses/AndroidVersion";
 
 const { info } = defineProps<{info: AndroidVersion;}>();
@@ -33,11 +33,11 @@ const download = async () => {
             progress: true,
         });
 
-        useNotificationStore().addSuccess("开始下载");
+        useNotification().addSuccess("开始下载");
 
         const result = await download;
         
-        useNotificationStore().addSuccess("下载完成");
+        useNotification().addSuccess("下载完成");
 
         try 
         {
@@ -48,8 +48,8 @@ const download = async () => {
         }
         catch(e)
         {
-            if (e.stack) useNotificationStore().addError(e.stack);
-            else useNotificationStore().addError(e);
+            if (e.stack) useNotification().addError(e.stack);
+            else useNotification().addError(e);
         }
         
         downloading.value = false;
@@ -57,7 +57,7 @@ const download = async () => {
     catch (error) 
     {
         console.error('下载或安装APK出错:', error);
-        useNotificationStore().addError('下载或安装APK出错, 将使用浏览器打开链接...');
+        useNotification().addError('下载或安装APK出错, 将使用浏览器打开链接...');
         setTimeout(() => {
             safeRedirect(info.url);
         }, 2000);

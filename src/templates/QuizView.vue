@@ -9,7 +9,7 @@ import CheckboxMarkedCircleOutline from "vue-material-design-icons/CheckboxMarke
 import CloseCircleOutlineIcon from "vue-material-design-icons/CloseCircleOutline.vue";
 import CloseIcon from "vue-material-design-icons/Close.vue";
 import CheckIcon from "vue-material-design-icons/Check.vue";
-import { useNotificationStore } from "../stores/notification.ts";
+import { useNotification } from "../stores/notification.ts";
 import { getOptionName } from "../utils/utils";
 import { useRouter } from "vue-router";
 
@@ -93,7 +93,7 @@ function trySubmit()
                     // 平滑滚动到未完成的题目
                     questionElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     
-                    useNotificationStore().add({
+                    useNotification().add({
                         message: '请完成所有题目后再提交',
                         type: 'warning'
                     });
@@ -112,7 +112,7 @@ function gotoAI(sectionIndex: number)
     const section = quiz.sections[sectionIndex];
     if (section.questions.length === 0)
     {
-        useNotificationStore().add({
+        useNotification().add({
             message: '该部分没有题目，无法使用AI',
             type: 'warning'
         });

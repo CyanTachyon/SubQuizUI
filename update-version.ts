@@ -1,10 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, writeFileSync } from "fs";
 import path from "path";
+import packageJson from "./package.json" with { type: "json" };
 
-const packageJson = JSON.parse(readFileSync(path.resolve('package.json'), 'utf-8'))
 const androidLatestVersionJson = path.resolve('public', 'android_latest.json');
 
-function updateAndroidVersion(versionName, versionId, minVersionId)
+function updateAndroidVersion(versionName: string, versionId: number, minVersionId: number, url: string)
 {
     console.log(`Updating version to ${versionName} (${versionId})`);
     if (!existsSync(path.resolve('public'))) 
@@ -15,9 +15,9 @@ function updateAndroidVersion(versionName, versionId, minVersionId)
             version: versionName, 
             versionCode: versionId,
             minVersionCode: minVersionId,
-            url: `https://quiz.bdfzscc.com/SubQuiz.apk`
+            url,
         })
     )
 }
 
-updateAndroidVersion(packageJson.version, packageJson.versionId, packageJson.minVersionId);
+updateAndroidVersion(packageJson.version, packageJson.versionId, packageJson.minVersionId, packageJson.downloadUrl);

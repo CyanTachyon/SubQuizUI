@@ -4,14 +4,15 @@ import Loading from "../components/Loading.vue";
 import { ref, watch } from "vue";
 import type { Quiz } from "../dataClasses/Quiz.ts";
 import { newQuiz, saveQuiz } from "../networks/backend/quiz.ts";
+import { startExam } from "../networks/backend/exam.ts";
 import { useRoute, useRouter } from "vue-router";
 import QuizView from "../templates/QuizView.vue";
 import debounce from "../utils/debounce.ts";
-import { useNotificationStore } from "../stores/notification.ts";
+import { useNotification } from "../stores/notification.ts";
 import type { AnswerType } from "../dataClasses/Question.ts";
 import type { KnowledgePointId } from "../dataClasses/Ids.ts";
 
-const notificationStore = useNotificationStore();
+const notificationStore = useNotification();
 const data = ref<null | Quiz<null, AnswerType | null, null>>(null);
 const route = useRoute();
 const router = useRouter();
@@ -24,10 +25,17 @@ const kps: (null | (KnowledgePointId[])) = (() => {
     if (!kps1 || kps1.length === 0) kps1 = null;
     return kps1;
 })();
+const exam = Number(route.query.exam);
 
 document.title = '测试 - SubQuiz';
 
-newQuiz(count, kps).then(quiz => data.value = quiz, router.back);
+const setData = (quiz: Quiz<null, AnswerType | null, null>) =>
+{
+    if (quiz.finished) router.replace('/analysis/' + quiz.id);
+    else data.value = quiz;
+};
+if (!exam) newQuiz(count, kps).then(setData, router.back);
+else startExam(exam).then(setData, router.back);
 
 let submitted = false;
 
