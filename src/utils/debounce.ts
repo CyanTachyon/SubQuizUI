@@ -7,7 +7,7 @@
  */
 export default function <T extends any[]>(fn: (...args: T) => any, delay: number, immediate: boolean = false): (...args: T) => void 
 {
-    let timer: number | null = null;
+    let timer;
     return (...args: T) => 
     {
         if (timer) clearTimeout(timer);

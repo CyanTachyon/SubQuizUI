@@ -19,7 +19,7 @@ document.title = '答题分析 - SubQuiz';
 const notificationStore = useNotification();
 let quit = false;
 let notificationId = 0n;
-let timeout = 0;
+let timeout;
 function init()
 {
     if (quit) return;

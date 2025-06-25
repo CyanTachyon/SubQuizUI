@@ -106,6 +106,8 @@ function handleMouseUp()
         @mousedown="handleMouseDown"
         @mouseup="handleMouseUp"
         @mouseleave="cancelLongPress"
+        @touchstart="handleMouseDown"
+        @touchend="handleMouseUp"
         :class="className" 
         ref="statusButton" 
         :disabled="disabled">
@@ -125,7 +127,6 @@ quiz-button {
     background: var(--glass-button-background);
     color: var(--color);
     cursor: pointer;
-    display: flex;
     justify-content: start;
     align-items: center;
     text-align: center;

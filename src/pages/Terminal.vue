@@ -16,7 +16,7 @@ const ansi_up = new AnsiUp();
 const inputCommand = ref('');
 const messages = ref<HTMLElement | null>(null);
 const url = connectUrl(Target.BACKEND, '/terminal/api').replace('https://', 'wss://').replace('http://', 'ws://');
-let timer: number | null = null;
+let timer;
 
 let tabs = ref([]);
 let select = undefined;
