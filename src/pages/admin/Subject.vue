@@ -6,7 +6,7 @@ import {ref} from "vue";
 import Card from "../../components/Card.vue";
 import {getSubject} from "../../networks/backend/subject.ts";
 import type {Subject} from "../../dataClasses/Subject.ts";
-import StatusButton from "../../components/StatusButton.vue";
+import Button from "../../components/Button.vue";
 import {useUser} from "../../stores/user.ts";
 import Text from "../../components/Text.vue";
 import type { SubjectId } from "../../dataClasses/Ids.ts";
@@ -70,25 +70,25 @@ function timeToString(time: number)
         <Text class="main-title">{{ subjectInfo.name }}</Text>
         <Text class="main-description">{{ subjectInfo.description }}</Text>
         <div class="section-types-container-header">
-            <StatusButton
+            <Button
                 v-if="user.hasAdmin()"
                 class="create-subject"
                 @click="editSubject"
             >
                 修改学科信息
-            </StatusButton>
-            <StatusButton
+            </Button>
+            <Button
                 v-if="user.hasAdmin()"
                 class="create-subject"
                 @click="createGroup"
             >
                 创建新备课组
-            </StatusButton>
+            </Button>
         </div>
         <Spacer/>
         <div class="section-types">
             <template v-for="q in groups">
-                <Card class="section-type clickable" @click="gotoGroup(q)">
+                <Card :max-tilt="5" class="section-type clickable" @click="gotoGroup(q)">
                     <p class="title">{{ q.name }}</p>
                     <Spacer/>
                     <p>创建时间: {{ timeToString(q.time) }}</p>

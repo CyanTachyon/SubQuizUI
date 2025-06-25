@@ -69,17 +69,11 @@ quiz-switch {
     background-color: transparent;
     border-radius: 25px;
     display: flex;
-    // justify-content: center;
     align-items: center;
     cursor: pointer;
     --size: 60px;
-    box-shadow: calc(var(--size) * 0.075) calc(var(--size) * 0.075) calc(var(--size) * 0.1) var(--up-shadow),
-    calc(var(--size) * -0.075) calc(var(--size) * -0.075) calc(var(--size) * 0.1) var(--down-shadow),
-    inset calc(var(--size) / -40) calc(var(--size) / -40) calc(var(--size) / 40) var(--down-shadow),
-    inset calc(var(--size) / 40) calc(var(--size) / 40) calc(var(--size) / 40) var(--up-shadow);
+    border: solid 2px var(--glass-button-hover-background);
     overflow: hidden;
-    border: 2px solid var(--bgcolor);
-    
 }
 
 quiz-switch-thumb {
@@ -91,11 +85,10 @@ quiz-switch-thumb {
     top: 0;
     left: 0;
     --size: 90px;
-    box-shadow: inset calc(var(--size) / -40) calc(var(--size) / -40) calc(var(--size) / 40) var(--up-shadow),
-    inset calc(var(--size) / 40) calc(var(--size) / 40) calc(var(--size) / 40) var(--down-shadow),
-    -37.5px 0 0 25px #2196f388,;
+    box-shadow: -37.5px 0 0 25px #2196f388,;
     
     transition: transform 0.3s ease-in-out;
+    background-color: var(--glass-button-hover-background);
 }
 
 .on {

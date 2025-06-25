@@ -108,6 +108,18 @@ const updateInfo: UpdateInfo[] = ([
             '- 修复了已知bug\n'
     },
     {
+        date: '2025-06-24',
+        version: '3.0.0',
+        description: '' +
+            '- 增加组卷功能\n' +
+            '- 增加班级相关功能\n' +
+            '- 允许老师查看学生考试分析\n' +
+            '- 重写大部分UI样式\n' +
+            '- 允许长按切换主题更换背景\n' +
+            '- 优化了AI相关功能\n' +
+            '- 修复了已知bug\n'
+    },
+    {
         version: 'TODO LIST',
         description: '以下是预计添加的新功能，但我开发速度有限，所以别急^v^\n' +
             "1. 简答/填空允许提交图片\n" +
@@ -120,7 +132,7 @@ const updateInfo: UpdateInfo[] = ([
 
 <template>
     <quiz-update-info-container>
-        <Card v-for="item in updateInfo" :key="item.version">
+        <Card :max-tilt="1" v-for="item in updateInfo" :key="item.version">
             <quiz-update-info-item-version>{{ item.version }}</quiz-update-info-item-version>
             <Spacer />
             <quiz-update-info-item-date v-if="item.date">发布时间：{{ item.date }}</quiz-update-info-item-date>

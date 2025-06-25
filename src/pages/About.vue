@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Card from "../components/Card.vue";
-import StatusButton from "../components/StatusButton.vue";
+import Button from "../components/Button.vue";
 import ChevronLeftIcon from "vue-material-design-icons/ChevronLeft.vue";
 import { useRouter } from "vue-router";
 import { safeRedirect } from "../utils/redirect.ts";
@@ -43,15 +43,15 @@ function goto(url: string)
 <template>
     <quiz-about-main>
         <quiz-about-button-container>
-            <StatusButton @click="goBack">
+            <Button @click="goBack">
                 <ChevronLeftIcon />Go Back
-            </StatusButton>
-            <StatusButton @click="gotoUpdateInfo">
+            </Button>
+            <Button @click="gotoUpdateInfo">
                 更新日志
                 <ChevronRightIcon />
-            </StatusButton>
+            </Button>
         </quiz-about-button-container>
-        <Card>
+        <Card :max-tilt="5">
             <h1>SubQuiz</h1>
             <p>Version: {{ version }}</p>
             <p class="clickable" @click="goto(author.website)"> Author: {{ author.name }} </p>

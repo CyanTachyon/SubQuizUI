@@ -2,7 +2,7 @@
 import { useUser } from "../stores/user.ts";
 import { safeRedirect } from "../utils/redirect.ts";
 import Image from "../components/Image.vue";
-import StatusButton from "../components/StatusButton.vue";
+import Button from "../components/Button.vue";
 import { connectUrl, Target } from "../networks/utils/sendRequest";
 
 const { close } = defineProps<{
@@ -22,12 +22,12 @@ const user = useUser();
             <quiz-username>{{ user.userName() }}</quiz-username>
         </quiz-user-box>
         <div style="display: flex;">
-            <StatusButton @click="() => { close(); safeRedirect(connectUrl(Target.SSO_FRONTEND, '/info?intent=seiue&userId=' + user.userId())); }">
+            <Button @click="() => { close(); safeRedirect(connectUrl(Target.SSO_FRONTEND, '/info?intent=seiue&userId=' + user.userId())); }">
                 绑定希悦
-            </StatusButton>
-            <StatusButton @click="() => { user.logout(); close(); safeRedirect(connectUrl(Target.FRONTEND, '/')) }">
+            </Button>
+            <Button @click="() => { user.logout(); close(); safeRedirect(connectUrl(Target.FRONTEND, '/')) }">
                 退出登陆
-            </StatusButton>
+            </Button>
         </div>
     </div>
 </template>

@@ -14,6 +14,7 @@ import type { ChatId } from '../dataClasses/Ids';
 import Loading from '../components/Loading.vue';
 import QuizView from './QuizView.vue';
 import Text from '../components/Text.vue';
+import Card from '../components/Card.vue';
 
 export type AiInfo = Chat & {
     histories: (AiHistory & { showReasoning: boolean; })[];
@@ -221,52 +222,55 @@ function openSection()
 </script>
 
 <template>
-    <div v-if="loading">
-        <Loading />
-    </div>
-    <div v-else style="display: flex; flex-direction: column;">
-        <Text class="section" v-if="info.section" @click="openSection">
-            {{ getSectionBrief(info.section) }}
-        </Text>
-        <div @scroll="handleScroll" class="histories" :class="info.histories.length === 0 ? 'empty' : ''"
-            ref="historiesContainer">
-            <Text v-if="info.histories.length === 0" class="message empty">
-                <span>{{ info.section ? "题目解析没看懂？" : "在题目解析页面点击AI标识" }}向AI提问</span>
+    <Card class="quiz-ai-dialog">
+        <Loading v-if="loading"></Loading>
+        <template v-else>
+            <Text class="section" v-if="info.section" @click="openSection">
+                {{ getSectionBrief(info.section) }}
             </Text>
-            <Text v-for="(item, index) in info.histories" :key="index" class="message" :class="item.role">
-                <div class="reasoning" v-if="item.reasoning_content">
-                    <div class="reasoning-header" @click="item.showReasoning = !item.showReasoning">
-                        <ChevronDownIcon v-if="item.showReasoning" class="icon" />
-                        <ChevronRightIcon v-else class="icon" />
-                        思考过程
+            <div @scroll="handleScroll" class="histories" :class="info.histories.length === 0 ? 'empty' : ''"
+                ref="historiesContainer">
+                <Text v-if="info.histories.length === 0" class="message empty">
+                    <span>{{ info.section ? "题目解析没看懂？" : "在题目解析页面点击AI标识" }}向AI提问</span>
+                </Text>
+                <Text v-for="(item, index) in info.histories" :key="index" class="message" :class="item.role">
+                    <div class="reasoning" v-if="item.reasoning_content">
+                        <div class="reasoning-header" @click="item.showReasoning = !item.showReasoning">
+                            <ChevronDownIcon v-if="item.showReasoning" class="icon" />
+                            <ChevronRightIcon v-else class="icon" />
+                            思考过程
+                        </div>
+                        <Text
+                            v-markdown="{ markdown: true, content: item.reasoning_content, section: info.section?.id }"
+                            class="reasoning-content" v-if="item.showReasoning" />
                     </div>
-                    <Text v-markdown="{ markdown: true, content: item.reasoning_content, section: info.section?.id }"
-                        class="reasoning-content" v-if="item.showReasoning" />
-                </div>
-                <Text class="content" v-if="item.content" v-markdown="{ markdown: item.role === 'assistant', content: item.content, section: info.section?.id }" />
-                <div class="loading-icon" v-if="index === info.histories.length - 1 && info.showAnswering" :key="index">
-                    <LoadingIcon />
-                </div>
+                    <Text class="content" v-if="item.content"
+                        v-markdown="{ markdown: item.role === 'assistant', content: item.content, section: info.section?.id }" />
+                    <div class="loading-icon" v-if="index === info.histories.length - 1 && info.showAnswering"
+                        :key="index">
+                        <LoadingIcon />
+                    </div>
+                </Text>
+            </div>
+            <Input v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
+            <Text class="bottom-bar">
+                <span @click="changeModel('BDFZ_HELPER')" class="model-name bdfz-helper"
+                    :class="model === 'BDFZ_HELPER' ? 'active' : ''">
+                    北大附中问答助手
+                </span>
+                <span @click="changeModel('QUIZ_AI')" class="model-name quiz-ai"
+                    :class="model === 'QUIZ_AI' ? 'active' : ''">
+                    Quiz AI
+                </span>
+                <span class="tip" v-if="model === 'QUIZ_AI'">
+                    *QuizAI 推理能力更强，但图片识别仍处于测试阶段
+                </span>
+                <span class="send" @click="onSubmit(null)">
+                    发送
+                </span>
             </Text>
-        </div>
-        <Input v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
-        <Text class="bottom-bar">
-            <span @click="changeModel('BDFZ_HELPER')" class="model-name bdfz-helper"
-                :class="model === 'BDFZ_HELPER' ? 'active' : ''">
-                北大附中问答助手
-            </span>
-            <span @click="changeModel('QUIZ_AI')" class="model-name quiz-ai"
-                :class="model === 'QUIZ_AI' ? 'active' : ''">
-                Quiz AI
-            </span>
-            <span class="tip" v-if="model === 'QUIZ_AI'">
-                *QuizAI 推理能力更强，但图片识别仍处于测试阶段
-            </span>
-            <span class="send" @click="onSubmit(null)">
-                发送
-            </span>
-        </Text>
-    </div>
+        </template>
+    </Card>
 </template>
 
 <style scoped lang="scss">
@@ -277,6 +281,13 @@ quiz-loading {
     transform: translate(-50%, -50%);
     height: 20%;
     width: 30%;
+}
+
+.quiz-ai-dialog {
+    height: calc(100% - 20px);
+    margin-bottom: 6px;
+    display: flex;
+    flex-direction: column;
 }
 
 .section {

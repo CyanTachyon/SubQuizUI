@@ -17,7 +17,6 @@ import TreeView, { type TreeNode } from "../../templates/TreeView.vue";
 import { getUserPermissionInGroup } from "../../networks/backend/admin.ts";
 import { isAdmin } from "../../dataClasses/Permission.ts";
 import type { KnowledgePoint } from "../../dataClasses/KnowledgePoint.ts";
-import StatusButton from "../../components/StatusButton.vue";
 import type { SectionType } from "../../dataClasses/SectionType.ts";
 import type { Slice } from "../../dataClasses/Slice.ts";
 import type { Section } from "../../dataClasses/Section.ts";
@@ -30,7 +29,7 @@ import FolderPlusIcon from "vue-material-design-icons/FolderPlus.vue";
 import AdjustIcon from "vue-material-design-icons/Adjust.vue";
 import FolderIcon from "vue-material-design-icons/Folder.vue";
 import PlusCircleOutlineIcon from "vue-material-design-icons/PlusCircleOutline.vue";
-import CommonButton from "../../components/CommonButton.vue";
+import Button from "../../components/Button.vue";
 import TextBoxPlusOutlineIcon from "vue-material-design-icons/TextBoxPlusOutline.vue";
 import { getSectionBrief, inputDialog, pushUrl } from "../../utils/utils.tsx";
 import Pagination from "../../components/Pagination.vue";
@@ -474,35 +473,35 @@ function startQuiz()
                     <div style="display: flex; margin-left: 20px;">
                         <p style="min-width: 110px; margin-top: 20px;">题目类型:</p>
                         <div style="display: flex; align-items: center; flex-wrap: wrap;">
-                            <StatusButton :down="current.sectionType == null" @click="changeType(null)">全部
-                            </StatusButton>
-                            <StatusButton v-for="type in current.sectionTypes" :key="type.id"
+                            <Button :down="current.sectionType == null" @click="changeType(null)">全部
+                            </Button>
+                            <Button v-for="type in current.sectionTypes" :key="type.id"
                                 :down="current.sectionType == type.id" @click="changeType(type.id)">
                                 {{ type.name }}
-                            </StatusButton>
+                            </Button>
                             <PlusIcon class="clickable" @click="addNewSectionType" />
                         </div>
                     </div>
 
                     <quiz-sections-ops v-if="current.sectionType">
-                        <StatusButton @click="createSection(current.sectionType)">
+                        <Button @click="createSection(current.sectionType)">
                             <TextBoxPlusOutlineIcon />
                             创建新题目
-                        </StatusButton>
-                        <StatusButton @click="renameSectionType">
+                        </Button>
+                        <Button @click="renameSectionType">
                             <SquareEditOutlineIcon />
                             修改题目类型
-                        </StatusButton>
-                        <StatusButton @click="removeSectionType">
+                        </Button>
+                        <Button @click="removeSectionType">
                             <DeleteIcon />
                             删除题目类型
-                        </StatusButton>
+                        </Button>
                     </quiz-sections-ops>
                     <quiz-sections-empty v-if="current.sections && current.sections.list.length === 0">
                         <p> 此知识点暂无题目 </p>
                     </quiz-sections-empty>
                     <quiz-sections-wrapper v-if="current.sections">
-                        <Card v-for="section in current.sections.list" :key="section.id" @click="gotoSection(section)"
+                        <Card :max-tilt="5" v-for="section in current.sections.list" :key="section.id" @click="gotoSection(section)"
                             class="clickable">
                             <Text>小题数量：{{ section.questions.length }}</Text>
                             <Text>题目类型：{{ current.sectionTypes.find(type => type.id === section.type)?.name }}</Text>
@@ -518,12 +517,12 @@ function startQuiz()
                 <!--  文件夹 -->
                 <template v-else-if="hasPermission">
                     <div v-if="current.children !== null" style="display: flex;">
-                        <CommonButton @click="createKP(true)">
+                        <Button @click="createKP(true)">
                             <FolderPlusIcon />
-                        </CommonButton>
-                        <CommonButton @click="createKP(false)">
+                        </Button>
+                        <Button @click="createKP(false)">
                             <PlusCircleOutlineIcon />
-                        </CommonButton>
+                        </Button>
                     </div>
 
                     <quiz-children-wrapper v-if="current.children !== null">
@@ -546,7 +545,7 @@ function startQuiz()
                         <Input :area="false" placeholder="Section Count" type="number" v-model="count" />
                         <Slider :min-value="0" :max-value="100" :step="1" v-model="count" />
                         <quiz-main-button-container>
-                            <StatusButton @click="startQuiz">开始测试</StatusButton>
+                            <Button @click="startQuiz">开始测试</Button>
                         </quiz-main-button-container>
                     </Card>
                 </quiz-main-container>

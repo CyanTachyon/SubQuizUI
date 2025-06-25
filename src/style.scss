@@ -5,6 +5,8 @@
     -moz-tab-size: 4;
     -o-tab-size: 4;
     tab-size: 4;
+
+    font-weight: 600;
 }
 
 :focus,
@@ -26,7 +28,22 @@ svg {
     --down-shadow: #{$light-down-shadow};
     --border-color: #{$light-border-color};
 
+    --glass-background: #{$light-glass-background};
+    --glass-border: #{$light-glass-border};
+    --glass-up-shadow: #{$light-glass-up-shadow};
+    --glass-down-shadow: #{$light-glass-down-shadow};
+    --glass-button-background: #{$light-glass-button-background};
+    --glass-button-hover-background: #{$light-glass-button-hover-background};
+
     -webkit-tap-highlight-color: transparent;
+
+    body {
+        background-image: url('/src/assets/light-background.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
 }
 
 [data-theme='dark'] {
@@ -35,6 +52,17 @@ svg {
     --up-shadow: #{$dark-up-shadow};
     --down-shadow: #{$dark-down-shadow};
     --border-color: #{$dark-border-color};
+    
+    --glass-background: #{$dark-glass-background};
+    --glass-border: #{$dark-glass-border};
+    --glass-up-shadow: #{$dark-glass-up-shadow};
+    --glass-down-shadow: #{$dark-glass-down-shadow};
+    --glass-button-background: #{$dark-glass-button-background};
+    --glass-button-hover-background: #{$dark-glass-button-hover-background};
+
+    body {
+        background-image: url('/src/assets/dark-background.jpg');
+    }
 }
 
 quiz-markdown-body {

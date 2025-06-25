@@ -2,7 +2,7 @@
 import {onMounted, ref, watch, getCurrentInstance} from 'vue';
 import {createAnimationsController} from '../utils/AnimationsController';
 import {sleep} from '../utils/sleep';
-import {$animateDuration, $appearDuration, State, useTransitionStore} from '../stores/transition';
+import {$appearDuration, State, useTransitionStore} from '../stores/transition';
 
 const model = defineModel<string | number>({required: false});
 const { placeholder, type, disappear, area, align, readonly, onFocus, onFocusOut } = defineProps({
@@ -50,37 +50,20 @@ function getAlign()
 let className = ref(disappear ? 'disappear-input' : 'up-input');
 let placeholderClassName = ref(disappear ? 'placeholder-disappear' : 'placeholder-appear');
 let controller = createAnimationsController();
-let isFocused = ref(false);
 
 // 获取当前组件实例
 const currentInstance = getCurrentInstance()
 
 function handleFocus() 
 {
-    if (isFocused.value || disappear || readonly) return;
-    controller.push([
-        () => {
-            className.value = 'down';
-            isFocused.value = true;
-            onFocus(currentInstance.exposed);
-        },
-        () => sleep($animateDuration),
-        () => className.value = 'down-input'
-    ])
+    if (disappear || readonly) return;
+    onFocus(currentInstance.exposed);
 }
 
 function handleFocusOut() 
 {
-    if (!isFocused.value || disappear) return;
-    controller.push([
-        () => {
-            className.value = 'up';
-            isFocused.value = false;
-            onFocusOut(currentInstance.exposed);
-        },
-        () => sleep($animateDuration),
-        () => className.value = 'up-input'
-    ])
+    if (disappear) return;
+    onFocusOut(currentInstance.exposed);
 }
 
 function handleInput(event: Event) 
@@ -103,14 +86,14 @@ function onDisappearChange(value: boolean, oldValue: boolean)
     if (value === oldValue) return;
     controller.push([
         () => {
-            className.value = isFocused.value ? (value ? 'down-disappear' : 'down-appear') : (value ? 'up-disappear' : 'up-appear');
+            className.value = value ? 'disappear' : 'appear'
             placeholderClassName.value = value ? 'placeholder-disappear' : 'disappeared-placeholder';
         },
         () => sleep($appearDuration/2),
         () => placeholderClassName.value = value ? 'disappeared-placeholder' : 'placeholder-appear',
         () => sleep($appearDuration/2),
         () => {
-            className.value = value ? 'disappear-input' : (isFocused.value ? 'down-input' : 'up-input');
+            className.value = value ? 'disappeared-input' : 'appeared-input';
             placeholderClassName.value = value ? 'disappeared-placeholder' : 'appeared-placeholder';
         }
     ])
@@ -127,7 +110,7 @@ let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
 const input = ref<HTMLInputElement | null>(null);
 onMounted(() => {
-    if (input.value && window.getComputedStyle(input.value).getPropertyValue('--transition') !== 'static')
+    if (input.value && window.getComputedStyle(input.value).getPropertyValue('--transition').trim() !== 'static')
     {
         watch(() => transitionStore.state, onTransitionChange, {immediate: true});
     }
@@ -164,21 +147,29 @@ defineExpose({
 
 <style scoped lang="scss">
 
-input:focus {
-    outline: none;
-}
-
-textarea:focus {
-    outline: none;
-}
-
 .input {
+    border: none;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color);
+    backdrop-filter: blur(5px);
+    transition: background 0.3s ease;
+
+    &:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+    }
+
+    &::placeholder {
+        color: var(--color);
+    }
+
     padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
     margin: 10px;
     font-size: 100%;
-    background-color: transparent;
     display: flex;
+    
     &::-webkit-inner-spin-button {
         -webkit-appearance: none !important;
     }
@@ -236,42 +227,12 @@ textarea {
     text-align: center;
 }
 
-.up-input {
-    @include neumorphism-up;
+.disappeared-input {
+    opacity: 0;
 }
 
-.down-input {
-    @include neumorphism-down;
-}
-
-.disappear-input {
-    color: transparent;
-    box-shadow: none;
-    border: 2px solid transparent;
-}
-
-.down {
-    @include neumorphism-up-to-down;
-}
-
-.up {
-    @include neumorphism-down-to-up;
-}
-
-.up-disappear {
-    @include appear('up-disappear', up, false);
-}
-
-.down-disappear {
-    @include appear('down-disappear', down, false);
-}
-
-.up-appear {
+.appear {
     @include appear('up-appear', up, true);
-}
-
-.down-appear {
-    @include appear('down-appear', down, true);
 }
 
 //// placeholder ////
@@ -281,7 +242,7 @@ textarea {
 }
 
 .appeared-placeholder::placeholder {
-    opacity: 1;
+    opacity: 0.5;
 }
 
 .placeholder-disappear::placeholder {
@@ -290,7 +251,7 @@ textarea {
 }
 
 .placeholder-appear::placeholder {
-    opacity: 1;
+    opacity: 0.5;
     transition: opacity calc($appear-duration / 2) ease-in-out;
 }
 </style>

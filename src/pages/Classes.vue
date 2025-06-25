@@ -2,11 +2,10 @@
 import Card from "../components/Card.vue";
 import { ref } from "vue";
 import Spacer from "../components/Spacer.vue";
-import CommonButton from "../components/CommonButton.vue";
+import Button from "../components/Button.vue";
 import Text from "../components/Text.vue";
 import type { ClassWithMembers } from "../dataClasses/Class";
 import { getClassList } from "../networks/backend/class";
-import StatusButton from "../components/StatusButton.vue";
 import { getPreparationGroup } from "../networks/backend/preparationGroup";
 import Loading from "../components/Loading.vue";
 import type { Exam } from "../dataClasses/Exam";
@@ -22,21 +21,6 @@ import { dialog, inputDialog } from "../utils/utils";
 const router = useRouter();
 let open = ref(true);
 let sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');
-
-// let controller = createAnimationsController();
-// function changeSidebarState()
-// {
-//     controller.push([
-//         () =>
-//         {
-//             open.value = !open.value;
-//             localStorage.setItem('ai-chats-sidebar-open', open.value.toString());
-//             sidebarClassName.value = open.value ? 'sidebar-open' : 'sidebar-close';
-//         },
-//         () => sleep(800),
-//         () => sidebarClassName.value = open.value ? 'sidebar-opened' : 'sidebar-closed',
-//     ], false);
-// }
 
 const isLoading = ref(false);
 const hasMore = ref(true);
@@ -108,12 +92,12 @@ function gotoExam(exam: Exam)
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 20px;">
                 开始考试：{ exam.name }
                 <div style="margin-top: 10px; display: flex; flex-direction: row; gap: 10px;">
-                    <StatusButton onClick={() => { close(); router.push('/quiz?exam=' + exam.id); }}>
+                    <Button onClick={() => { close(); router.push('/quiz?exam=' + exam.id); }}>
                         开始
-                    </StatusButton>
-                    <StatusButton onClick={() => close()}>
+                    </Button>
+                    <Button onClick={() => close()}>
                         取消
-                    </StatusButton>
+                    </Button>
                 </div>
             </div>,
             () => close()
@@ -146,18 +130,18 @@ function createExam()
     <quiz-classes>
         <Card :class="sidebarClassName" class="sidebar">
             <div class="menu-title-box box">
-                <!-- <StatusButton @click="changeSidebarState" class="menu-btn">
+                <!-- <Button @click="changeSidebarState" class="menu-btn">
                     <MenuOpenIcon v-if="open" />
                     <MenuCloseIcon v-else />
-                </StatusButton> -->
+                </Button> -->
                 <div class="menu-title">我的班级</div>
             </div>
 
             <Spacer style="margin-bottom: 10px;" />
             <div class="classes" @scroll="handleScroll">
-                <CommonButton class="item" v-for="clazz in classes" :key="clazz.id" @click="changeClass(clazz)">
+                <Button class="item" v-for="clazz in classes" :key="clazz.id" @click="changeClass(clazz)">
                     {{ clazz.name }}
-                </CommonButton>
+                </Button>
                 <Text v-if="isLoading" class="loading-indicator">
                     加载中...
                 </Text>
@@ -171,22 +155,21 @@ function createExam()
 
         </Card>
 
-        <div class="main-content">
-            <Card v-if="info && pgName && exams !== null && admin !== null"
-                style="flex-grow: 1; margin-bottom: 7px; display: flex; flex-direction: column;">
+        <Card class="main-content">
+            <template v-if="info && pgName && exams !== null && admin !== null">
                 <Text class="main-title">{{ info.name }}</Text>
                 <Text class="main-description"> {{ pgName }} </Text>
                 <div class="section-types-container-header">
-                    <StatusButton class="item" @click="chosen = 0" :down="chosen === 0">考试</StatusButton>
-                    <StatusButton class="item" @click="chosen = 1" :down="chosen === 1">成员</StatusButton>
+                    <Button class="item" @click="chosen = 0" :down="chosen === 0">考试</Button>
+                    <Button class="item" @click="chosen = 1" :down="chosen === 1">成员</Button>
                 </div>
                 <Spacer />
                 <div style="overflow: auto; scrollbar-width: none; flex-grow: 1;">
-                    <StatusButton v-if="chosen === 0 && admin" style="margin-left: 20px;" @click="createExam()">
+                    <Button v-if="chosen === 0 && admin" style="margin-left: 20px;" @click="createExam()">
                         新建考试
-                    </StatusButton> 
+                    </Button>
                     <div class="exams" v-if="chosen === 0">
-                        <Card v-for="e in exams" @click="gotoExam(e)">
+                        <Card v-for="e in exams" @click="gotoExam(e)" :max-tilt="5">
                             <p class="title">{{ e.name }}</p>
                             <Spacer />
                             <p>ID: {{ e.id }}</p>
@@ -196,7 +179,7 @@ function createExam()
                         <Text v-if="exams.length === 0" class="no-exam">暂无考试</Text>
                     </div>
                     <div class="members" v-if="chosen === 1">
-                        <Card v-for="m in info.members" :key="m.seiue.studentId" class="member-item">
+                        <Card v-for="m in info.members" :key="m.seiue.studentId" class="member-item" :max-tilt="7">
                             <quiz-user-box class="box">
                                 <Image class="avatar" :src="avatarUrl(m.user)" />
                                 <quiz-username-box>
@@ -206,15 +189,15 @@ function createExam()
                             </quiz-user-box>
                         </Card>
                     </div>
-            </div>
-            </Card>
+                </div>
+            </template>
             <div class="class-area" v-else-if="!info">
                 <Text class="empty-state">
                     <p>请选择一个班级查看详情</p>
                 </Text>
             </div>
             <Loading v-else class="loading" />
-        </div>
+        </Card>
     </quiz-classes>
 </template>
 
@@ -238,7 +221,6 @@ function createExam()
     margin-bottom: 7px;
     --sidebar-close-width: 80px;
     --sidebar-open-width: 200px;
-    overflow: hidden;
 
     .sidebar-empty {
         display: flex;
@@ -252,17 +234,19 @@ function createExam()
         padding: 10px;
         display: flex;
         flex-direction: column;
-        overflow-y: scroll;
+        overflow-y: auto;
         scrollbar-width: none;
         flex-grow: 1;
+        max-height: calc(100% - 80px);
+        min-height: calc(100% - 80px);
     }
 
     .loading-indicator,
     .no-more-indicator {
         text-align: center;
         padding: 15px;
-        color: #666;
         font-size: 14px;
+        opacity: 0.5;
     }
 
     .loading-indicator {
@@ -286,13 +270,16 @@ function createExam()
     }
 }
 
-div.main-content {
+.main-content {
     width: 100%;
     height: 100%;
-    overflow: auto;
     scrollbar-width: none;
     position: relative;
     display: flex;
+
+    margin-bottom: 7px; 
+    flex-direction: column;
+    height: calc(100% - 20px);
 
     .main-title {
         margin: 20px 0 0 20px;

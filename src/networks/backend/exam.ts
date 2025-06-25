@@ -1,5 +1,6 @@
+import type { ClassMember } from "../../dataClasses/Class";
 import type { Exam } from "../../dataClasses/Exam";
-import type { ExamId } from "../../dataClasses/Ids";
+import type { ExamId, SectionId } from "../../dataClasses/Ids";
 import type { AnswerType } from "../../dataClasses/Question";
 import type { Quiz } from "../../dataClasses/Quiz";
 import { checkResponse, ResponseError } from "../utils/checkResponse";
@@ -78,4 +79,41 @@ export async function startExam(id: number)
         if (e instanceof ResponseError && e.response.code === 406) return e.response.data as Quiz<null, AnswerType | null, null>;
         throw e;
     }
+}
+
+const getExamScoresUrl = "/exam/{id}/scores";
+export async function getExamScores(id: number)
+{
+    return await checkResponse<ExamScore[]>(sendRequest({
+        target: Target.BACKEND,
+        url: getExamScoresUrl,
+        method: 'GET',
+        params: { id },
+    }));
+}
+
+export interface ExamScore {
+    member: ClassMember;
+    sections: SectionScore[];
+}
+
+export interface SectionScore {
+    id: SectionId;
+    questions: QuestionScore[];
+}
+
+export interface QuestionScore {
+    answer: string;
+    correct: boolean | null;
+}
+
+const getStudentExamUrl = "/exam/{id}/student/{student}";
+export async function getStudentExam(id: number, student: string)
+{
+    return await checkResponse<Quiz<AnswerType, AnswerType, string>>(sendRequest({
+        target: Target.BACKEND,
+        url: getStudentExamUrl,
+        method: 'GET',
+        params: { id, student },
+    }));
 }

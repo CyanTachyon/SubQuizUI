@@ -13,7 +13,7 @@ import AccountMultipleIcon from "vue-material-design-icons/AccountMultiple.vue";
 import ShieldCrownOutlineIcon from "vue-material-design-icons/ShieldCrownOutline.vue";
 import RobotExcitedOutlineIcon from "vue-material-design-icons/RobotExcitedOutline.vue";
 import { createAnimationsController } from "../../utils/AnimationsController.ts";
-import StatusButton from "../../components/StatusButton.vue";
+import Button from "../../components/Button.vue";
 import Image from "../../components/Image.vue";
 import { safeRedirect } from "../../utils/redirect.ts";
 import { useUser } from "../../stores/user.ts";
@@ -24,7 +24,6 @@ import SidebarItem from "./SidebarItem.vue";
 import ThemeIcon from "vue-material-design-icons/ThemeLightDark.vue";
 import { useTheme } from "../../stores/theme";
 import Spacer from "../../components/Spacer.vue";
-import { Capacitor } from "@capacitor/core";
 
 let open = ref(localStorage.getItem('sidebar-open') !== 'false');
 let sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');
@@ -66,10 +65,10 @@ function gotoSSO()
     <quiz-sidebar-container>
         <Card :class="sidebarClassName" class="sidebar">
             <quiz-menu-title-box class="box" style="min-height: 80px; max-height: 80px;">
-                <StatusButton @click="changeSidebarState" class="menu-btn">
+                <Button @click="changeSidebarState" class="menu-btn">
                     <MenuOpenIcon v-if="open" />
                     <MenuCloseIcon v-else />
-                </StatusButton>
+                </Button>
                 <quiz-menu-title @click="goto('/')">SubQuiz</quiz-menu-title>
             </quiz-menu-title-box>
 
@@ -82,7 +81,7 @@ function gotoSSO()
                 <SidebarItem @click="goto('/ai-chat')" :icon="RobotExcitedOutlineIcon" title="AI 助手" />
                 <SidebarItem v-if="user.hasAdmin()" @click="goto('/admin/admins')" :icon="ShieldCrownOutlineIcon" title="全局管理" />
                 <SidebarItem v-if="user.isRoot()" @click="goto('/terminal')" :icon="ConsoleIcon" title="控制台" />
-                <SidebarItem v-if="Capacitor.getPlatform() === 'web'" @click="themeStore.toggleTheme" :icon="ThemeIcon" title="切换主题" />
+                <SidebarItem @click="themeStore.toggleTheme" @long-press="themeStore.changeBackground" :icon="ThemeIcon" title="切换主题" />
                 <SidebarItem @click="goto('/about')" :icon="InfoMationOutlineIcon" title="关于项目" />
             </div>
 

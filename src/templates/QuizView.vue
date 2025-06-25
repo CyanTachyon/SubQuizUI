@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import type {Quiz} from "../dataClasses/Quiz.ts";
-import StatusButton from "../components/StatusButton.vue";
+import Button from "../components/Button.vue";
 import Card from "../components/Card.vue";
 import Text from "../components/Text.vue";
 import Spacer from "../components/Spacer.vue";
@@ -143,7 +143,7 @@ function gotoAI(sectionIndex: number)
             </div>
             <div v-if="question.options" class="options-wrapper">
                 <div v-for="(option, optionIndex) in question.options" class="option-box">
-                    <StatusButton 
+                    <Button 
                         class="option" 
                         :down="question.userAnswer === optionIndex || (question.userAnswer?.length && question.userAnswer.includes(optionIndex))"
                         @click="onOptionClick(sectionIndex, questionIndex, optionIndex)"
@@ -156,7 +156,7 @@ function gotoAI(sectionIndex: number)
                             {{ getOptionName(optionIndex) }}
                         </div>
                         <Text class="option-content" v-markdown="{markdown: section.markdown, content: option, section: section.id}"/>
-                    </StatusButton>
+                    </Button>
                     <Text 
                         v-if="optionIndex === question.answer || (question.answer?.length && question.answer.includes(optionIndex))" 
                         class="right-answer"
@@ -174,22 +174,22 @@ function gotoAI(sectionIndex: number)
                 </div>
             </div>
             <div v-else-if="question.type === 'judge'" class="judge-option-box">
-                <StatusButton 
+                <Button 
                     class="judge-option" 
                     :down="question.userAnswer === false" 
                     :class="{ 'choice-answer': question.userAnswer === false }"
                     @click="onOptionClick(sectionIndex, questionIndex, 0)"
                 >
                     <CloseIcon/>
-                </StatusButton>
-                <StatusButton 
+                </Button>
+                <Button 
                     class="judge-option" 
                     :down="question.userAnswer === true" 
                     :class="{ 'choice-answer': question.userAnswer === true }"
                     @click="onOptionClick(sectionIndex, questionIndex, 1)"
                 >
                     <CheckIcon/>
-                </StatusButton>
+                </Button>
             </div>
             <div v-else-if="question.type === 'fill'" class="option-box">
                 <Input :area="false" placeholder="请输入答案" type="text" :value="question.userAnswer" @input="fillAnswer(sectionIndex, questionIndex, $event.target.value)" class="fill-option-input" :disabled="!editable"/>
@@ -220,9 +220,9 @@ function gotoAI(sectionIndex: number)
             </Text>
             <br v-if="questionIndex < section.questions.length - 1"/>
         </div>
-        <StatusButton v-if="ai" class="ai" @click="gotoAI(sectionIndex)">AI</StatusButton>
+        <Button v-if="ai" class="ai" @click="gotoAI(sectionIndex)">AI</Button>
     </Card>
-    <StatusButton v-if="editable" class="submit" @click="trySubmit">Submit</StatusButton>
+    <Button v-if="editable" class="submit" @click="trySubmit">Submit</Button>
 </template>
 
 <style scoped lang="scss">
@@ -231,7 +231,7 @@ function gotoAI(sectionIndex: number)
 }
 
 .section-description {
-    background-color: var(--bgcolor);
+    backdrop-filter: blur(99px);
     position: -webkit-sticky;
     position: sticky;
     top: 0;

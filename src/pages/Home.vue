@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import StatusButton from "../components/StatusButton.vue";
+import Button from "../components/Button.vue";
 import { useRouter, useRoute } from "vue-router";
 import { useNotification } from "../stores/notification.ts";
 import type { SubjectId } from '../dataClasses/Ids.ts';
@@ -10,7 +10,6 @@ import Input from '../components/Input.vue';
 import { getSubject } from '../networks/backend/subject.ts';
 import Slider from '../components/Slider.vue';
 import NotFound from './NotFound.vue';
-import GlassCard from '../components/GlassCard.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -64,21 +63,18 @@ function gotoSubject()
     <NotFound v-if="notFound"/>
     <Loading v-else-if="subject && subjectName === ''"/>
     <quiz-main-container v-else>
-        <!-- <Card>
+        <Card :max-tilt="5">
             <p class="main-title">开始新的测试</p>
             <p class="title">学科</p>
             <Input :area="false" placeholder="Subject Name" type="text" v-model="subjectName" readonly
                 @click="gotoSubject" />
             <p class="title">题目数量</p>
             <Input :area="false" placeholder="Section Count" type="number" v-model="count" />
-            <Slider :min-value="0" :max-value="100" :step="1" v-model="count"/>
+            <Slider :min-value="0" :max-value="50" :step="1" v-model="count"/>
             <quiz-main-button-container>
-                <StatusButton @click="startQuiz">开始测试</StatusButton>
+                <Button @click="startQuiz">开始测试</Button>
             </quiz-main-button-container>
-        </Card> -->
-        <GlassCard>
-            
-        </GlassCard>
+        </Card>
     </quiz-main-container>
 </template>
 

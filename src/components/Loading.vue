@@ -102,12 +102,7 @@ quiz-loading-element {
     margin: calc(var(--size) * 0.1);
     overflow: hidden;
     border-radius: calc(var(--size) * 0.25);
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), var(--bgcolor));
-    border: calc(var(--size) / 100) solid var(--bgcolor);
-    box-shadow: calc(var(--size) * 0.075) calc(var(--size) * 0.075) calc(var(--size) * 0.1) var(--up-shadow),
-    calc(var(--size) * -0.075) calc(var(--size) * -0.075) calc(var(--size) * 0.1) var(--down-shadow),
-    inset calc(var(--size) / -40) calc(var(--size) / -40) calc(var(--size) / 40) var(--down-shadow),
-    inset calc(var(--size) / 40) calc(var(--size) / 40) calc(var(--size) / 40) var(--up-shadow);
+    border: calc(var(--size) / 100) solid var(--glass-border);
 }
 
 quiz-loading-element::before {
@@ -119,9 +114,8 @@ quiz-loading-element::before {
     height: calc(var(--size) * 0.18);
     z-index: 100;
     border-radius: 50%;
-    box-shadow: inset calc(var(--size) / -40) calc(var(--size) / -40) calc(var(--size) / 40) var(--up-shadow),
-    inset calc(var(--size) / 40) calc(var(--size) / 40) calc(var(--size) / 40) var(--down-shadow),
-    0 calc(var(--size) * 2.1) 0 calc(var(--size) * 2) #2196f3,;
+    box-shadow: 0 calc(var(--size) * 2.1) 0 calc(var(--size) * 2) #2196f3,;
+    background-color: var(--glass-button-background);
 
     animation: animate 2.5s ease-in-out infinite;
     animation-delay: calc(var(--x) * -0.3s);

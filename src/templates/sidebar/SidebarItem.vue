@@ -1,11 +1,15 @@
 <script setup lang="ts">
 
-import CommonButton from "../../components/CommonButton.vue";
+import Button from "../../components/Button.vue";
 
 const { onClick, icon, title, iconLocation } = defineProps({
     onClick: {
         type: Function,
         default: () => {}
+    },
+    onLongPress: {
+        type: Function,
+        default: null
     },
     icon: {
         // 为一个vue组件
@@ -25,12 +29,12 @@ const { onClick, icon, title, iconLocation } = defineProps({
 </script>
 
 <template>
-    <CommonButton class="item" @click="onClick()">
+    <Button class="item" @click="onClick()" @long-press="onLongPress">
         <quiz-sidebar-item-wrapper :style="{ 'flex-direction': iconLocation === 'left' ? 'row' : 'row-reverse' }">
             <quiz-sidebar-item-icon-wrapper><component :is="icon" :size="36"/></quiz-sidebar-item-icon-wrapper>
             <quiz-sidebar-item-content-wrapper>{{ title }}</quiz-sidebar-item-content-wrapper>
         </quiz-sidebar-item-wrapper>
-    </CommonButton>
+    </Button>
 </template>
 
 <style scoped lang="scss">

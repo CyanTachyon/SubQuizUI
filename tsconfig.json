@@ -12,11 +12,13 @@
         "types": [
             "volar-generated.d.ts",
             "vite/client",
-            "unplugin-vue-define-options/client"
+            "unplugin-vue-define-options/client",
+            "javascript-obfuscator"
         ],
         "jsx": "preserve",
         "jsxFactory": "h",
         "jsxFragmentFactory": "Fragment",
-        "jsxImportSource": "vue"
+        "jsxImportSource": "vue",
+        "skipLibCheck": true,
     }
 }

@@ -3,7 +3,7 @@
 import {useRouter} from "vue-router";
 import {ref} from "vue";
 import Card from "../../components/Card.vue";
-import StatusButton from "../../components/StatusButton.vue";
+import Button from "../../components/Button.vue";
 import {useUser} from "../../stores/user.ts";
 import NotFound from "../NotFound.vue";
 import Input from "../../components/Input.vue";
@@ -95,7 +95,7 @@ function submit()
             <Input :area="false" placeholder="Preparation Group Name" type="text" v-model="groupName"/>
             <p class="title">备课组描述</p>
             <Input :area="true" placeholder="Preparation Group Description" type="text" v-model="groupDescription" class="description"/>
-            <StatusButton @click="submit">{{ group === null ? '创建备课组' : '编辑备课组' }}</StatusButton>
+            <Button @click="submit">{{ group === null ? '创建备课组' : '编辑备课组' }}</Button>
         </Card>
     </div>
 </template>

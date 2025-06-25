@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import StatusButton from "../../components/StatusButton.vue";
+import Button from "../../components/Button.vue";
 import Card from "../../components/Card.vue";
 import Input from "../../components/Input.vue";
 import NotFound from "../NotFound.vue"
@@ -9,7 +9,6 @@ import { ref } from "vue";
 import { useRoute } from "vue-router";
 import type { SectionId, SectionTypeId } from "../../dataClasses/Ids.ts";
 import { deleteSection, getSection, getSectionImages, getSectionType, modifySection, newSection, removeSectionImage, } from "../../networks/backend/section.ts";
-import CommonButton from "../../components/CommonButton.vue";
 import PlusIcon from "vue-material-design-icons/Plus.vue";
 import MinusIcon from "vue-material-design-icons/Minus.vue";
 import ContentSaveIcon from "vue-material-design-icons/ContentSave.vue";
@@ -313,12 +312,12 @@ function deleteImage(name: string)
     <NotFound v-if="notFound"/>
     <Loading v-else-if="section === null || !sectionTypeInfo" class="main-loading"/>
     <div v-else-if="!preview" class="section-container">
-        <Card class="section">
+        <Card :scroll="true" style="flex-grow: 1; max-height: calc(100% - 335px);">
             <p class="main-title">{{ section.id === 0 ? '新建' : '编辑' }}题目</p>
             <p class="title">{{ `类型：${sectionTypeInfo.name}` }}</p>
-            <StatusButton @click="preview = true">
+            <Button @click="preview = true">
                 题目预览
-            </StatusButton>
+            </Button>
             <Spacer/>
             <p class="small-title">大题描述</p>
             <quiz-small-title>
@@ -335,52 +334,52 @@ function deleteImage(name: string)
                     <p class="q-title">
                         {{ questionIndex + 1 }}.
                     </p>
-                    <CommonButton 
+                    <Button 
                         @click="changeQuestionType(questionIndex)">
                         {{ getTypeName(question.type) }}
-                    </CommonButton>
+                    </Button>
                 </div>
                 <Input :area="true" placeholder="Question Description" type="text" v-model="question.description" class="question-description-input" @focus="onFocus" @focus-out="onFocusOut"/>
 
                 <!-- 单选和多选 -->
 
                 <div v-if="question.type === 'single' || question.type === 'multiple'" v-for="(_, optionIndex) in question.options" :key="optionIndex" class="option-box">
-                    <StatusButton 
+                    <Button 
                         class="option-title" 
                         @click="setAnswer(questionIndex, optionIndex)" 
                         :down="Array.isArray(question.answer) ? question.answer.includes(optionIndex) : question.answer === optionIndex"
                         :class="{ 'right-answer': Array.isArray(question.answer) ? question.answer.includes(optionIndex) : question.answer === optionIndex }"
                     >
                         {{ getOptionName(optionIndex) }}
-                    </StatusButton>
+                    </Button>
                     <Input placeholder="Option Description" type="text" v-model="question.options[optionIndex]" class="option-input" @focus="onFocus" @focus-out="onFocusOut"/>
                 </div>
 
                 <div v-if="question.type === 'single' || question.type === 'multiple'" class="option-box">
                     <div class="button-box">
-                        <CommonButton @click="addOption(questionIndex)" class="add-button"><PlusIcon/></CommonButton>
-                        <CommonButton @click="deleteOption(questionIndex)" class="add-button"><MinusIcon/></CommonButton>
+                        <Button @click="addOption(questionIndex)" class="add-button"><PlusIcon/></Button>
+                        <Button @click="deleteOption(questionIndex)" class="add-button"><MinusIcon/></Button>
                     </div>
                 </div>
 
                 <!-- 判断 -->
                 <div v-else-if="question.type === 'judge'" class="judge-option-box">
-                    <StatusButton 
+                    <Button 
                         class="judge-option" 
                         :down="question.answer === false" 
                         :class="{ 'right-answer': question.answer === false }"
                         @click="setAnswer(questionIndex, false)"
                     >
                         <CloseIcon/>
-                    </StatusButton>
-                    <StatusButton 
+                    </Button>
+                    <Button 
                         class="judge-option" 
                         :down="question.answer === true" 
                         :class="{ 'right-answer': question.answer === true }"
                         @click="setAnswer(questionIndex, true)"
                     >
                         <CheckIcon/>
-                    </StatusButton>
+                    </Button>
                 </div>
 
                 <!-- 填空/简答 -->
@@ -411,13 +410,13 @@ function deleteImage(name: string)
                 <Slider :min-value="0" :max-value="100" :step="1" v-model="section.weight" style="width: 300px;"/>
             </div>
             <div class="button-box">
-                <CommonButton @click="addQuestion" class="add-button"><PlusIcon/></CommonButton>
-                <CommonButton @click="deleteQuestion" class="add-button"><MinusIcon/></CommonButton>
-                <StatusButton @click="saveSection" class="add-button"><ContentSaveIcon/></StatusButton>
-                <StatusButton @click="deleteSection_" class="add-button"><TrashCanIcon/></StatusButton>
+                <Button @click="addQuestion" class="add-button"><PlusIcon/></Button>
+                <Button @click="deleteQuestion" class="add-button"><MinusIcon/></Button>
+                <Button @click="saveSection" class="add-button"><ContentSaveIcon/></Button>
+                <Button @click="deleteSection_" class="add-button"><TrashCanIcon/></Button>
             </div>
         </Card>
-        <Card>
+        <Card class="img-card">
             <div style="font-weight: bold; display: flex; flex-direction: row; align-items: center; margin-right: auto;">
                 <p style="margin-left: 10px; cursor: pointer; " @click="addImage">图库</p> 
                 <Text @click="addImage" style="cursor: pointer; "><PlusIcon /></Text>
@@ -436,11 +435,11 @@ function deleteImage(name: string)
                     </Text>
                 </div>
             </template>
-            <!-- <CommonButton  class="add-img-button">添加图片附件</CommonButton> -->
+            <!-- <Button  class="add-img-button">添加图片附件</Button> -->
         </Card>
     </div> 
     <template v-else>
-        <StatusButton @click="preview = false">返回编辑</StatusButton>
+        <Button @click="preview = false">返回编辑</Button>
         <QuizView :quiz="{ sections: [section], correct: null }" :editable="false"/>
     </template>
 </template>
@@ -466,11 +465,6 @@ function deleteImage(name: string)
     flex-direction: column;
     width: 100%;
     height: 100%;
-}
-
-.section {
-    overflow: auto;
-    scrollbar-width: none;
 }
 
 quiz-small-title {
@@ -581,6 +575,12 @@ quiz-small-title {
 
 
 ///// img
+
+.img-card {
+    margin-bottom: 6;
+    height: 285px;
+    min-height: 285px;
+}
 
 .img-sources {
     // width: 100%;

@@ -9,7 +9,7 @@ import Pagination from "../../components/Pagination.vue";
 import {pushUrl} from "../../utils/utils.tsx";
 import {getSubjectList} from "../../networks/backend/subject.ts";
 import type {Subject} from "../../dataClasses/Subject.ts";
-import StatusButton from "../../components/StatusButton.vue";
+import Button from "../../components/Button.vue";
 import {useUser} from "../../stores/user.ts";
 import Text from "../../components/Text.vue";
 import Spacer from "../../components/Spacer.vue";
@@ -61,15 +61,15 @@ const user = useUser();
 <template>
     <Loading v-if="data === null" class="loading"/>
     <quiz-subjects-container v-else>
-        <StatusButton
+        <Button
             v-if="user.hasAdmin()"
             class="create-subject"
             @click="createSubject"
         >
             创建新科目
-        </StatusButton>
+        </Button>
         <quiz-subjects>
-            <Card v-for="q in data.list" @click="gotoSubject(q)">
+            <Card :max-tilt="5" v-for="q in data.list" @click="gotoSubject(q)">
                 <p class="title">{{ q.name }}</p>
                 <Spacer/>
                 <p>ID: {{ q.id }}</p>

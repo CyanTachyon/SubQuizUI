@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import debounce from "../utils/debounce.ts";
-import StatusButton from "./StatusButton.vue";
+import Button from "./Button.vue";
 
 const {count, current, onChangePage} = defineProps({
     count: {
@@ -128,22 +128,22 @@ watch(() => ({count, current}), (newVal, oldVal) =>
 <template>
     <quiz-pagination ref="containerRef">
         <template v-for="page in pages" :key="page">
-            <StatusButton v-if="page === -1"
+            <Button v-if="page === -1"
                     class="ellipsis"
                     @click="handleEllipsisClick(-1)"
             >...
-            </StatusButton>
-            <StatusButton v-else-if="page === -2"
+            </Button>
+            <Button v-else-if="page === -2"
                     class="ellipsis"
                     @click="handleEllipsisClick(1)"
             >...
-            </StatusButton>
-            <StatusButton v-else
+            </Button>
+            <Button v-else
                     :down="page === current"
                     class="page-button"
                     @click="handlePageClick(page)"
             >{{ page }}
-            </StatusButton>
+            </Button>
         </template>
     </quiz-pagination>
 </template>

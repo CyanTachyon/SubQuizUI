@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
-import StatusButton from '../../components/StatusButton.vue';
+import Button from '../../components/Button.vue';
 import { safeRedirect } from '../../utils/redirect';
 
 const route = useRoute();
@@ -19,9 +19,9 @@ safeRedirect(url, true);
 
 <template>
     <a :href="url">
-        <StatusButton>
+        <Button>
             返回应用
-        </StatusButton>
+        </Button>
     </a>
 </template>
 

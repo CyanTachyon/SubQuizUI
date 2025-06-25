@@ -122,7 +122,7 @@ quiz-img-wrapper {
 }
 
 .border {
-    @include neumorphism-up;
+    border: solid 2px var(--glass-border);
 }
 
 .border-disappeared {

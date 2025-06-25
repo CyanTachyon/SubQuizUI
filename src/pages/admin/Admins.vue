@@ -16,7 +16,7 @@ import NotFound from '../NotFound.vue';
 import Card from '../../components/Card.vue';
 import Input from '../../components/Input.vue';
 import Slider from '../../components/Slider.vue';
-import CommonButton from '../../components/CommonButton.vue';
+import Button from '../../components/Button.vue';
 import { isAdmin, Permission, permissionFromNumber, permissionToNumber } from '../../dataClasses/Permission';
 import { useNotification } from '../../stores/notification';
 import debounce from '../../utils/debounce';
@@ -175,7 +175,7 @@ function handlePageChange(newPage: number)
             <label>用户权限</label>
             <Input placeholder="用户权限" type="text" :value="permissionFromNumber(permission)" @input="" disabled />
             <Slider :min-value="0" :max-value="3" :step="1" v-model="permission" />
-            <CommonButton @click="save">保存</CommonButton>
+            <Button @click="save">保存</Button>
         </Card>
 
         <quiz-admins>

@@ -11,7 +11,7 @@ import type { ChatId } from "../dataClasses/Ids";
 import AiDialog from "../templates/AiDialog.vue";
 import PlusIcon from "vue-material-design-icons/Plus.vue";
 import Spacer from "../components/Spacer.vue";
-import CommonButton from "../components/CommonButton.vue";
+import Button from "../components/Button.vue";
 import Text from "../components/Text.vue";
 
 let open = ref(true);
@@ -74,19 +74,19 @@ loadChats(false);
     <quiz-ai-chats>
         <Card :class="sidebarClassName" class="sidebar">
             <div class="menu-title-box box">
-                <!-- <StatusButton @click="changeSidebarState" class="menu-btn">
+                <!-- <Button @click="changeSidebarState" class="menu-btn">
                     <MenuOpenIcon v-if="open" />
                     <MenuCloseIcon v-else />
-                </StatusButton> -->
+                </Button> -->
                 <div class="menu-title">Quiz AI</div>
             </div>
 
             <SidebarItem title="新建对话" :icon="PlusIcon" @click="info = -Math.random()" />
             <Spacer style="margin-top: 10px; margin-bottom: 10px;" />
             <div class="chats" @scroll="handleScroll">
-                <CommonButton class="item" v-for="chat in chats" :key="chat.id" @click="info = chat.id">
+                <Button class="item" v-for="chat in chats" :key="chat.id" @click="info = chat.id">
                     {{ getSectionBrief(chat.section) }}
-                </CommonButton>
+                </Button>
                 <Text v-if="isLoading" class="loading-indicator">
                     加载中...
                 </Text>
@@ -101,8 +101,7 @@ loadChats(false);
         </Card>
 
         <div class="main-content">
-            <AiDialog :key="typeof info === 'object' ? info.id : info" :info="info" style="height: 100%;"
-                @newChat="loadChats(true)" />
+            <AiDialog :key="typeof info === 'object' ? info.id : info" :info="info" @newChat="loadChats(true)" />
         </div>
     </quiz-ai-chats>
 </template>
@@ -117,7 +116,6 @@ loadChats(false);
     margin-bottom: 7px;
     --sidebar-close-width: 80px;
     --sidebar-open-width: 200px;
-    overflow: hidden;
 
     .sidebar-empty {
         display: flex;
@@ -131,16 +129,18 @@ loadChats(false);
         padding: 10px;
         display: flex;
         flex-direction: column;
-        overflow-y: scroll;
+        overflow-y: auto;
         scrollbar-width: none;
         flex-grow: 1;
+        max-height: calc(100% - 160px);
+        min-height: calc(100% - 160px);
     }
 
     .loading-indicator,
     .no-more-indicator {
         text-align: center;
         padding: 15px;
-        color: #666;
+        opacity: 0.5;
         font-size: 14px;
     }
 

@@ -39,8 +39,7 @@ if (value.value > maxValue)
     value.value = maxValue;
 }
 
-let className = ref(disappear ? 'disappear-input' : 'up-input');
-let thumbClassName = ref(disappear ? 'disappear-thumb' : 'appear-thumb');
+let className = ref(disappear ? 'disappear-input' : 'appeared-input');
 let controller = createAnimationsController();
 
 function onDisappearChange(value: boolean, oldValue: boolean)
@@ -48,13 +47,11 @@ function onDisappearChange(value: boolean, oldValue: boolean)
     if (value === oldValue) return;
     controller.push([
         () => {
-            className.value = value ? 'up-disappear' : 'up-appear';
-            thumbClassName.value = value ? 'thumb-disappear' : 'thumb-appear';
+            className.value = value ? 'disappear' : 'appear';
         },
         () => sleep($appearDuration),
         () => {
-            className.value = value ? 'disappear-input' : 'up-input';
-            thumbClassName.value = value ? 'disappear-thumb' : 'appear-thumb';
+            className.value = value ? 'disappeared-input' : 'appeared-input';
         },
     ])
 }
@@ -71,7 +68,7 @@ watch(() => disappear, onDisappearChange);
 const slider = ref<HTMLElement | null>(null);
 const sliderTrack = ref<HTMLElement | null>(null);
 onMounted(() => {
-    if (slider.value && window.getComputedStyle(slider.value).getPropertyValue('--transition') !== 'static')
+    if (slider.value && window.getComputedStyle(slider.value).getPropertyValue('--transition').trim() !== 'static')
     {
         watch(() => transitionStore.state, onTransitionChange, {immediate: true});
     }
@@ -158,7 +155,7 @@ watch(value, (newVal, oldValue) =>
         <quiz-slider-container @mousedown="startDrag" @touchstart.passive="startDrag">
             <quiz-slider-track ref="sliderTrack">
                 <quiz-slider-progress :style="{ '--w': progressPercentage + '%' }"/>
-                <quiz-slider-thumb :class="thumbClassName" :style="{ left: progressPercentage + '%' }"/>
+                <quiz-slider-thumb :style="{ left: progressPercentage + '%' }"/>
                 <quiz-slider-step-markers v-if="showStep">
                     <quiz-slider-step-marker v-for="(marker, index) in markers" :key="index" :style="{ left: marker.position + '%' }"/>
                 </quiz-slider-step-markers>
@@ -174,14 +171,8 @@ quiz-slider {
     border-radius: 2rem;
     overflow: hidden;
     margin: 10px;
-}
 
-@mixin thumb-shadow {
-    box-shadow: 1px 1px 1px var(--outer-up-shadow),
-        -1px -1px 1px var(--outer-down-shadow),
-        inset 1px 1px 1px var(--inner-up-shadow),
-        inset -1px -1px 1px var(--inner-down-shadow);
-    border: 3px solid var(--border-color);
+    border: solid 2px var(--glass-button-hover-background);
 }
 
 quiz-slider-container {
@@ -220,6 +211,10 @@ quiz-slider-container {
             top: 50%;
             transform: translate(-50%, -50%);
             cursor: grab;
+
+            border: solid 2px var(--glass-button-hover-background);
+            backdrop-filter: blur(5px);
+            background: var(--glass-button-hover-background);
         }
     }
 
@@ -233,11 +228,11 @@ quiz-slider-container {
         height: 4px;
         pointer-events: none;
 
-        .step-marker {
+        quiz-slider-step-marker {
             position: absolute;
             width: 5px;
             height: 5px;
-            background: var(--border-color);
+            background: var(--glass-border);
             top: 50%;
             border-radius: 50%;
             transform: translateX(-50%) translateY(-50%);
@@ -245,86 +240,15 @@ quiz-slider-container {
     }
 }
 
-
-.up-input {
-    @include neumorphism-up;
+.disappeared-input {
+    opacity: 0;
 }
 
-.down-input {
-    @include neumorphism-down;
+.disappear {
+    @include appear('disappear', up, false);
 }
 
-.disappear-input {
-    color: transparent;
-    box-shadow: none;
-}
-
-.down {
-    @include neumorphism-up-to-down;
-}
-
-.up {
-    @include neumorphism-down-to-up;
-}
-
-.up-disappear {
-    @include appear('up-disappear', up, false);
-}
-
-.down-disappear {
-    @include appear('down-disappear', down, false);
-}
-
-.up-appear {
-    @include appear('up-appear', up, true);
-}
-
-.down-appear {
-    @include appear('down-appear', down, true);
-}
-
-.thumb-appear {
-    @keyframes thumb-appear {
-        0% {
-            box-shadow: none;
-            border: 3px solid transparent;
-        }
-        50% {
-            @include thumb-shadow;
-        }
-        100% {
-            @include thumb-shadow;
-        }
-    }
-    & {
-        animation: thumb-appear $appear-duration ease-in forwards;
-    }
-}
-
-.thumb-disappear {
-    @keyframes thumb-disappear {
-        0% {
-            @include thumb-shadow;
-        }
-        50% {
-            @include thumb-shadow;
-        }
-        100% {
-            box-shadow: none;
-            border: 3px solid transparent;
-        }
-    }
-    & {
-        animation: thumb-disappear $appear-duration ease-out forwards;
-    }
-}
-
-.disappear-thumb {
-    box-shadow: none;
-    border: 3px solid transparent;
-}
-
-.appear-thumb {
-    @include thumb-shadow;
+.appear {
+    @include appear('appear', up, true);
 }
 </style>

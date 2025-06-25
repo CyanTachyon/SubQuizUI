@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import { ref, watch } from "vue";
+import Card from "./Card.vue";
 
 const { open, onClose } = defineProps(
     {
@@ -32,18 +33,18 @@ onMounted(() =>
 
 <template>
     <dialog ref="ele" @close="onClose()" @click.self="onClose()" @keydown.esc="onClose()">
-        <quiz-dialog-wrapper>
+        <Card class="dialog-wrapper">
             <slot/>
-        </quiz-dialog-wrapper>
+        </Card>
     </dialog>
 </template>
 
 <style lang="scss" scoped>
 dialog {
-    background-color: var(--bgcolor);
+    background-color: transparent;
     border: none;
     border-radius: 0.5rem;
-    --transition:static;
+    --transition: static;
     -webkit-user-select: none;
     user-select: none;
 }
@@ -57,9 +58,11 @@ dialog::backdrop {
     background-color: rgba(0, 0, 0, 0.5);
 }
 
-quiz-dialog-wrapper {
+.dialog-wrapper {
     width: 100%;
     height: 100%;
     color: var(--color);
+    padding: 1rem;
+    margin: 0;
 }
 </style>

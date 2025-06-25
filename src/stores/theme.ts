@@ -43,6 +43,41 @@ const actions = {
         {
             document.documentElement.removeAttribute('data-theme');
         }
+        const background = localStorage.getItem('background');
+        if (background)
+        {
+            document.body.style.backgroundImage = `url(${background})`;
+        }
+        else
+        {
+            document.body.style.backgroundImage = '';
+        }
+    },
+    changeBackground: () => 
+    {
+        if (localStorage.getItem('background'))
+        {
+            localStorage.removeItem('background');
+            actions.applyTheme();
+            return;
+        }
+
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = async (event) =>
+        {
+            const file = (event.target as HTMLInputElement).files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () =>
+            {
+                localStorage.setItem('background', reader.result as string);
+                actions.applyTheme();
+            };
+            reader.readAsDataURL(file);
+        };
+        input.click();
     }
 }
 export const useTheme = () => {

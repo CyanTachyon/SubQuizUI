@@ -4,7 +4,7 @@ import {useRouter} from "vue-router";
 import {ref} from "vue";
 import Card from "../../components/Card.vue";
 import {modifySubject, newSubject} from "../../networks/backend/subject.ts";
-import StatusButton from "../../components/StatusButton.vue";
+import Button from "../../components/Button.vue";
 import {useUser} from "../../stores/user.ts";
 import NotFound from "../NotFound.vue";
 import Input from "../../components/Input.vue";
@@ -76,7 +76,7 @@ function submit()
             <Input :area="false" placeholder="Subject Name" type="text" v-model="subjectName"/>
             <p class="title">学科描述</p>
             <Input :area="true" placeholder="Subject Description" type="text" v-model="subjectDescription" class="description"/>
-            <StatusButton @click="submit">{{ subject === null ? '创建学科' : '保存编辑' }}</StatusButton>
+            <Button @click="submit">{{ subject === null ? '创建学科' : '保存编辑' }}</Button>
         </Card>
     </div>
 </template>

@@ -88,7 +88,7 @@ function getTotalPage()
     <quiz-quizzes-container v-else>
         <Text v-if="data.list.length === 0" class="no-quizzes">暂无测试记录</Text>
         <quiz-quizzes>
-            <Card v-for="q in data.list" @click="gotoQuiz(q)">
+            <Card v-for="q in data.list" @click="gotoQuiz(q)" :max-tilt="5">
                 <p class="title">{{ startTimeToString(q.time) }}</p>
                 <Spacer />
                 <p>测试ID：{{ q.id }}</p>

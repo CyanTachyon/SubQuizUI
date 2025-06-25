@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CommonButton from "../../components/CommonButton.vue";
+import Button from "../../components/Button.vue";
 import { safeRedirect } from "../../utils/redirect";
 import { ref } from "vue";
 import { FileOpener } from '@capacitor-community/file-opener';
@@ -70,9 +70,9 @@ const download = async () => {
         <quiz-card>
             <h1>新版本可用</h1>
             <p>Version: {{ info.version }}</p>
-            <CommonButton class="btn" @click="download" :disabled="downloading"> 
+            <Button class="btn" @click="download" :disabled="downloading"> 
                 {{ downloading ? `下载中... ${(downloadProgress * 100).toFixed(1)}%` : '下载更新' }} 
-            </CommonButton>
+            </Button>
             <quiz-progress v-if="downloading">
                 <quiz-progress-bar :style="{ width: (downloadProgress * 100) + '%' }"/>
             </quiz-progress>

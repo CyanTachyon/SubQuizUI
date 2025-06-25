@@ -1,9 +1,9 @@
 {
   "name": "subquiz",
   "private": true,
-  "version": "2.2.1.6",
-  "versionId": 20201006,
-  "minVersionId": 20201006,
+  "version": "3.0.0.0",
+  "versionId": 30000000,
+  "minVersionId": 30000000,
   "downloadUrl": "https://quiz.bdfzscc.com/SubQuiz.apk",
   "type": "module",
   "scripts": {
@@ -38,16 +38,19 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.1",
+    "@types/javascript-obfuscator": "^0.0.5",
     "@types/node": "^22.13.1",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vitejs/plugin-vue-jsx": "^4.2.0",
     "@vue/tsconfig": "^0.7.0",
     "autoprefixer": "^10.4.20",
     "glob": "^11.0.1",
+    "javascript-obfuscator": "^4.1.1",
     "sass": "^1.85.0",
     "terser": "^5.39.0",
     "typescript": "~5.6.2",
     "vite": "^6.3.5",
+    "vite-plugin-javascript-obfuscator": "^3.1.0",
     "vue-tsc": "^2.2.0"
   }
 }
