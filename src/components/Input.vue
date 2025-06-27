@@ -3,6 +3,7 @@ import {onMounted, ref, watch, getCurrentInstance} from 'vue';
 import {createAnimationsController} from '../utils/AnimationsController';
 import {sleep} from '../utils/sleep';
 import {$appearDuration, State, useTransitionStore} from '../stores/transition';
+import { getThemes } from '../stores/theme';
 
 const model = defineModel<string | number>({required: false});
 const { placeholder, type, disappear, area, align, readonly, onFocus, onFocusOut } = defineProps({
@@ -133,7 +134,7 @@ defineExpose({
             :placeholder="placeholder"
             :type="type"
             :inputmode="type === 'number' ? 'numeric' : undefined"
-            :class="[className, placeholderClassName, `align-${getAlign()}`]"
+            :class="[className, placeholderClassName, `align-${getAlign()}`, getThemes().useBlur ? 'use-blur' : '']"
             :disabled="disappear"
             @input="handleInput"
             @focus="handleFocus"
@@ -146,13 +147,14 @@ defineExpose({
 </template>
 
 <style scoped lang="scss">
-
+.input.use-blur {
+    backdrop-filter: blur(5px);
+}
 .input {
     border: none;
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.1);
     color: var(--color);
-    backdrop-filter: blur(5px);
     transition: background 0.3s ease;
 
     &:focus {

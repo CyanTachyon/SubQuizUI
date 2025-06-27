@@ -5,7 +5,6 @@ import { fileURLToPath, URL } from 'node:url';
 import { readFileSync } from 'node:fs';
 import vueJSX from '@vitejs/plugin-vue-jsx';
 import path from 'node:path';
-import obfuscatorPlugin from "vite-plugin-javascript-obfuscator";
 
 const packageJson = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'));
 
@@ -38,33 +37,6 @@ export default defineConfig(({ mode }) => ({
         }),
         inspect(),
         vueJSX(),
-        obfuscatorPlugin({
-            options: {
-                compact: true,
-                controlFlowFlattening: false,
-                deadCodeInjection: false,
-                deadCodeInjectionThreshold: 0.4,
-                debugProtection: true,
-                disableConsoleOutput: true,
-                identifierNamesGenerator: 'mangled',
-                identifiersPrefix: "",
-                log: false,
-                renameGlobals: true,
-                rotateStringArray: false,
-                selfDefending: false,
-                shuffleStringArray: false,
-                splitStrings: false,
-                splitStringsChunkLength: 10,
-                stringArray: false,
-                stringArrayThreshold: 0.75,
-                transformObjectKeys: true,
-                unicodeEscapeSequence: false,
-                reservedNames: [],
-                reservedStrings: [],
-                renameProperties: true,
-                ignoreKeys: [],
-            },
-        })
     ],
     define: {
         'environment': getEnv(loadEnv(mode, process.cwd())),

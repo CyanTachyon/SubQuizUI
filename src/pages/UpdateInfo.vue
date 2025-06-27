@@ -120,6 +120,15 @@ const updateInfo: UpdateInfo[] = ([
             '- 修复了已知bug\n'
     },
     {
+        date: '2025-07-01',
+        version: '3.0.1',
+        description: '' +
+            '- 添加了主题设置页面\n' +
+            '- 允许分别配置模糊、玻璃效果\n' +
+            '- 调整安卓设置缩放比例\n' +
+            '- 修复了已知bug\n'
+    },
+    {
         version: 'TODO LIST',
         description: '以下是预计添加的新功能，但我开发速度有限，所以别急^v^\n' +
             "1. 简答/填空允许提交图片\n" +

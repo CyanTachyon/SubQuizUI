@@ -2,39 +2,20 @@ $appear-duration: 300ms;
 $animate-duration: 0.2s;
 
 // 亮色主题变量
-$light-bgcolor: #E2E3E7;
 $light-color: black;
-$light-up-shadow: #b5b5b9;
-$light-down-shadow: #ffffff;
-$light-border-color: #CFD1D3;
-
-$light-inner-up-shadow: #b0b1b4;
-$light-inner-down-shadow: #f0f1f5;
-$light-outer-up-shadow: #b0b1b4;
-$light-outer-down-shadow: #f0f1f5;
-
 $light-glass-background: rgba(255, 255, 255, 0.6);
 $light-glass-border: rgba(255, 255, 255, 0.18);
 $light-glass-up-shadow: rgba(255, 255, 255, 0.38);
 $light-glass-down-shadow: rgba(0, 0, 0, 0.18);
 $light-glass-button-background: rgba(255, 255, 255, 0.2);
 $light-glass-button-hover-background: rgba(255, 255, 255, 0.3);
-
+$light-glass-button-highlight-border: rgba(37, 47, 195, 0.6);
 // 暗色主题变量
-$dark-bgcolor: rgb(27, 27, 30);
 $dark-color: white;
-$dark-up-shadow: #202023;
-$dark-down-shadow: #45464C;
-$dark-border-color: #4A4B4F;
-
-$dark-inner-up-shadow: #2a2b2e;
-$dark-inner-down-shadow: #404146;
-$dark-outer-up-shadow: #2a2b2e;
-$dark-outer-down-shadow: #3d3f43;
-
 $dark-glass-background: rgba(0, 0, 0, 0.5);
 $dark-glass-border: rgba(255, 255, 255, 0);
 $dark-glass-up-shadow: rgba(255, 255, 255, 0.18);
 $dark-glass-down-shadow: rgba(0, 0, 0, 0.80);
 $dark-glass-button-background: rgba(255, 255, 255, 0.05);
 $dark-glass-button-hover-background: rgba(255, 255, 255, 0.1);
+$dark-glass-button-highlight-border: rgba(158, 147, 216, 0.6);

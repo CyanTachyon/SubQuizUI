@@ -264,9 +264,6 @@ function openSection(section: SectionId)
                     <Button @click="updateDescription">
                         修改描述
                     </Button>
-                    <Switch :on="exam.available" @click="changeAvailability" />
-                    <span v-if="exam.available">考试已发布</span>
-                    <span v-else>考试未发布</span>
                 </div>
                 <Spacer />
 
@@ -291,8 +288,11 @@ function openSection(section: SectionId)
         <Button @click="showMembers = false;" style="margin: 13px;">
             返回考试
         </Button>
-        <div class="members">
-            <Card v-for="m in rawExamScores.map((e) => e.member)" :key="m.seiue.studentId" class="member-item"
+        <div class="members" :class="{ empty: rawExamScores.length === 0 }">
+            <div v-if="rawExamScores.length === 0" class="no-scores">
+                暂无作答数据
+            </div>
+            <Card v-else v-for="m in rawExamScores.map((e) => e.member)" :key="m.seiue.studentId" class="member-item"
                 :max-tilt="7">
                 <quiz-user-box class="box" @click="showStudentExam = m.seiue.studentId">
                     <Image class="avatar" :src="avatarUrl(m.user)" />
@@ -331,7 +331,7 @@ function openSection(section: SectionId)
             <div v-if="Object.keys(examScores).length === 0" class="no-scores">
                 暂无考试数据
             </div>
-            <div v-for="(section, index) in exam.sections" :key="section" class="score-section">
+            <div v-else v-for="(section, index) in exam.sections" :key="section" class="score-section">
                 <div class="section-header" @click="toggleSectionExpansion(section)">
                     <div class="section-title">
                         <div style="display: flex;">
@@ -455,6 +455,11 @@ function openSection(section: SectionId)
     }
 }
 
+.members.empty {
+    display: flex;
+    height: 100%;
+    width: 100%;
+}
 .members {
     margin: 20px 0 0 0;
     display: grid;
@@ -514,6 +519,16 @@ function openSection(section: SectionId)
                 flex-grow: 1;
             }
         }
+    }
+
+    .no-scores {
+        opacity: 0.5;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.2em;
     }
 }
 

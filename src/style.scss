@@ -22,11 +22,7 @@ svg {
 }
 
 :root {
-    --bgcolor: #{$light-bgcolor};
     --color: #{$light-color};
-    --up-shadow: #{$light-up-shadow};
-    --down-shadow: #{$light-down-shadow};
-    --border-color: #{$light-border-color};
 
     --glass-background: #{$light-glass-background};
     --glass-border: #{$light-glass-border};
@@ -34,6 +30,7 @@ svg {
     --glass-down-shadow: #{$light-glass-down-shadow};
     --glass-button-background: #{$light-glass-button-background};
     --glass-button-hover-background: #{$light-glass-button-hover-background};
+    --glass-button-highlight-border: #{$light-glass-button-highlight-border};
 
     -webkit-tap-highlight-color: transparent;
 
@@ -46,12 +43,8 @@ svg {
     }
 }
 
-[data-theme='dark'] {
-    --bgcolor: #{$dark-bgcolor};
+[quiz-theme='dark'] {
     --color: #{$dark-color};
-    --up-shadow: #{$dark-up-shadow};
-    --down-shadow: #{$dark-down-shadow};
-    --border-color: #{$dark-border-color};
     
     --glass-background: #{$dark-glass-background};
     --glass-border: #{$dark-glass-border};
@@ -59,6 +52,7 @@ svg {
     --glass-down-shadow: #{$dark-glass-down-shadow};
     --glass-button-background: #{$dark-glass-button-background};
     --glass-button-hover-background: #{$dark-glass-button-hover-background};
+    --glass-button-highlight-border: #{$dark-glass-button-highlight-border};
 
     body {
         background-image: url('/src/assets/dark-background.jpg');

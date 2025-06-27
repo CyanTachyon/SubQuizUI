@@ -1,63 +1,76 @@
-import { Capacitor } from '@capacitor/core';
 import { ref } from 'vue';
 
-const isDark = ref(false);
+const themeInfo = ref({
+    useBlur: true,
+    useGlass: true,
+    theme: 'unset' as 'light' | 'dark' | 'unset',
+    background: '' as string
+});
 
 const actions = {
     initialize: () =>
     {
-        if (Capacitor.getPlatform() === 'web')
+        const savedTheme = localStorage.getItem('theme');
+        const savedBlur = localStorage.getItem('theme-blur');
+        const savedGlass = localStorage.getItem('theme-glass');
+        const savedBackground = localStorage.getItem('background');
+        themeInfo.value.theme = savedTheme === 'dark' ? 'dark' : savedTheme === 'light' ? 'light' : 'unset';
+        themeInfo.value.useBlur = !(savedBlur ? savedBlur === 'off' : false);
+        themeInfo.value.useGlass = !(savedGlass ? savedGlass === 'off' : false);
+        themeInfo.value.background = savedBackground || '';
+        actions.applyTheme();
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (localStorage.getItem('theme') === 'unset') actions.applyTheme();
+        });
+    },
+    setTheme: (theme: 'light' | 'dark' | 'unset') =>
+    {
+        themeInfo.value.theme = theme;
+        if (theme === 'unset') localStorage.removeItem('theme');
+        else localStorage.setItem('theme', theme);
+        actions.applyTheme();
+    },
+    setBlur: (blur: 'on' | 'off') =>
+    {
+        if (blur === 'off')
         {
-            const savedTheme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            isDark.value = savedTheme ? savedTheme === 'dark' : prefersDark;
-            actions.applyTheme();
+            localStorage.setItem('theme-blur', 'off');
+            themeInfo.value.useBlur = false;
         }
         else
         {
-            const updateTheme = () =>
-            {
-                isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                actions.applyTheme();
-            };
-            updateTheme();
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTheme);
+            localStorage.removeItem('theme-blur');
+            themeInfo.value.useBlur = true;
         }
     },
-    toggleTheme: () =>
+    setGlass: (glass: 'on' | 'off') =>
     {
-        isDark.value = !isDark.value;
-        actions.applyTheme();
-        if (Capacitor.getPlatform() === 'web')
+        if (glass === 'off')
         {
-            localStorage.setItem('theme', isDark.value ? 'dark' : 'light');
+            localStorage.setItem('theme-glass', 'off');
+            themeInfo.value.useGlass = false;
+        }
+        else
+        {
+            localStorage.removeItem('theme-glass');
+            themeInfo.value.useGlass = true;
         }
     },
     applyTheme: () =>
     {
-        if (isDark.value)
-        {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-        else
-        {
-            document.documentElement.removeAttribute('data-theme');
-        }
-        const background = localStorage.getItem('background');
-        if (background)
-        {
-            document.body.style.backgroundImage = `url(${background})`;
-        }
-        else
-        {
-            document.body.style.backgroundImage = '';
-        }
+        if (themeInfo.value.theme === 'dark' || (themeInfo.value.theme === 'unset' && window.matchMedia('(prefers-color-scheme: dark)').matches))
+            document.documentElement.setAttribute('quiz-theme', 'dark');
+        else 
+            document.documentElement.removeAttribute('quiz-theme');
+        if (themeInfo.value.background) document.body.style.backgroundImage = `url(${themeInfo.value.background})`;
+        else document.body.style.backgroundImage = '';
     },
     changeBackground: () => 
     {
-        if (localStorage.getItem('background'))
+        if (themeInfo.value.background)
         {
             localStorage.removeItem('background');
+            themeInfo.value.background = '';
             actions.applyTheme();
             return;
         }
@@ -72,7 +85,9 @@ const actions = {
             const reader = new FileReader();
             reader.onload = () =>
             {
-                localStorage.setItem('background', reader.result as string);
+                const res = reader.result as string;
+                localStorage.setItem('background', res);
+                themeInfo.value.background = res;
                 actions.applyTheme();
             };
             reader.readAsDataURL(file);
@@ -83,3 +98,6 @@ const actions = {
 export const useTheme = () => {
     return actions;
 }
+export const getThemes = () => {
+    return themeInfo.value;
+};

@@ -22,14 +22,12 @@ import { tryLogin } from "../../utils/utils.tsx";
 import { useRouter } from "vue-router";
 import SidebarItem from "./SidebarItem.vue";
 import ThemeIcon from "vue-material-design-icons/ThemeLightDark.vue";
-import { useTheme } from "../../stores/theme";
 import Spacer from "../../components/Spacer.vue";
 
 let open = ref(localStorage.getItem('sidebar-open') !== 'false');
 let sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');
 let controller = createAnimationsController();
 const router = useRouter();
-const themeStore = useTheme();
 
 function changeSidebarState()
 {
@@ -81,7 +79,7 @@ function gotoSSO()
                 <SidebarItem @click="goto('/ai-chat')" :icon="RobotExcitedOutlineIcon" title="AI 助手" />
                 <SidebarItem v-if="user.hasAdmin()" @click="goto('/admin/admins')" :icon="ShieldCrownOutlineIcon" title="全局管理" />
                 <SidebarItem v-if="user.isRoot()" @click="goto('/terminal')" :icon="ConsoleIcon" title="控制台" />
-                <SidebarItem @click="themeStore.toggleTheme" @long-press="themeStore.changeBackground" :icon="ThemeIcon" title="切换主题" />
+                <SidebarItem @click="goto('/theme')" :icon="ThemeIcon" title="主题设置" />
                 <SidebarItem @click="goto('/about')" :icon="InfoMationOutlineIcon" title="关于项目" />
             </div>
 

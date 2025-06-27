@@ -3,6 +3,7 @@ import {createAnimationsController} from "../utils/AnimationsController.ts";
 import {onMounted, ref, watch} from "vue";
 import {$appearDuration, State, useTransitionStore} from "../stores/transition.ts";
 import {sleep} from "../utils/sleep.ts";
+import { getThemes } from "../stores/theme";
 
 const {disappear, scroll, maxTilt} = defineProps({
     disappear: {
@@ -73,9 +74,12 @@ function handleMouseLeave()
 
 <template>
     <quiz-card :class="className" ref="card" @mousemove="handleMouseMove" @mouseleave="handleMouseLeave">
-        <div class="glass-effect"></div>
+        <div 
+            class="glass-effect" 
+            :class="{'use-blur': getThemes().useBlur, 'use-glass': getThemes().useGlass}"
+        />
         <div class="glass-tint"></div>
-        <div class="glass-shine"></div>
+        <div class="glass-shine" v-if="getThemes().useGlass"></div>
         <div v-if="scroll" class="scroll-content">
             <slot />
         </div>
@@ -91,7 +95,7 @@ quiz-card {
     display: block;
     margin: 13px;
     padding: 0.25rem 0.5rem;
-    border: solid 2px var(--glass-background);
+    border: solid 2px transparent;
 
     position: relative;
     border-radius: 24px;
@@ -104,8 +108,6 @@ quiz-card {
     position: absolute;
     inset: 0;
     z-index: -2;
-    backdrop-filter: blur(15px);
-    filter: url(#glass-distortion);
     isolation: isolate;
     border-radius: 24px;
     pointer-events: none;
@@ -113,6 +115,15 @@ quiz-card {
     left: -2px;
     right: -2px;
     bottom: -2px;
+    backdrop-filter: blur(0px);
+}
+
+.glass-effect.use-blur {
+    backdrop-filter: blur(15px);
+}
+
+.glass-effect.use-glass {
+    filter: url(#glass-distortion);
 }
 
 .glass-tint {

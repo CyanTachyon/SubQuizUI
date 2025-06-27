@@ -7,10 +7,6 @@ const { onClick, icon, title, iconLocation } = defineProps({
         type: Function,
         default: () => {}
     },
-    onLongPress: {
-        type: Function,
-        default: null
-    },
     icon: {
         // 为一个vue组件
         type: Object,
@@ -29,7 +25,7 @@ const { onClick, icon, title, iconLocation } = defineProps({
 </script>
 
 <template>
-    <Button class="item" @click="onClick()" @long-press="onLongPress">
+    <Button class="item" @click="onClick()">
         <quiz-sidebar-item-wrapper :style="{ 'flex-direction': iconLocation === 'left' ? 'row' : 'row-reverse' }">
             <quiz-sidebar-item-icon-wrapper><component :is="icon" :size="36"/></quiz-sidebar-item-icon-wrapper>
             <quiz-sidebar-item-content-wrapper>{{ title }}</quiz-sidebar-item-content-wrapper>
