@@ -100,14 +100,17 @@ function gotoAdmin()
     router.push('/admin/admins?group=' + group);
 }
 
-function toTreeNode(node: KnowledgePointTree, selectable: boolean)
+
+function toTreeNode(node: KnowledgePointTree, selectable: boolean): TreeNode<{ select: boolean; updateSelect: () => void; }> | null
 {
+    const children = node.children.map(child => toTreeNode(child, selectable)).filter(child => child !== null);
+    if (selectable && children.length === 0 && node.info.folder) return null;
     let res: TreeNode<{ select: boolean; updateSelect: () => void; }> = {
         id: node.info.id,
         expand: false,
         icon: markRaw(selectable ? (node.info.folder ? CheckboxMultipleMarked : CheckboxMarkedIcon) : (node.info.folder ? FolderOutlineIcon : AdjustIcon)),
         label: node.info.name,
-        children: node.children.map(child => toTreeNode(child, selectable)),
+        children: children,
         folder: node.info.folder,
         select: true,
 
@@ -227,7 +230,6 @@ const current = ref<Node>({
 watch(() => current.value.knowledgePoint?.id, (newValue) => {
     if (newValue && !rawGroup)
     {
-        console.log(rawGroup)
         pushUrl('/admin/group/' + group, { 'kp': newValue + '' });
     }
 });
@@ -432,7 +434,7 @@ function startQuiz()
 <template>
     <NotFound v-if="groupInfo === null" />
     <Loading v-else-if="knowledgePoints === undefined || groupInfo === undefined" class="loading" />
-    <Split v-else class="section-types-container">
+    <Split v-else class="section-types-container" :initial-left-width="20" :min-left-width="15" :max-left-width="33.333">
         <template #left>
             <Card class="sidebar">
                 <Text class="main-title" style="display: flex;">

@@ -41,7 +41,14 @@ const nodes = computed(() => {
                 </quiz-tree-node-label>
             </quiz-tree-node-title>
 
-            <TreeView v-if="node.expand && node.children.length > 0" :model-value="node" :key="node.id" style="margin-left: 20px;"/>
+            <TreeView v-if="node.expand" :model-value="node" :key="node.id" style="margin-left: 20px;"/>
+        </quiz-tree-node>
+        <quiz-tree-node v-if="nodes.length === 0">
+            <quiz-tree-node-title>
+                <quiz-tree-node-label>
+                    暂无内容
+                </quiz-tree-node-label>
+            </quiz-tree-node-title>
         </quiz-tree-node>
     </quiz-tree-wrapper>
 </template>
