@@ -14,7 +14,7 @@ export interface AiMessage
 }
 
 export type AiHistory = { role: 'user' | 'assistant'; } & AiMessage;
-export type Model = 'BDFZ_HELPER' | 'QUIZ_AI';
+export type Model = string;
 
 const getChatUrl = '/ai/chat/{chat}';
 
@@ -73,6 +73,23 @@ export async function sendContent(chatId: number, content: string, model: Model,
             return defaultOnFail(res);
         }
     );
+}
+
+const aiModelsUrl = '/ai/chat/models';
+export async function getAiModels(): Promise<ModelInfo[]>
+{
+    return checkResponse<ModelInfo[]>(sendRequest({
+        target: Target.BACKEND,
+        url: aiModelsUrl,
+        method: 'GET'
+    }));
+}
+
+export interface ModelInfo
+{
+    model: Model;
+    displayName: string;
+    description: string;
 }
 
 const sseUrl = '/ai/chat/sse';

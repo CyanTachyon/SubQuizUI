@@ -2,7 +2,7 @@
 import { ref, nextTick } from 'vue';
 import type { AnswerType } from '../dataClasses/Question';
 import type { Section } from '../dataClasses/Section';
-import { chatSSE, createChat, getChat, sendContent, type AiHistory, type AiMessage, type Model } from '../networks/backend/ai';
+import { chatSSE, createChat, getChat, sendContent, type AiHistory, type AiMessage, type Model, type ModelInfo } from '../networks/backend/ai';
 import Input from '../components/Input.vue';
 import { useNotification } from '../stores/notification';
 import LoadingIcon from 'vue-material-design-icons/Loading.vue';
@@ -15,6 +15,8 @@ import Loading from '../components/Loading.vue';
 import QuizView from './QuizView.vue';
 import Text from '../components/Text.vue';
 import Card from '../components/Card.vue';
+import { getAiModels } from '../networks/backend/ai';
+import SelectMenu from '../components/SelectMenu.vue';
 
 export type AiInfo = Chat & {
     histories: (AiHistory & { showReasoning: boolean; })[];
@@ -131,7 +133,24 @@ const onMessage = (message: AiMessage & { finished: boolean, banned: boolean; })
 
 const input = ref('');
 
-const model = ref<Model>(localStorage.getItem('quiz-ai-model') as Model || 'BDFZ_HELPER');
+const model = ref<Model>('');
+const models = ref<ModelInfo[]>([
+    {
+        model: '',
+        displayName: "加载中...",
+        description: "正在加载模型信息，请稍候。",
+    }
+]);
+
+(async () => {
+    models.value = await getAiModels();
+    const savedModel = localStorage.getItem('quiz-ai-model') as Model;
+    if (models.value.some(m => m.model === savedModel)) {
+        model.value = savedModel;
+    } else {
+        model.value = models.value[0].model;
+    }
+})();
 
 function changeModel(newModel: Model)
 {
@@ -254,17 +273,7 @@ function openSection()
             </div>
             <Input v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
             <Text class="bottom-bar">
-                <span @click="changeModel('BDFZ_HELPER')" class="model-name bdfz-helper"
-                    :class="model === 'BDFZ_HELPER' ? 'active' : ''">
-                    北大附中问答助手
-                </span>
-                <span @click="changeModel('QUIZ_AI')" class="model-name quiz-ai"
-                    :class="model === 'QUIZ_AI' ? 'active' : ''">
-                    Quiz AI
-                </span>
-                <span class="tip" v-if="model === 'QUIZ_AI'">
-                    *QuizAI 推理能力更强，但图片识别仍处于测试阶段
-                </span>
+                <SelectMenu :model-value="model" :options="models.map(m => ({ label: m.displayName, value: m.model }))" class="model-name quiz-ai" :placeholder="'选择模型'" @update:model-value="changeModel" :direction="'up'"/>
                 <span class="send" @click="onSubmit(null)">
                     发送
                 </span>

@@ -17,21 +17,6 @@ import Text from "../components/Text.vue";
 let open = ref(true);
 let sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');
 
-// let controller = createAnimationsController();
-// function changeSidebarState()
-// {
-//     controller.push([
-//         () =>
-//         {
-//             open.value = !open.value;
-//             localStorage.setItem('ai-chats-sidebar-open', open.value.toString());
-//             sidebarClassName.value = open.value ? 'sidebar-open' : 'sidebar-close';
-//         },
-//         () => sleep(800),
-//         () => sidebarClassName.value = open.value ? 'sidebar-opened' : 'sidebar-closed',
-//     ], false);
-// }
-
 const chats = ref<Chat[]>([]);
 const info = ref(0 as ChatId | Section<AnswerType, AnswerType, string>);
 const isLoading = ref(false);
@@ -74,10 +59,6 @@ loadChats(false);
     <quiz-ai-chats>
         <Card :class="sidebarClassName" class="sidebar">
             <div class="menu-title-box box">
-                <!-- <Button @click="changeSidebarState" class="menu-btn">
-                    <MenuOpenIcon v-if="open" />
-                    <MenuCloseIcon v-else />
-                </Button> -->
                 <div class="menu-title">Quiz AI</div>
             </div>
 
