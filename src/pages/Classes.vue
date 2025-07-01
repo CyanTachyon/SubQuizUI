@@ -34,28 +34,33 @@ const admin = ref(null as boolean | null);
 function loadClasses(reload: boolean)
 {
     if (isLoading.value || !hasMore.value) return;
-    
+
     isLoading.value = true;
-    if (reload) {
+    if (reload)
+    {
         classes.value = [];
         hasMore.value = true;
     }
-    getClassList(null, null, classes.value.length, 20).then((result) => {
+    getClassList(0, null, classes.value.length, 20).then((result) =>
+    {
         const { list } = result;
         classes.value.push(...list);
         if (list.length < 20) hasMore.value = false;
         isLoading.value = false;
-    }).catch(() => {
+    }).catch(() =>
+    {
         isLoading.value = false;
     });
 }
 
-function handleScroll(event: Event) {
+function handleScroll(event: Event)
+{
     const target = event.target as HTMLElement;
     const { scrollTop, scrollHeight, clientHeight } = target;
-    
+
     // 检查是否滚动到底部（允许一点误差）
-    if (scrollHeight - scrollTop - clientHeight < 10) {
+    if (scrollHeight - scrollTop - clientHeight < 10)
+    {
         loadClasses(false);
     }
 }
@@ -64,11 +69,11 @@ loadClasses(false);
 
 function changeClass(clazz: ClassWithMembers)
 {
-    info.value = clazz; 
-    pgName.value = null; 
+    info.value = clazz;
+    pgName.value = null;
     exams.value = null;
     admin.value = null;
-    
+
     getPreparationGroup(info.value.group).then((pg) =>
     {
         pgName.value = pg.name;
@@ -79,18 +84,18 @@ function changeClass(clazz: ClassWithMembers)
 
     getExams(info.value.id).then((result) => exams.value = result);
 
-    if (useUser().hasAdmin()) admin.value = true; 
+    if (useUser().hasAdmin()) admin.value = true;
     else getUserPermissionInGroup(info.value.group, 0).then((perm) => admin.value = isAdmin(perm));
 }
 
 function gotoExam(exam: Exam)
 {
-    if (admin.value) router.push('/admin/exam/' + exam.id); 
+    if (admin.value) router.push('/admin/exam/' + exam.id);
     else 
     {
         const close = dialog(
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 20px;">
-                开始考试：{ exam.name }
+                开始考试：{exam.name}
                 <div style="margin-top: 10px; display: flex; flex-direction: row; gap: 10px;">
                     <Button onClick={() => { close(); router.push('/quiz?exam=' + exam.id); }}>
                         开始
@@ -111,17 +116,18 @@ function createExam()
         <div>
             请输入考试名称
         </div>,
-        (name) => {
+        (name) =>
+        {
             newExam({
                 name,
                 available: false,
                 description: '',
                 clazz: info.value.id,
                 sections: [],
-            }).then((exam) => router.push('/admin/exam/' + exam))
+            }).then((exam) => router.push('/admin/exam/' + exam));
         },
         () => x()
-    )
+    );
 }
 
 </script>
@@ -130,15 +136,11 @@ function createExam()
     <quiz-classes>
         <Card :class="sidebarClassName" class="sidebar">
             <div class="menu-title-box box">
-                <!-- <Button @click="changeSidebarState" class="menu-btn">
-                    <MenuOpenIcon v-if="open" />
-                    <MenuCloseIcon v-else />
-                </Button> -->
                 <div class="menu-title">我的班级</div>
             </div>
 
             <Spacer style="margin-bottom: 10px;" />
-            <div class="classes" @scroll="handleScroll">
+            <div v-if="classes.length" class="classes" @scroll="handleScroll">
                 <Button class="item" v-for="clazz in classes" :key="clazz.id" @click="changeClass(clazz)">
                     {{ clazz.name }}
                 </Button>
@@ -149,7 +151,7 @@ function createExam()
                     没有更多班级了
                 </Text>
             </div>
-            <Text class="sidebar-empty" v-if="!classes.length">
+            <Text class="sidebar-empty" v-else>
                 还没有班级
             </Text>
 
@@ -202,7 +204,6 @@ function createExam()
 </template>
 
 <style lang="scss" scoped>
-
 .loading {
     position: relative;
     top: 50%;
@@ -277,7 +278,7 @@ function createExam()
     position: relative;
     display: flex;
 
-    margin-bottom: 7px; 
+    margin-bottom: 7px;
     flex-direction: column;
     height: calc(100% - 20px);
 
@@ -320,12 +321,13 @@ function createExam()
             display: flex;
             flex-direction: column;
             margin: 20px;
-    
+
             .description {
                 overflow: hidden;
                 white-space: nowrap;
                 text-overflow: ellipsis;
             }
+
             .title {
                 font-size: 1.25em;
                 margin-bottom: 0px;
@@ -355,21 +357,21 @@ function createExam()
             flex-direction: row;
             margin-left: -6px;
             margin-right: -6px;
-    
+
             .avatar {
                 min-width: 50px;
                 max-width: 50px;
                 min-height: 50px;
                 max-height: 50px;
             }
-    
+
             quiz-username-box {
                 display: flex;
                 flex-direction: column;
                 flex: 1;
                 min-width: 0;
                 margin-left: 10px;
-    
+
                 quiz-username {
                     margin-right: 5px;
                     display: block;
@@ -382,7 +384,7 @@ function createExam()
                     flex-grow: 1;
                     min-width: 0;
                 }
-    
+
                 quiz-user-id {
                     display: block;
                     max-width: 100%;
@@ -445,7 +447,7 @@ div.menu-title-box {
     margin-top: -6px;
     padding: 6px;
     flex-direction: row-reverse;
-    
+
     ///
     min-height: 80px;
     max-height: 80px;
@@ -492,7 +494,7 @@ div.menu-title-box {
 .empty-state {
     opacity: 0.5;
     text-align: center;
-    
+
     p {
         font-size: 18px;
         margin: 0;
