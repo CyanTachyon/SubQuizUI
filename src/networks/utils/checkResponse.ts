@@ -36,7 +36,7 @@ function defaultOnFail<T>(response: ResponseBody<T>): T
         if (Capacitor.getPlatform() === 'android') message = `错误：版本过低，请更新应用程序。`;
         else message = '错误：请刷新网页并重试。';
         useNotification().addError(message)
-        checkUpdate();
+        checkUpdate(true);
         throw error;
     }
     const notifications = useNotification()

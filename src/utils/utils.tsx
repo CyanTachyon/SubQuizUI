@@ -1,7 +1,7 @@
 import { computed, createApp, ref } from "vue";
 import { Capacitor } from '@capacitor/core';
 import { connectUrl, Target } from "../networks/utils/sendRequest.ts";
-import { router } from "../main.ts";
+import { router, scale } from "../main.ts";
 import { safeRedirect } from "./redirect.ts";
 import Dialog from "@/components/Dialog.vue";
 import Input from "@/components/Input.vue";
@@ -81,7 +81,7 @@ export function dialog(
     const app = createApp({
         render()
         {
-            return <Dialog open={open.value} onClose={onClose}>{innerHtml}</Dialog>;
+            return <Dialog open={open.value} onClose={onClose} style={ `transform: scale(${scale});` }>{innerHtml}</Dialog>;
         }
     }).directive('markdown', vMarkdown)
     app.mount(container);
@@ -147,9 +147,9 @@ export function getSectionBrief(section: Section<any, any, any>)
 }
 
 export const versionInfo = ref(null as AndroidVersion | null);
-export async function checkUpdate()
+export async function checkUpdate(force: boolean = false)
 {
     let r1 = await fetch(environment.frontend + '/android_latest.json' + `?timestamp=${Date.now()}`, { cache: "reload", });
     let res = (await r1.json()) as AndroidVersion;
-    if (res.minVersionCode > currentVersion.versionCode) versionInfo.value = res;
+    if (res.minVersionCode > currentVersion.versionCode || force && (res.versionCode > currentVersion.versionCode)) versionInfo.value = res;
 }

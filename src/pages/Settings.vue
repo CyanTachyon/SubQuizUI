@@ -9,6 +9,12 @@ import Sun from 'vue-material-design-icons/WeatherSunny.vue';
 import Auto from 'vue-material-design-icons/Autorenew.vue';
 import { useNotification } from '../stores/notification';
 import { Capacitor } from '@capacitor/core';
+import { ref } from 'vue';
+import Input from '../components/Input.vue';
+import Slider from '../components/Slider.vue';
+import debounce from '../utils/debounce';
+import currentVersion from '../../public/android_latest.json';
+import { checkUpdate } from '../utils/utils';
 
 function isBackdropFilterSupported()
 {
@@ -92,6 +98,20 @@ const handleBackgroundChange = () =>
     theme.changeBackground();
 };
 
+const scale = ref(Number(localStorage.getItem('scale')) || (Capacitor.getPlatform() === 'web' ? 1 : 0.8));
+const setScale = debounce((newScale: number) =>
+{
+    localStorage.setItem('scale', String(newScale));
+    useNotification().addSuccess(`页面缩放已设置, ${Capacitor.getPlatform() === 'web' ? '刷新页面以应用更改。' : '请重启应用以应用更改。'}`);
+}, 500);
+const handleScaleChange = (newScale: number) =>
+{
+    if (!newScale) return;
+    scale.value = newScale;
+    if (newScale < 0.5 || newScale > 2.5) return;
+    setScale(newScale);
+};
+
 </script>
 
 <template>
@@ -102,7 +122,7 @@ const handleBackgroundChange = () =>
             </Text>
 
             <!-- 主题选择 -->
-            <Card style="padding: 20px;">
+            <Card style="padding: 10px 20px 20px 20px">
                 <Text>
                     <h2 class="section-title">外观主题</h2>
                 </Text>
@@ -118,7 +138,7 @@ const handleBackgroundChange = () =>
             </Card>
 
             <!-- 视觉效果 -->
-            <Card style="padding: 20px;">
+            <Card style="padding: 10px 20px 20px 20px">
                 <Text>
                     <h2 class="section-title">视觉效果</h2>
                 </Text>
@@ -144,7 +164,7 @@ const handleBackgroundChange = () =>
                 </div>
             </Card>
 
-            <Card style="padding: 20px;">
+            <Card style="padding: 10px 20px 20px 20px">
                 <Text>
                     <h2 class="section-title">背景设置</h2>
                 </Text>
@@ -159,6 +179,47 @@ const handleBackgroundChange = () =>
                     <div class="background-actions">
                         <Button :onClick="handleBackgroundChange">
                             {{ getThemes().background ? '移除自定义背景' : '选择自定义背景' }}
+                        </Button>
+                    </div>
+                </div>
+            </Card>
+
+            <Card style="padding: 10px 20px 20px 20px">
+                <Text>
+                    <h2 class="section-title">缩放控制</h2>
+                </Text>
+
+                <div class="background-section">
+                    <Text>
+                        <p class="background-description">
+                            调整页面缩放
+                        </p>
+                    </Text>
+
+                    <div class="background-actions">
+                        <div style="width: calc(min(300px, 100%));">
+                            <Input style="width: calc(100% - 20px);" type="number" :modelValue="~~(scale * 100)" @update:modelValue="s => handleScaleChange(Number(s) / 100)" />
+                            <Slider style="width: calc(100% - 20px);" :minValue="0.5" :maxValue="2.5" :step="0.01" :modelValue="scale" @update:modelValue="handleScaleChange" />
+                        </div>
+                    </div>
+                </div>
+            </Card>
+
+            <Card style="padding: 10px 20px 20px 20px" v-if="Capacitor.getPlatform() === 'android'">
+                <Text>
+                    <h2 class="section-title">检查更新</h2>
+                </Text>
+
+                <div class="background-section">
+                    <Text>
+                        <p class="background-description">
+                            当前版本：{{ currentVersion.version }} (ID: {{ currentVersion.versionCode }})<br>
+                        </p>
+                    </Text>
+
+                    <div class="background-actions">
+                        <Button :onClick="() => checkUpdate(true)">
+                            检查更新
                         </Button>
                     </div>
                 </div>
@@ -196,6 +257,7 @@ const handleBackgroundChange = () =>
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-left: 13px;
 }
 
 .theme-options {
@@ -226,6 +288,8 @@ const handleBackgroundChange = () =>
     align-items: center;
     padding: 16px 0;
     border-bottom: 1px solid var(--glass-card-border);
+    margin-left: 13px;
+    margin-right: 13px;
 
     &:last-child {
         border-bottom: none;
@@ -261,91 +325,5 @@ const handleBackgroundChange = () =>
 .background-actions {
     display: flex;
     justify-content: center;
-}
-
-.preview-area {
-    display: flex;
-    justify-content: center;
-}
-
-.preview-card {
-    background: var(--glass-card-background);
-    border: 1px solid var(--glass-card-border);
-    border-radius: 12px;
-    padding: 24px;
-    max-width: 300px;
-    width: 100%;
-    text-align: center;
-    transition: all 0.3s ease;
-
-    &.glass-effect {
-        backdrop-filter: blur(20px);
-        background: rgba(255, 255, 255, 0.1);
-
-        [quiz-theme="dark"] & {
-            background: rgba(0, 0, 0, 0.2);
-        }
-    }
-
-    &.blur-effect {
-        backdrop-filter: blur(10px);
-    }
-
-    h3 {
-        font-size: 1.3rem;
-        font-weight: 600;
-        color: var(--primary-text);
-        margin-bottom: 12px;
-    }
-
-    p {
-        font-size: 1rem;
-        color: var(--secondary-text);
-        line-height: 1.5;
-    }
-}
-
-// 响应式设计
-@media (max-width: 768px) {
-    .theme-page {
-        padding: 16px;
-    }
-
-    .page-title {
-        font-size: 2rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .section {
-        padding: 20px;
-        margin-bottom: 20px;
-    }
-
-    .theme-options {
-        grid-template-columns: 1fr;
-    }
-
-    .effect-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-
-        .effect-info {
-            width: 100%;
-        }
-    }
-}
-
-// 暗色主题适配
-[quiz-theme="dark"] {
-    .section {
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-
-    .theme-option {
-        &:hover {
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-    }
 }
 </style>

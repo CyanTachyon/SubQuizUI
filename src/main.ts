@@ -27,7 +27,7 @@ import Group from './pages/admin/Group.vue';
 import AiChats from './pages/AiChats.vue';
 import Classes from './pages/Classes.vue';
 import Exam from './pages/admin/Exam.vue';
-import Theme from './pages/Theme.vue';
+import Theme from './pages/Settings.vue';
 import { useUser } from './stores/user';
 import { useTheme } from './stores/theme';
 
@@ -51,7 +51,7 @@ const routes: Readonly<RouteRecordRaw[]> = [
     { path: '/terminal', name: 'Terminal', component: Terminal, meta: { sidebar: true } },
     { path: '/ai-chat', name: 'AIChats', component: AiChats, meta: { sidebar: true } },
     { path: '/class', name: 'Class', component: Classes, meta: { sidebar: true } },
-    { path: '/theme', name: 'Theme', component: Theme, meta: { sidebar: true } },
+    { path: '/setting', name: 'Theme', component: Theme, meta: { sidebar: true } },
     { path: '/admin/admins', name: 'Admins', component: Admins, meta: { sidebar: true } },
 
     { path: '/admin/subject/list', component: SubjectList, meta: { sidebar: true } },
@@ -93,33 +93,20 @@ CapacitorApp.addListener('appUrlOpen', (data) =>
 });
 
 
-let user = useUser();
-user.reload();
-
 const theme = useTheme();
 theme.initialize();
+const user = useUser();
+user.reload();
 
 const appEle = (document.querySelector('quiz-app') as any);
-if (Capacitor.getPlatform() === 'android')
-{
-    appEle.style = `
-        transform: scale(0.8);
-        transform-origin: top left;
-        width: 125%;
-        height: 125%;
-        overflow: hidden;
-    `;
-}
-else 
-{
-    appEle.style = `
-        transform: scale(1);
-        transform-origin: top left;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-    `;
-}
+export const scale = Number(localStorage.getItem('scale')) || (Capacitor.getPlatform() === 'web' ? 1 : 0.8);
+appEle.style = `
+    transform: scale(${scale});
+    transform-origin: top left;
+    width: ${100 / scale}%;
+    height: ${100 / scale}%;
+    overflow: hidden;
+`;
 
 createApp(App)
     .use(router)
