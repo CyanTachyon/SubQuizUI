@@ -1,6 +1,6 @@
 import katex, { type KatexOptions } from 'katex';
 const inlineRuleNonStandard = /^(?:(\${1,2})(?!\$)((?:\\.|[^\\\n])*?(?:\\.|[^\\\n\$]))\1)|^(?:\\\(((?:\\.|[^\\\n])*?(?:\\.|[^\\\n\$]))\\\))/;
-const blockRule = /^(?:(\${1,2})\n((?:\\[\s\S]|[^\\])+?)\n\1(?:\n|$))|(?:\\\[((?:\\[\s\S]|[^\\])+?)\\\])/;
+const blockRule = /^(?:(\${1,2})\n((?:\\[\s\S]|[^\\])+?)\n\1(?:\n|$))|^(?:\\\[((?:\\[\s\S]|[^\\])+?)\\\])/;
 
 // Define the options interface for KaTeX rendering
 export interface MarkedKatexOptions extends KatexOptions
@@ -64,7 +64,7 @@ function inlineKatex(options, renderer)
                 return {
                     type: 'inlineKatex',
                     raw: match[0],
-                    text: match[2]?.trim() || match[3]?.trim(),
+                    text: match[2]?.trim() || match[3]?.trim() || ' ',
                     displayMode: false,
                 };
             }
@@ -86,7 +86,7 @@ function blockKatex(_, renderer)
                 return {
                     type: 'blockKatex',
                     raw: match[0],
-                    text: match[2]?.trim() || match[3]?.trim(),
+                    text: match[2]?.trim() || match[3]?.trim() || ' ',
                     displayMode: true,
                 };
             }

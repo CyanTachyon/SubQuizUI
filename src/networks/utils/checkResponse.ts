@@ -1,5 +1,5 @@
 import type { ResponseBody } from "../../dataClasses/ResponseBody.ts";
-import { checkUpdate, tryBindSeiue, tryLogin } from "../../utils/utils.tsx";
+import { checkUpdate, CheckUpdateReason, tryBindSeiue, tryLogin } from "../../utils/utils.tsx";
 import { useNotification } from "../../stores/notification.ts";
 import type { UserInfo } from "../../dataClasses/User.ts";
 import { useUser } from "../../stores/user.ts";
@@ -36,7 +36,7 @@ function defaultOnFail<T>(response: ResponseBody<T>): T
         if (Capacitor.getPlatform() === 'android') message = `错误：版本过低，请更新应用程序。`;
         else message = '错误：请刷新网页并重试。';
         useNotification().addError(message)
-        checkUpdate(true);
+        checkUpdate(CheckUpdateReason.SERVER_REQUIRED);
         throw error;
     }
     const notifications = useNotification()

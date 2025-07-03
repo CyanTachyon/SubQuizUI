@@ -209,7 +209,7 @@ onUnmounted(() =>
     border: solid 2px var(--glass-border);
     border-radius: 10px;
     margin-top: 4px;
-    max-height: 200px;
+    // max-height: 200px;
     overflow-y: auto;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 

@@ -14,7 +14,7 @@ import Input from '../components/Input.vue';
 import Slider from '../components/Slider.vue';
 import debounce from '../utils/debounce';
 import currentVersion from '../../public/android_latest.json';
-import { checkUpdate } from '../utils/utils';
+import { checkUpdate, CheckUpdateReason } from '../utils/utils';
 
 function isBackdropFilterSupported()
 {
@@ -218,7 +218,7 @@ const handleScaleChange = (newScale: number) =>
                     </Text>
 
                     <div class="background-actions">
-                        <Button :onClick="() => checkUpdate(true)">
+                        <Button :onClick="() => checkUpdate(CheckUpdateReason.USER_ACTIVATED)">
                             检查更新
                         </Button>
                     </div>

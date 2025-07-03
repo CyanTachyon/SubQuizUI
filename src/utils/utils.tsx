@@ -11,6 +11,8 @@ import { vMarkdown } from "./markdown.ts";
 import type { Section } from "../dataClasses/Section.ts";
 import type { AndroidVersion } from "../dataClasses/AndroidVersion.ts";
 import currentVersion from "../../public/android_latest.json";
+import { useNotification } from "../stores/notification.ts";
+import Button from "@/components/Button.vue";
 
 export function getToken()
 {
@@ -147,9 +149,54 @@ export function getSectionBrief(section: Section<any, any, any>)
 }
 
 export const versionInfo = ref(null as AndroidVersion | null);
-export async function checkUpdate(force: boolean = false)
+export enum CheckUpdateReason
+{
+    NONE = 0,
+    SERVER_REQUIRED = 1,
+    USER_ACTIVATED = 2,
+}
+export async function checkUpdate(reason: CheckUpdateReason)
 {
     let r1 = await fetch(environment.frontend + '/android_latest.json' + `?timestamp=${Date.now()}`, { cache: "reload", });
     let res = (await r1.json()) as AndroidVersion;
-    if (res.minVersionCode > currentVersion.versionCode || force && (res.versionCode > currentVersion.versionCode)) versionInfo.value = res;
+    if (Capacitor.getPlatform() === 'web')
+    {
+        if (reason === CheckUpdateReason.NONE)
+        {
+            if (res.version !== currentVersion.version) 
+            {
+                window.location.reload();
+                return;
+            }
+        }
+        return;
+    }
+    else if (reason === CheckUpdateReason.NONE)
+    {
+        if (res.minVersionCode > currentVersion.versionCode) 
+            versionInfo.value = res;
+    }
+    else if (reason === CheckUpdateReason.SERVER_REQUIRED) versionInfo.value = res;
+    else if (reason === CheckUpdateReason.USER_ACTIVATED)
+    {
+        if (res.versionCode > currentVersion.versionCode) 
+        {
+            const close = dialog(
+                <div style="margin: 20px 50px;">
+                    <h2 style="display: flex; justify-content: center;">发现新版本</h2>
+                    <p style="display: flex; justify-content: center;">当前版本：{currentVersion.version}</p>
+                    <p style="display: flex; justify-content: center;">最新版本：{res.version}</p>
+                    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
+                        <Button onClick={() => {versionInfo.value = res;close();}}>下载新版本</Button>
+                    </div>
+                </div>,
+                () => close()
+            );
+        }
+        else 
+        {
+            versionInfo.value = null;
+            useNotification().addInfo(`当前版本已是最新版本：${currentVersion.version}`);
+        }
+    }
 }

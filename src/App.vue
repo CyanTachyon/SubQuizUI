@@ -39,7 +39,7 @@ import { $appearDuration, useTransitionActions } from "./stores/transition.ts";
 import { getNotifications } from "./stores/notification.ts";
 import Sidebar from "./templates/sidebar/Sidebar.vue";
 import DownloadNewVersion from "./pages/_app/DownloadNewVersion.vue";
-import { checkUpdate, versionInfo } from "./utils/utils";
+import { CheckUpdateReason, checkUpdate, versionInfo } from "./utils/utils";
 import { Capacitor } from "@capacitor/core";
 
 const router = useRouter();
@@ -70,7 +70,7 @@ router.afterEach((_, __, failure) =>
         }, $appearDuration);
     });
 });
-checkUpdate();
+checkUpdate(CheckUpdateReason.NONE);
 </script>
 <style lang="scss">
 body {

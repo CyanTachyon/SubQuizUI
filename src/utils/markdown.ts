@@ -1,5 +1,6 @@
 import { marked } from "marked";
 import markedKatex, { type MarkedKatexOptions } from "./katex";
+import "katex/dist/contrib/mhchem.mjs";
 import { connectUrl, Target } from "../networks/utils/sendRequest";
 import type { Directive } from "vue";
 import type { SectionId } from "../dataClasses/Ids";
