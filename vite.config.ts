@@ -80,7 +80,6 @@ export default defineConfig(({ mode }) => ({
                         'mathjax',
                         '@capacitor-community/file-opener',
                         '@capacitor/app',
-                        '@capacitor/browser',
                         '@capacitor/core',
                         '@capacitor/device',
                         '@capacitor/filesystem',

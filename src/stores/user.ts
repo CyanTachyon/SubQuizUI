@@ -1,16 +1,17 @@
-import { setToken, token } from "../utils/utils.tsx";
+import { setToken, getToken } from "../utils/utils.tsx";
 import type { UserInfo } from "../dataClasses/User.ts";
 import { getUserInfo } from "../networks/backend/user.ts";
 import { avatarUrl } from "../networks/sso/avatar.ts";
 import { isAdmin, Permission } from "../dataClasses/Permission.ts";
 import { ref } from 'vue';
+import { InAppBrowser } from "@capgo/inappbrowser";
 
 const user = ref(null as (UserInfo | null));
 
 const actions = {
-    reload: () =>
+    reload: async () =>
     {
-        if (!token)
+        if (!await getToken())
         {
             actions.logout();
             return;
@@ -21,6 +22,8 @@ const actions = {
     {
         user.value = null;
         setToken(null);
+        InAppBrowser.clearAllCookies();
+        InAppBrowser.clearCache();
     },
     userId: () =>
     {

@@ -23,8 +23,13 @@ import { useRouter } from "vue-router";
 import SidebarItem from "./SidebarItem.vue";
 import SettingIcon from "vue-material-design-icons/CogOutline.vue";
 import Spacer from "../../components/Spacer.vue";
+import { storageGet, storageSet } from "../../utils/storage.ts";
 
-let open = ref(localStorage.getItem('sidebar-open') !== 'false');
+let open = ref(true);
+(async () => 
+{
+    open.value = await storageGet('sidebar-open') !== 'false';
+})();
 let sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');
 let controller = createAnimationsController();
 const router = useRouter();
@@ -35,7 +40,7 @@ function changeSidebarState()
         () =>
         {
             open.value = !open.value;
-            localStorage.setItem('sidebar-open', open.value.toString());
+            storageSet('sidebar-open', open.value.toString());
             sidebarClassName.value = open.value ? 'sidebar-open' : 'sidebar-close';
         },
         () => sleep(200),

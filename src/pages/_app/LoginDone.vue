@@ -1,28 +1,30 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
-import Button from '../../components/Button.vue';
-import { safeRedirect } from '../../utils/redirect';
+import { useNotification } from '../../stores/notification';
 
 const route = useRoute();
 const code = route.query.code as string | undefined;
-const from = route.query.from as string | undefined;
 
-document.title = '登录中... - SubQuiz';
+document.title = '登陆成功... - SubQuiz';
 
-let url = "subquiz://oauth";
-if (code || from) url = url + "?";
-if (code) url = url + "code=" + code + "&";
-if (from) url = url + "from=" + from + "&";
-if (code || from) url = url.slice(0, url.length-1);
-safeRedirect(url, true);
+try
+{
+    // @ts-ignore
+    window.mobileApp.postMessage({ detail: { code: code } });
+    // @ts-ignore
+    useNotification().addSuccess(`${window.mobileApp}`)
+}
+catch (error)
+{
+    useNotification().addError(error);
+}
+
 </script>
 
 <template>
-    <a :href="url">
-        <Button>
-            返回应用
-        </Button>
-    </a>
+    <div>
+        正在处理登录信息...
+    </div>
 </template>
 
 <style scoped lang="scss">

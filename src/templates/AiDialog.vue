@@ -17,6 +17,7 @@ import Text from '../components/Text.vue';
 import Card from '../components/Card.vue';
 import { getAiModels } from '../networks/backend/ai';
 import SelectMenu from '../components/SelectMenu.vue';
+import { storageGet, storageSet } from '../utils/storage';
 
 export type AiInfo = Chat & {
     histories: (AiHistory & { showReasoning: boolean; })[];
@@ -144,7 +145,7 @@ const models = ref<ModelInfo[]>([
 
 (async () => {
     models.value = await getAiModels();
-    const savedModel = localStorage.getItem('quiz-ai-model') as Model;
+    const savedModel = await storageGet('quiz-ai-model') as Model;
     if (models.value.some(m => m.model === savedModel)) {
         model.value = savedModel;
     } else {
@@ -155,7 +156,7 @@ const models = ref<ModelInfo[]>([
 function changeModel(newModel: Model)
 {
     model.value = newModel;
-    localStorage.setItem('quiz-ai-model', newModel);
+    storageSet('quiz-ai-model', newModel);
 }
 
 function onSubmit(event: KeyboardEvent)

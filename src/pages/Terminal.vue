@@ -91,13 +91,13 @@ function submit(event: Event)
     );
 }
 
-function socketCloseListener()
+async function socketCloseListener()
 {
     socket = null;
-    socket = openSocket();
+    socket = await openSocket();
 }
 
-function openSocket(): WebSocket
+async function openSocket(): Promise<WebSocket>
 {
     if (timer)
     {
@@ -108,7 +108,7 @@ function openSocket(): WebSocket
     {
         timer = null;
     }, 1000);
-    const socket_ = new WebSocket(url, ['Bearer', getToken()]);
+    const socket_ = new WebSocket(url, ['Bearer', await getToken()]);
     socket_.addEventListener('message', socketListener);
     socket_.addEventListener('close', socketCloseListener);
     return socket_;
@@ -188,7 +188,7 @@ function keyDownListener(event: KeyboardEvent)
 
 onMounted(() =>
 {
-    socket = openSocket();
+    openSocket().then((s) => socket = s);
 });
 
 onBeforeUnmount(() =>

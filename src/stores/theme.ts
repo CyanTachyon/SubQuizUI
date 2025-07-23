@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import { storageGet, storageRemove, storageSet } from '../utils/storage';
 
 const themeInfo = ref({
     useBlur: true,
@@ -8,38 +9,38 @@ const themeInfo = ref({
 });
 
 const actions = {
-    initialize: () =>
+    initialize: async () =>
     {
-        const savedTheme = localStorage.getItem('theme');
-        const savedBlur = localStorage.getItem('theme-blur');
-        const savedGlass = localStorage.getItem('theme-glass');
-        const savedBackground = localStorage.getItem('background');
+        const savedTheme = await storageGet('theme');
+        const savedBlur = await storageGet('theme-blur');
+        const savedGlass = await storageGet('theme-glass');
+        const savedBackground = await storageGet('background');
         themeInfo.value.theme = savedTheme === 'dark' ? 'dark' : savedTheme === 'light' ? 'light' : 'unset';
         themeInfo.value.useBlur = !(savedBlur ? savedBlur === 'off' : false);
         themeInfo.value.useGlass = !(savedGlass ? savedGlass === 'off' : false);
         themeInfo.value.background = savedBackground || '';
         actions.applyTheme();
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-            if (localStorage.getItem('theme') === 'unset') actions.applyTheme();
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', async () => {
+            if (await storageGet('theme') === 'unset') actions.applyTheme();
         });
     },
     setTheme: (theme: 'light' | 'dark' | 'unset') =>
     {
         themeInfo.value.theme = theme;
-        if (theme === 'unset') localStorage.removeItem('theme');
-        else localStorage.setItem('theme', theme);
+        if (theme === 'unset') storageRemove('theme');
+        else storageSet('theme', theme);
         actions.applyTheme();
     },
     setBlur: (blur: 'on' | 'off') =>
     {
         if (blur === 'off')
         {
-            localStorage.setItem('theme-blur', 'off');
+            storageSet('theme-blur', 'off');
             themeInfo.value.useBlur = false;
         }
         else
         {
-            localStorage.removeItem('theme-blur');
+            storageRemove('theme-blur');
             themeInfo.value.useBlur = true;
         }
     },
@@ -47,12 +48,12 @@ const actions = {
     {
         if (glass === 'off')
         {
-            localStorage.setItem('theme-glass', 'off');
+            storageSet('theme-glass', 'off');
             themeInfo.value.useGlass = false;
         }
         else
         {
-            localStorage.removeItem('theme-glass');
+            storageRemove('theme-glass');
             themeInfo.value.useGlass = true;
         }
     },
@@ -69,7 +70,7 @@ const actions = {
     {
         if (themeInfo.value.background)
         {
-            localStorage.removeItem('background');
+            storageRemove('background');
             themeInfo.value.background = '';
             actions.applyTheme();
             return;
@@ -86,7 +87,7 @@ const actions = {
             reader.onload = () =>
             {
                 const res = reader.result as string;
-                localStorage.setItem('background', res);
+                storageSet('background', res);
                 themeInfo.value.background = res;
                 actions.applyTheme();
             };

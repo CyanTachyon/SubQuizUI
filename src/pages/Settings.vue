@@ -15,6 +15,7 @@ import Slider from '../components/Slider.vue';
 import debounce from '../utils/debounce';
 import currentVersion from '../../public/android_latest.json';
 import { checkUpdate, CheckUpdateReason } from '../utils/utils';
+import { storageGet, storageSet } from '../utils/storage';
 
 function isBackdropFilterSupported()
 {
@@ -98,10 +99,13 @@ const handleBackgroundChange = () =>
     theme.changeBackground();
 };
 
-const scale = ref(Number(localStorage.getItem('scale')) || (Capacitor.getPlatform() === 'web' ? 1 : 0.8));
+const scale = ref(1);
+(async () => {
+    scale.value = Number(await storageGet('scale')) || (Capacitor.getPlatform() === 'web' ? 1 : 0.8);
+})();
 const setScale = debounce((newScale: number) =>
 {
-    localStorage.setItem('scale', String(newScale));
+    storageSet('scale', String(newScale));
     useNotification().addSuccess(`页面缩放已设置, ${Capacitor.getPlatform() === 'web' ? '刷新页面以应用更改。' : '请重启应用以应用更改。'}`);
 }, 500);
 const handleScaleChange = (newScale: number) =>

@@ -4,6 +4,7 @@ import { safeRedirect } from "../utils/redirect.ts";
 import Image from "../components/Image.vue";
 import Button from "../components/Button.vue";
 import { connectUrl, Target } from "../networks/utils/sendRequest";
+import { tryOpenSSO } from "../utils/utils.tsx";
 
 const { close } = defineProps<{
     close: () => void;
@@ -22,7 +23,7 @@ const user = useUser();
             <quiz-username>{{ user.userName() }}</quiz-username>
         </quiz-user-box>
         <div style="display: flex;">
-            <Button @click="() => { close(); safeRedirect(connectUrl(Target.SSO_FRONTEND, '/info?intent=seiue&userId=' + user.userId())); }">
+            <Button @click="() => { close(); tryOpenSSO('/info?intent=seiue&userId=' + user.userId()); }">
                 绑定希悦
             </Button>
             <Button @click="() => { user.logout(); close(); safeRedirect(connectUrl(Target.FRONTEND, '/')) }">

@@ -1,7 +1,6 @@
-import { computed, createApp, ref } from "vue";
+import { createApp, ref } from "vue";
 import { Capacitor } from '@capacitor/core';
 import { connectUrl, Target } from "../networks/utils/sendRequest.ts";
-import { router, scale } from "../main.ts";
 import { safeRedirect } from "./redirect.ts";
 import Dialog from "@/components/Dialog.vue";
 import Input from "@/components/Input.vue";
@@ -13,18 +12,21 @@ import type { AndroidVersion } from "../dataClasses/AndroidVersion.ts";
 import currentVersion from "../../public/android_latest.json";
 import { useNotification } from "../stores/notification.ts";
 import Button from "@/components/Button.vue";
+import { InAppBrowser, ToolBarType } from "@capgo/inappbrowser";
+import { login } from "../networks/backend/oauth.ts";
+import { ScreenOrientation } from "@capacitor/screen-orientation";
+import { storageGet, storageRemove, storageSet } from "./storage.ts";
+import { getScale } from "../main.ts";
 
-export function getToken()
+export async function getToken()
 {
-    return localStorage.getItem('token');
+    return await storageGet('token');
 }
 export function setToken(token: string | null)
 {
-    if (token !== null) localStorage.setItem('token', token);
-    else localStorage.removeItem('token');
+    if (token !== null) storageSet('token', token);
+    else storageRemove('token');
 }
-
-export let token = computed({ get: getToken, set: setToken, });
 
 export function tryLogin()
 {
@@ -36,17 +38,42 @@ export function tryBindSeiue()
     const close = dialog(<RealNameRequired close={ () => { close(); } }/>);
 }
 
-function tryOpenSSO(url: string)
+if (Capacitor.getPlatform() !== 'web')
 {
-    if (Capacitor.getPlatform() !== 'web') 
+    InAppBrowser.addListener("messageFromWebview", async (data) =>
     {
-        const callbackUrl = connectUrl(Target.FRONTEND, '/_app/login', { from: location.pathname });
-        router.push(connectUrl(Target.EMPTY, '/_app/sso' + url, { from: callbackUrl }));
+        const code = data.detail["code"];
+        InAppBrowser.close();
+        if (!code) return;
+        await login(code);
+    });
+    InAppBrowser.addListener("closeEvent", async () =>
+    {
+        await ScreenOrientation.lock({ orientation: 'landscape' });
+    });
+}
+
+export function tryOpenSSO(url: string)
+{
+    if (Capacitor.getPlatform() === 'web') 
+    {
+        const callbackUrl = connectUrl(Target.FRONTEND, "/login", { from: location.pathname });
+        const target = connectUrl(Target.SSO_FRONTEND, url, { from: callbackUrl });
+        safeRedirect(target);
     }
     else 
     {
-        const callbackUrl = connectUrl(Target.FRONTEND, '/login', { from: location.pathname });
-        safeRedirect(connectUrl(Target.SSO_FRONTEND, url, { from: callbackUrl }));
+        const doneUrl = connectUrl(Target.FRONTEND, '/_app/login');
+        const callbackUrl = connectUrl(Target.EMPTY, doneUrl, { from: location.pathname });
+        const target = connectUrl(Target.SSO_FRONTEND, url, { from: callbackUrl });
+        (async () =>
+        {
+            await ScreenOrientation.unlock();
+            await InAppBrowser.openWebView({ 
+                url: target,
+                toolbarType: ToolBarType.BLANK,
+            });
+        })();
     }
 }
 
@@ -83,7 +110,7 @@ export function dialog(
     const app = createApp({
         render()
         {
-            return <Dialog open={open.value} onClose={onClose} style={ `transform: scale(${scale});` }>{innerHtml}</Dialog>;
+            return <Dialog open={open.value} onClose={onClose} style={ `transform: scale(${getScale()});` }>{innerHtml}</Dialog>;
         }
     }).directive('markdown', vMarkdown)
     app.mount(container);

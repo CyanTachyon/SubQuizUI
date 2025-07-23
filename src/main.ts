@@ -18,7 +18,6 @@ import Admins from './pages/admin/Admins.vue';
 import UpdateInfo from './pages/UpdateInfo.vue';
 import { App as CapacitorApp } from '@capacitor/app';
 import LoginApp from './pages/_app/LoginDone.vue';
-import SSO from './pages/_app/SSO.vue';
 import { Capacitor } from '@capacitor/core';
 import './katex.css';
 import { vMarkdown } from './utils/markdown';
@@ -30,6 +29,7 @@ import Exam from './pages/admin/Exam.vue';
 import Theme from './pages/Settings.vue';
 import { useUser } from './stores/user';
 import { useTheme } from './stores/theme';
+import { storageGet } from './utils/storage';
 
 if (Capacitor.getPlatform() === 'web')
 {
@@ -66,7 +66,6 @@ const routes: Readonly<RouteRecordRaw[]> = [
     { path: '/admin/exam/:id', component: Exam, meta: { sidebar: true } },
 
     { path: '/_app/login', name: 'LoginApp', component: LoginApp },
-    { path: '/_app/sso/:url*', name: 'SSO', component: SSO },
 
     { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFound }
 ];
@@ -98,8 +97,15 @@ theme.initialize();
 const user = useUser();
 user.reload();
 
+let scale = 1;
+export function getScale(): number
+{
+    return scale;
+}
+
 const appEle = (document.querySelector('quiz-app') as any);
-export const scale = Number(localStorage.getItem('scale')) || (Capacitor.getPlatform() === 'web' ? 1 : 0.8);
+(async () => {
+scale = Number(await storageGet('scale')) || (Capacitor.getPlatform() === 'web' ? 1 : 0.8);
 appEle.style = `
     transform: scale(${scale});
     transform-origin: top left;
@@ -107,6 +113,7 @@ appEle.style = `
     height: ${100 / scale}%;
     overflow: hidden;
 `;
+})();
 
 createApp(App)
     .use(router)
