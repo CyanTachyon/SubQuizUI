@@ -27,6 +27,7 @@ import AiChats from './pages/AiChats.vue';
 import Classes from './pages/Classes.vue';
 import Exam from './pages/admin/Exam.vue';
 import Theme from './pages/Settings.vue';
+import AiTranslate from './pages/AiTranslate.vue';
 import { useUser } from './stores/user';
 import { useTheme } from './stores/theme';
 import { storageGet } from './utils/storage';
@@ -50,6 +51,7 @@ const routes: Readonly<RouteRecordRaw[]> = [
     { path: '/quiz', name: 'Quiz', component: Quiz, meta: { sidebar: true } },
     { path: '/terminal', name: 'Terminal', component: Terminal, meta: { sidebar: true } },
     { path: '/ai-chat', name: 'AIChats', component: AiChats, meta: { sidebar: true } },
+    { path: '/ai-translate', name: 'AiTranslate', component: AiTranslate, meta: { sidebar: true } },
     { path: '/class', name: 'Class', component: Classes, meta: { sidebar: true } },
     { path: '/setting', name: 'Theme', component: Theme, meta: { sidebar: true } },
     { path: '/admin/admins', name: 'Admins', component: Admins, meta: { sidebar: true } },

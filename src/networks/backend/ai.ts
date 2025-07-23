@@ -142,5 +142,49 @@ export async function chatSSE(
                 onMessage({ content: null, reasoning_content: null, finished: true, banned: true });
             }
         });
-      }
+    }
+}
+
+const translateSSEUrl = '/ai/translate';
+export async function translateSSE(
+    text: string,
+    onMessage: (message: string) => void,
+)
+{
+    const req = await request(connectUrl(Target.BACKEND, translateSSEUrl), 'POST', {}, true, { text });
+
+    let ok = req.headers.get('Content-Type')?.startsWith('text/event-stream');
+    if (!ok) return checkResponse(req.json());
+
+    const reader = req.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true)
+    {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        chunk.split(/\r?\n\r?\n/).filter(part => part.trim() !== '').forEach(block =>
+        {
+            const parts = block.split(/\n|\r/).filter(part => part.trim() !== '');
+            let data = '';
+            let event = '';
+            for (const part of parts)
+            {
+                if (part.startsWith('data: ')) data += part.slice(6) + '\n';
+                if (part.startsWith('event: ')) event += part.slice(7) + '\n';
+            }
+            if (data.endsWith('\n')) data = data.slice(0, -1);
+            if (event.endsWith('\n')) event = event.slice(0, -1);
+            if (event === 'message') try 
+            {
+                onMessage(JSON.parse(data).text);
+            }
+            catch (e) 
+            {
+                useNotification().addError(`Error parsing AI message`);
+            }
+        });
+    }
 }

@@ -13,8 +13,11 @@ import PlusIcon from "vue-material-design-icons/Plus.vue";
 import Spacer from "../components/Spacer.vue";
 import Button from "../components/Button.vue";
 import Text from "../components/Text.vue";
+import TranslateIcon from "vue-material-design-icons/Translate.vue";
+import { useRouter } from "vue-router";
 
 let open = ref(true);
+const router = useRouter();
 let sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');
 
 const chats = ref<Chat[]>([]);
@@ -51,6 +54,11 @@ function handleScroll(event: Event)
     if (scrollHeight - scrollTop - clientHeight < 10) loadChats(false);
 }
 
+function openAiTranslate()
+{
+    router.push('/ai-translate');
+}
+
 loadChats(false);
 
 </script>
@@ -63,6 +71,7 @@ loadChats(false);
             </div>
 
             <SidebarItem title="新建对话" :icon="PlusIcon" @click="info = -Math.random()" />
+            <SidebarItem title="AI翻译" :icon="TranslateIcon" @click="openAiTranslate" />
             <Spacer style="margin-top: 10px; margin-bottom: 10px;" />
             <div class="chats" @scroll="handleScroll">
                 <Button class="item" v-for="chat in chats" :key="chat.id" @click="info = chat.id">
@@ -113,8 +122,8 @@ loadChats(false);
         overflow-y: auto;
         scrollbar-width: none;
         flex-grow: 1;
-        max-height: calc(100% - 160px);
-        min-height: calc(100% - 160px);
+        max-height: calc(100% - 225px);
+        min-height: calc(100% - 225px);
     }
 
     .loading-indicator,

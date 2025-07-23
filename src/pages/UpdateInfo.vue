@@ -135,12 +135,19 @@ const updateInfo: UpdateInfo[] = ([
             '- AI答疑功能优化，支持更多模型选择\n'
     },
     {
+        date: '2025-07-23',
+        version: '3.0.3',
+        description: '' +
+            '- 添加AI翻译功能\n' +
+            '- 修复已知问题\n'
+    },
+    {
         version: 'TODO LIST',
         description: '以下是预计添加的新功能，但我开发速度有限，所以别急^v^\n' +
             "1. 简答/填空允许提交图片\n" +
             "2. 支持给题目设置难度系数\n" +
             "3. 添加批量题目导入导出功能\n" +
-            "4. 添加AI工具箱（AI文字识别、AI翻译等）\n"
+            "4. 添加AI工具箱（AI文字识别等）\n"
         ,
     }
 ] as UpdateInfo[]).reverse();
