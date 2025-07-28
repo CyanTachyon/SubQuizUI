@@ -142,6 +142,14 @@ const updateInfo: UpdateInfo[] = ([
             '- 修复已知问题\n'
     },
     {
+        date: '2025-07-25',
+        version: '3.0.4',
+        description: '' +
+            '- 添加AI图片识别功能\n' +
+            '- 优化AI答疑功能，支持删除聊天，以及一些其他UI优化\n' +
+            '- 修复已知问题\n'
+    },
+    {
         version: 'TODO LIST',
         description: '以下是预计添加的新功能，但我开发速度有限，所以别急^v^\n' +
             "1. 简答/填空允许提交图片\n" +

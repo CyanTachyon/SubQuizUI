@@ -120,7 +120,7 @@ function gotoAI(sectionIndex: number)
     }
 
     router.push({
-        path: '/ai-chat',
+        path: '/ai/chat',
         state: {
             section: JSON.parse(JSON.stringify(section)),
         }

@@ -7,6 +7,7 @@ export interface Chat
 {
     id: ChatId;
     user: number;
+    title: string;
     section: Section<AnswerType, AnswerType, string> | null;
     histories: AiHistory[];
     hash: string;

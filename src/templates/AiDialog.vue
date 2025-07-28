@@ -2,11 +2,11 @@
 import { ref, nextTick } from 'vue';
 import type { AnswerType } from '../dataClasses/Question';
 import type { Section } from '../dataClasses/Section';
-import { chatSSE, createChat, getChat, sendContent, type AiHistory, type AiMessage, type Model, type ModelInfo } from '../networks/backend/ai';
+import { chatSSE, createChat, deleteChat, getChat, sendContent, type AiHistory, type AiMessage, type Model, type ModelInfo } from '../networks/backend/ai';
 import Input from '../components/Input.vue';
 import { useNotification } from '../stores/notification';
 import LoadingIcon from 'vue-material-design-icons/Loading.vue';
-import { dialog, getSectionBrief } from '../utils/utils';
+import { dialog } from '../utils/utils';
 import ChevronRightIcon from 'vue-material-design-icons/ChevronRight.vue';
 import ChevronDownIcon from 'vue-material-design-icons/ChevronDown.vue';
 import type { Chat } from '../dataClasses/Chat';
@@ -18,6 +18,11 @@ import Card from '../components/Card.vue';
 import { getAiModels } from '../networks/backend/ai';
 import SelectMenu from '../components/SelectMenu.vue';
 import { storageGet, storageSet } from '../utils/storage';
+import { Capacitor } from '@capacitor/core';
+import { TrashIcon } from '@heroicons/vue/16/solid';
+import ContentCopyIcon from 'vue-material-design-icons/ContentCopy.vue';
+import FileQuestionIcon from 'vue-material-design-icons/FileQuestion.vue';
+import Button from '../components/Button.vue';
 
 export type AiInfo = Chat & {
     histories: (AiHistory & { showReasoning: boolean; })[];
@@ -27,7 +32,8 @@ export type AiInfo = Chat & {
 
 const props = defineProps<{
     info: ChatId | Section<AnswerType, AnswerType, string>;
-    onNewChat: () => void;
+    onNewChat: (id: ChatId) => void;
+    onChatNamed: (id: ChatId, title: string) => void;
 }>();
 
 const info = ref<AiInfo>();
@@ -84,7 +90,8 @@ const onMessage = (message: AiMessage & { finished: boolean, banned: boolean; })
     }
 }
 
-(async () => {
+const init = async () => 
+{
     if (typeof props.info === 'number' && props.info > 0)
     {
         const chat = await getChat(props.info);
@@ -104,6 +111,7 @@ const onMessage = (message: AiMessage & { finished: boolean, banned: boolean; })
             id: 0,
             section: typeof props.info === 'object' ? props.info : null,
             user: 0,
+            title: '新建对话',
             hash: '',
             histories: [],
             showAnswering: false,
@@ -128,13 +136,16 @@ const onMessage = (message: AiMessage & { finished: boolean, banned: boolean; })
     chatSSE(
         info.value.id,
         info.value.hash,
-        onMessage
+        onMessage,
+        (title) => props.onChatNamed(info.value.id, title)
     ).finally(() => info.value.inAnswering = info.value.showAnswering = false);
-})().then(() => { loading.value = false; nextTick(scrollToBottom); });
+};
+init().then(() => { loading.value = false; nextTick(scrollToBottom); });
 
 const input = ref('');
 
 const model = ref<Model>('');
+const searching = ref(false);
 const models = ref<ModelInfo[]>([
     {
         model: '',
@@ -146,11 +157,15 @@ const models = ref<ModelInfo[]>([
 (async () => {
     models.value = await getAiModels();
     const savedModel = await storageGet('quiz-ai-model') as Model;
-    if (models.value.some(m => m.model === savedModel)) {
+    if (models.value.some(m => m.model === savedModel))
+    {
         model.value = savedModel;
-    } else {
+    } 
+    else
+    {
         model.value = models.value[0].model;
     }
+    searching.value = !!Boolean(await storageGet('quiz-ai-searching'));
 })();
 
 function changeModel(newModel: Model)
@@ -158,10 +173,21 @@ function changeModel(newModel: Model)
     model.value = newModel;
     storageSet('quiz-ai-model', newModel);
 }
+function changeSearching()
+{
+    searching.value = !searching.value;
+    storageSet('quiz-ai-searching', searching.value + '');
+}
+
+function isMobileDevice()
+{
+    if (Capacitor.getPlatform() !== 'web') return true;
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
 
 function onSubmit(event: KeyboardEvent)
 {
-    if (event && event.shiftKey) return;
+    if (event && (event.shiftKey || isMobileDevice())) return;
     event?.preventDefault();
     if (input.value.trim() === '' || info.value.showAnswering) return;
     else if (info.value.inAnswering) 
@@ -171,7 +197,8 @@ function onSubmit(event: KeyboardEvent)
     }
     info.value.inAnswering = true;
 
-(async () => {
+    (async () => {
+    
     if (!info.value.id)
     {
         const {id, user, hash} = await createChat(info.value.section, input.value, model.value)
@@ -179,7 +206,8 @@ function onSubmit(event: KeyboardEvent)
         info.value.hash = hash;
         info.value.histories = [];
         info.value.user = user;
-        try { props.onNewChat(); } catch (e) {  }
+        props.onNewChat(id);
+        return;
     }
     else 
     {
@@ -222,13 +250,22 @@ function onSubmit(event: KeyboardEvent)
             info.value.id,
             info.value.hash,  
             onMessage,
+            (title) => props.onChatNamed(info.value.id, title)
         )
     }
     finally
     {
         info.value.showAnswering = false;
     }
-})().finally(() => { info.value.inAnswering = false; });
+    })().finally(() => 
+    { 
+        info.value.inAnswering = false; 
+        if (
+            info.value.histories.length > 0 && 
+            info.value.histories[info.value.histories.length - 1].role === 'assistant' &&
+            info.value.histories[info.value.histories.length - 1].content === ''
+        ) init();
+    });
 }
 
 function openSection()
@@ -239,42 +276,58 @@ function openSection()
     </div>, () => {close();});
 }
 
+function copyToClipboard(content: string | null)
+{
+    if (!content) return;
+    navigator.clipboard.writeText(content).then(() =>
+    {
+        useNotification().addSuccess('已复制到剪贴板');
+    }).catch(() =>
+    {
+        useNotification().addError('复制失败');
+    });
+}
+
 </script>
 
 <template>
     <Card class="quiz-ai-dialog">
         <Loading v-if="loading"></Loading>
         <template v-else>
+            <div style="display: flex; align-items: center; justify-content: center; height: 60px; padding: 0 10px; font-size: 1.2rem; font-weight: bold; gap: 10px; position: relative; min-height: 60px;">
+                {{ info?.title ?? '新建对话' }}
+                <TrashIcon v-if="info?.id" @click="deleteChat(info?.id).then(() => onNewChat(0))" style="color: red; width: 20px; height: 20px; opacity: 0.7; cursor: pointer;" />
+            </div>
             <Text class="section" v-if="info.section" @click="openSection">
-                {{ getSectionBrief(info.section) }}
+                <FileQuestionIcon />
+                点击查看题目内容
             </Text>
-            <div @scroll="handleScroll" class="histories" :class="info.histories.length === 0 ? 'empty' : ''"
-                ref="historiesContainer">
+            <div @scroll="handleScroll" class="histories" :class="info.histories.length === 0 ? 'empty' : ''" ref="historiesContainer">
                 <Text v-if="info.histories.length === 0" class="message empty">
                     <span>{{ info.section ? "题目解析没看懂？" : "在题目解析页面点击AI标识" }}向AI提问</span>
                 </Text>
-                <Text v-for="(item, index) in info.histories" :key="index" class="message" :class="item.role">
-                    <div class="reasoning" v-if="item.reasoning_content">
-                        <div class="reasoning-header" @click="item.showReasoning = !item.showReasoning">
-                            <ChevronDownIcon v-if="item.showReasoning" class="icon" />
-                            <ChevronRightIcon v-else class="icon" />
-                            思考过程
+                <div class="message-box" :class="item.role" v-for="(item, index) in info.histories" :key="index" >
+                    <Text class="message" :class="item.role">
+                        <div class="reasoning" v-if="item.reasoning_content">
+                            <div class="reasoning-header" @click="item.showReasoning = !item.showReasoning">
+                                <ChevronDownIcon v-if="item.showReasoning" class="icon" />
+                                <ChevronRightIcon v-else class="icon" />
+                                思考过程
+                            </div>
+                            <Text v-markdown="{ markdown: true, content: item.reasoning_content, section: info.section?.id }" class="reasoning-content" v-if="item.showReasoning" />
                         </div>
-                        <Text
-                            v-markdown="{ markdown: true, content: item.reasoning_content, section: info.section?.id }"
-                            class="reasoning-content" v-if="item.showReasoning" />
-                    </div>
-                    <Text class="content" v-if="item.content"
-                        v-markdown="{ markdown: item.role === 'assistant', content: item.content, section: info.section?.id }" />
-                    <div class="loading-icon" v-if="index === info.histories.length - 1 && info.showAnswering"
-                        :key="index">
-                        <LoadingIcon />
-                    </div>
-                </Text>
+                        <Text class="content" v-if="item.content" v-markdown="{ markdown: item.role === 'assistant', content: item.content, section: info.section?.id }" />
+                        <div class="loading-icon" v-if="index === info.histories.length - 1 && info.showAnswering" :key="index">
+                            <LoadingIcon />
+                        </div>
+                    </Text>
+                    <div v-if="index !== info.histories.length - 1 || !info.showAnswering" class="copy-button"> <ContentCopyIcon :size="20" class="icon" @click="copyToClipboard(item.content)"/> </div>
+                </div>
             </div>
             <Input v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
             <Text class="bottom-bar">
                 <SelectMenu :model-value="model" :options="models.map(m => ({ label: m.displayName, value: m.model }))" class="model-name quiz-ai" :placeholder="'选择模型'" @update:model-value="changeModel" :direction="'up'"/>
+                <Button @click="changeSearching" :down="searching">联网搜索</Button>
                 <span class="send" @click="onSubmit(null)">
                     发送
                 </span>
@@ -302,17 +355,24 @@ quiz-loading {
 
 .section {
     display: flex;
-    max-height: 20%;
     height: fit-content;
+    min-height: fit-content;
+    max-height: fit-content;
+    width: fit-content;
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
     margin: 10px;
+    margin-left: auto;
+    margin-right: auto;
     background-color: rgba(127, 120, 154, 0.4);
     overflow: auto;
     scrollbar-width: none;
     cursor: pointer;
     top: 0;
     position: sticky;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .histories {
@@ -353,65 +413,97 @@ quiz-loading {
     min-height: 4rem;
 }
 
-.message {
-    width: fit-content;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
+.message-box {
     margin: 10px;
-
-    .reasoning {
-        .reasoning-header {
+    .copy-button {
+        display: flex;
+        .icon {
+            opacity: 0.5;
             cursor: pointer;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            margin: 10px 10px 10px 0;
-            width: fit-content;
-            font-weight: bold;
-            background-color: rgba(125, 125, 125, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-
-            .icon {
-                margin: -3px;
+            margin: 3px 0 3px 0;
+            padding: 4px;
+            border-radius: 8px;
+            transition: background-color 0.2s ease;
+            &:hover {
+                background-color: var(--glass-button-hover-background);
+            }
+            &:active {
+                opacity: 1;
             }
         }
+    }
+    .message {
+        width: fit-content;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
 
-        .reasoning-content {
-            border-left: gray 3px solid;
-            margin-left: 3px;
-            margin-bottom: 1rem;
-            padding-left: 1rem;
+        .reasoning {
+            .reasoning-header {
+                cursor: pointer;
+                padding: 0.5rem 1rem;
+                border-radius: 0.5rem;
+                margin: 10px 10px 10px 0;
+                width: fit-content;
+                font-weight: bold;
+                background-color: rgba(125, 125, 125, 0.4);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
 
+                .icon {
+                    margin: -3px;
+                }
+            }
+
+            .reasoning-content {
+                border-left: gray 3px solid;
+                margin-left: 3px;
+                margin-bottom: 1rem;
+                padding-left: 1rem;
+
+                -webkit-user-select: text;
+                user-select: text;
+            }
+        }
+        .content {
             -webkit-user-select: text;
             user-select: text;
         }
     }
-    .content {
-        -webkit-user-select: text;
-        user-select: text;
+}
+
+.message-box.user {
+    margin-left: auto;
+    max-width: 75%;
+    .copy-button {
+        .icon {
+            right: 0; 
+            margin-left: auto;
+        }
     }
 }
 
 .message.user {
-    align-self: flex-end;
-    background-color: rgba(96, 178, 139, 0.2);
     right: 0;
     margin-left: auto;
-    max-width: 75%;
+    align-self: flex-end;
+    background-color: rgba(96, 178, 139, 0.2);
 
     .content {
         white-space: pre-wrap;
     }
 }
 
+.message-box.assistant {
+    max-width: 95%;
+}
+
 .message.assistant {
-    align-self: flex-start;
-    background-color: rgba(69, 175, 195, 0.2);
     left: 0;
     margin-right: auto;
-    max-width: 95%;
+    align-self: flex-start;
+    background-color: rgba(69, 175, 195, 0.2);
 }
 
 .bottom-bar {

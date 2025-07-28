@@ -1,24 +1,23 @@
 <script setup lang="tsx">
-import Card from "../components/Card.vue";
-import { ref } from "vue";
-import type { Chat } from "../dataClasses/Chat";
-import { getChatList } from "../networks/backend/ai";
-import SidebarItem from "../templates/sidebar/SidebarItem.vue";
-import { getSectionBrief } from "../utils/utils";
-import type { AnswerType } from "../dataClasses/Question";
-import type { Section } from "../dataClasses/Section";
-import type { ChatId } from "../dataClasses/Ids";
-import AiDialog from "../templates/AiDialog.vue";
+import Card from "../../components/Card.vue";
+import { ref, watch } from "vue";
+import type { Chat } from "../../dataClasses/Chat";
+import { getChatList } from "../../networks/backend/ai";
+import SidebarItem from "../../templates/sidebar/SidebarItem.vue";
+import type { AnswerType } from "../../dataClasses/Question";
+import type { Section } from "../../dataClasses/Section";
+import type { ChatId } from "../../dataClasses/Ids";
+import AiDialog from "../../templates/AiDialog.vue";
 import PlusIcon from "vue-material-design-icons/Plus.vue";
-import Spacer from "../components/Spacer.vue";
-import Button from "../components/Button.vue";
-import Text from "../components/Text.vue";
-import TranslateIcon from "vue-material-design-icons/Translate.vue";
-import { useRouter } from "vue-router";
+import Spacer from "../../components/Spacer.vue";
+import Button from "../../components/Button.vue";
+import Text from "../../components/Text.vue";
+import { useRoute } from "vue-router";
+import { replaceUrl } from "../../utils/utils";
 
-let open = ref(true);
-const router = useRouter();
-let sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');
+const open = ref(true);
+const route = useRoute();
+const sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');
 
 const chats = ref<Chat[]>([]);
 const info = ref(0 as ChatId | Section<AnswerType, AnswerType, string>);
@@ -26,11 +25,12 @@ const isLoading = ref(false);
 const hasMore = ref(true);
 
 if (history.state.section) info.value = history.state.section;
+else if (route.query.id) info.value = Number(route.query.id) || 0;
 history.replaceState({}, '');
 
 function loadChats(reload: boolean)
 {
-    if (isLoading.value || !hasMore.value) return;
+    if (isLoading.value || (!hasMore.value && !reload)) return;
 
     isLoading.value = true;
     if (reload)
@@ -54,12 +54,42 @@ function handleScroll(event: Event)
     if (scrollHeight - scrollTop - clientHeight < 10) loadChats(false);
 }
 
-function openAiTranslate()
+function onChatNamed(id: ChatId, title: string)
 {
-    router.push('/ai-translate');
+    const chat = chats.value.find(c => c.id === id);
+    if (chat) 
+    {
+        let index = 0;
+        const addChar = () =>
+        {
+            chat.title = title.slice(0, index);
+            index++;
+            if (index <= title.length)
+            {
+                setTimeout(addChar, 50);
+            } 
+            else
+            {
+                chat.title = title;
+            }
+        };
+        addChar();
+    }
+}
+
+function onNewChat(id: ChatId)
+{
+    info.value = id;
+    loadChats(true);
 }
 
 loadChats(false);
+
+watch(info, (newInfo) => 
+{
+    if (typeof newInfo === 'object') return;
+    replaceUrl('/ai/chat', { id: `${newInfo}` });
+});
 
 </script>
 
@@ -70,12 +100,14 @@ loadChats(false);
                 <div class="menu-title">Quiz AI</div>
             </div>
 
-            <SidebarItem title="新建对话" :icon="PlusIcon" @click="info = -Math.random()" />
-            <SidebarItem title="AI翻译" :icon="TranslateIcon" @click="openAiTranslate" />
+            <SidebarItem title="新建对话" :icon="PlusIcon" @click="info = 0" />
             <Spacer style="margin-top: 10px; margin-bottom: 10px;" />
-            <div class="chats" @scroll="handleScroll">
+            <Text class="sidebar-empty" v-if="!chats.length">
+                还没有对话记录
+            </Text>
+            <div class="chats" @scroll="handleScroll" v-else>
                 <Button class="item" v-for="chat in chats" :key="chat.id" @click="info = chat.id">
-                    {{ getSectionBrief(chat.section) }}
+                    {{ chat.title }}
                 </Button>
                 <Text v-if="isLoading" class="loading-indicator">
                     加载中...
@@ -84,14 +116,11 @@ loadChats(false);
                     没有更多对话了
                 </Text>
             </div>
-            <Text class="sidebar-empty" v-if="!chats.length">
-                还没有对话记录
-            </Text>
-
         </Card>
 
         <div class="main-content">
-            <AiDialog :key="typeof info === 'object' ? info.id : info" :info="info" @newChat="loadChats(true)" />
+            <AiDialog :key="typeof info === 'object' ? info.id : info" :info="info" @newChat="onNewChat"
+                @chatNamed="onChatNamed" />
         </div>
     </quiz-ai-chats>
 </template>
@@ -122,8 +151,8 @@ loadChats(false);
         overflow-y: auto;
         scrollbar-width: none;
         flex-grow: 1;
-        max-height: calc(100% - 225px);
-        min-height: calc(100% - 225px);
+        max-height: calc(100% - 165px);
+        min-height: calc(100% - 165px);
     }
 
     .loading-indicator,

@@ -1,35 +1,50 @@
 <script setup lang="ts">
-import { ref, onUnmounted, computed } from 'vue';
+import { ref, onUnmounted, computed, onMounted } from 'vue';
 import Text from '../components/Text.vue';
 
 // Props
 interface Props
 {
-    initialLeftWidth?: number;
-    minLeftWidth?: number;
-    maxLeftWidth?: number;
-    dividerWidth?: number;
+    initialLeftWidth?: string;
+    minLeftWidth?: string;
+    maxLeftWidth?: string;
+    minRightWidth?: string;
+    maxRightWidth?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    initialLeftWidth: 50,
-    minLeftWidth: 10,
-    maxLeftWidth: 90,
-    dividerWidth: 4
+    initialLeftWidth: '50%',
+    minLeftWidth: '100px',
+    maxLeftWidth: '100%',
+    minRightWidth: '100px',
+    maxRightWidth: '100%',
 });
 
-const emit = defineEmits<{
-    resize: [leftWidth: number, rightWidth: number];
-}>();
-
-const leftWidth = ref(props.initialLeftWidth);
+const leftWidth = ref(0);
+onMounted(() => {
+    const rect = splitContainer.value.getBoundingClientRect();
+    leftWidth.value = convertToPercentage(props.initialLeftWidth || '50%', rect.width);
+})
 const isDragging = ref(false);
 const splitContainer = ref<HTMLElement>();
 
 const rightWidth = computed(() => 100 - leftWidth.value);
 
-const getEventX = (event: MouseEvent | TouchEvent): number => {
-    if ('touches' in event) {
+const convertToPercentage = (value: string, containerWidth: number): number =>
+{
+    if (value.endsWith('%')) return parseFloat(value);
+    else if (value.endsWith('px')) return parseFloat(value) / containerWidth * 100;
+    else if (value.endsWith('em')) return (parseFloat(value) * 16) / containerWidth * 100;
+    else if (value.endsWith('rem')) return (parseFloat(value) * 16) / containerWidth * 100;
+    else if (value.endsWith('vw')) return (parseFloat(value) / containerWidth * window.innerWidth);
+    else if (value.endsWith('vh')) return (parseFloat(value) / containerWidth * window.innerHeight);
+    return parseFloat(value) || 0;
+};
+
+const getEventX = (event: MouseEvent | TouchEvent): number =>
+{
+    if ('touches' in event) 
+    {
         return event.touches[0]?.clientX || 0;
     }
     return event.clientX;
@@ -52,8 +67,8 @@ const onDrag = (event: MouseEvent | TouchEvent) =>
 {
     if (!isDragging.value || !splitContainer.value) return;
 
-    // 防止触摸滚动
-    if ('touches' in event) {
+    if ('touches' in event) 
+    {
         event.preventDefault();
     }
     
@@ -62,14 +77,7 @@ const onDrag = (event: MouseEvent | TouchEvent) =>
     const eventX = getEventX(event);
     const mouseX = eventX - containerRect.left;
 
-    const newLeftWidth = (mouseX / containerWidth) * 100;
-
-    leftWidth.value = Math.max(
-        props.minLeftWidth,
-        Math.min(props.maxLeftWidth, newLeftWidth)
-    );
-
-    emit('resize', leftWidth.value, rightWidth.value);
+    leftWidth.value = (mouseX / containerWidth) * 100;
 };
 
 const stopDrag = () =>
@@ -96,18 +104,17 @@ onUnmounted(() =>
 </script>
 <template>
     <div ref="splitContainer" class="split-container">
-        <div class="split-left" :style="{ width: `${leftWidth}%` }">
+        <div class="split-left" :style="{ width: `${leftWidth}%`, maxWidth: props.maxLeftWidth, minWidth: props.minLeftWidth }">
             <slot name="left"></slot>
         </div>
         <Text 
-            class="split-divider" 
-            :style="{ width: `${props.dividerWidth}px` }" 
+            class="split-divider"
             @mousedown="startDrag"
             @touchstart="startDrag"
             >
             <div/>
         </Text>
-        <div class="split-right" :style="{ width: `${rightWidth}%` }">
+        <div class="split-right" :style="{ width: `${rightWidth}%`, maxWidth: props.maxRightWidth, minWidth: props.minRightWidth }">
             <slot name="right"></slot>
         </div>
     </div>
@@ -131,24 +138,27 @@ onUnmounted(() =>
     position: relative;
     flex-shrink: 0;
     touch-action: none; /* 防止触摸时的默认行为 */
+    width: 4px;
 
     div {
         opacity: 0.2;
-        background-color: var(--color);
-        transition: background-color 0.2s ease;
-        width: 100%;
+        cursor: col-resize;
         height: 100%;
+        left: -8px;
+        right: -8px;
+        width: calc(100% + 16px);
+        position: absolute;
     }
 
     &:hover {
-        div {
+        &::before {
             opacity: 0.2;
             background-color: #007acc;
         }
     }
 
     &:active {
-        div {
+        &::before {
             opacity: 0.2;
             background-color: #005a9e;
         }
@@ -159,11 +169,15 @@ onUnmounted(() =>
         content: '';
         position: absolute;
         top: 0;
-        left: -8px; /* 增加触摸区域 */
-        right: -8px;
         bottom: 0;
-        cursor: col-resize;
         touch-action: none;
+
+
+        opacity: 0.2;
+        background-color: var(--color);
+        transition: background-color 0.2s ease;
+        width: 100%;
+        height: 100%;
     }
 }
 </style>

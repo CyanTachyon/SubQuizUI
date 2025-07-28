@@ -25,13 +25,14 @@ import SettingIcon from "vue-material-design-icons/CogOutline.vue";
 import Spacer from "../../components/Spacer.vue";
 import { storageGet, storageSet } from "../../utils/storage.ts";
 
-let open = ref(true);
+const open = ref(true);
+const sidebarClassName = ref('');
 (async () => 
 {
     open.value = await storageGet('sidebar-open') !== 'false';
+    sidebarClassName.value = open.value ? 'sidebar-opened' : 'sidebar-closed';
 })();
-let sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');
-let controller = createAnimationsController();
+const controller = createAnimationsController();
 const router = useRouter();
 
 function changeSidebarState()
@@ -81,7 +82,7 @@ function gotoSSO()
                 <SidebarItem @click="goto('/admin/subject/list')" :icon="BookshelfIcon" title="学科列表" />
                 <SidebarItem @click="goto('/class')" :icon="AccountMultipleIcon" title="我的班级" />
                 <SidebarItem @click="goto('/history')" :icon="HistoryIcon" title="答题记录" />
-                <SidebarItem @click="goto('/ai-chat')" :icon="RobotExcitedOutlineIcon" title="AI 助手" />
+                <SidebarItem @click="goto('/ai')" :icon="RobotExcitedOutlineIcon" title="AI 助手" />
                 <SidebarItem v-if="user.hasAdmin()" @click="goto('/admin/admins')" :icon="ShieldCrownOutlineIcon" title="全局管理" />
                 <SidebarItem v-if="user.isRoot()" @click="goto('/terminal')" :icon="ConsoleIcon" title="控制台" />
                 <SidebarItem @click="goto('/setting')" :icon="SettingIcon" title="系统设置" />

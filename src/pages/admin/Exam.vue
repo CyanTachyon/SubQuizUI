@@ -238,7 +238,7 @@ function openSection(section: SectionId)
         </Button>
         <QuizView :quiz="getStudentExam(showStudentExam)" :editable="false" />
     </div>
-    <Split v-else-if="edit" class="split">
+    <Split v-else-if="edit" class="split" min-right-width="433px" min-left-width="623px">
         <template #left>
             <Group :group="clazz.group" @clickSection="addSection" />
         </template>

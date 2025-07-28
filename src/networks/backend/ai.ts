@@ -5,7 +5,7 @@ import type { Section } from "../../dataClasses/Section";
 import type { Slice } from "../../dataClasses/Slice";
 import { useNotification } from "../../stores/notification";
 import { checkResponse } from "../utils/checkResponse";
-import { connectUrl, request, sendRequest, Target } from "../utils/sendRequest";
+import { sendRequest, sseRequest, Target } from "../utils/sendRequest";
 
 export interface AiMessage 
 {
@@ -24,6 +24,17 @@ export async function getChat(chat: ChatId): Promise<Chat>
         target: Target.BACKEND,
         url: getChatUrl,
         method: 'GET',
+        params: { chat }
+    }));
+}
+
+const deleteChatUrl = '/ai/chat/{chat}';
+export async function deleteChat(chat: ChatId): Promise<void>
+{
+    return checkResponse<void>(sendRequest({
+        target: Target.BACKEND,
+        url: deleteChatUrl,
+        method: 'DELETE',
         params: { chat }
     }));
 }
@@ -96,95 +107,87 @@ const sseUrl = '/ai/chat/sse';
 export async function chatSSE(
     chat: ChatId,
     hash: string,
-    onMessage: (message: AiMessage & {finished: boolean, banned: boolean}) => void
+    onMessage: (message: AiMessage & {finished: boolean, banned: boolean}) => void,
+    onChatNamed: (title: string) => void,
 )
 {
-    const req = await request(connectUrl(Target.BACKEND, sseUrl, { chat, hash }), 'GET', {}, true, undefined);
-
-    let ok = req.headers.get('Content-Type')?.startsWith('text/event-stream');
-    if (!ok) return checkResponse(req.json());
-
-    const reader = req.body.getReader();
-    const decoder = new TextDecoder();
-
-    while (true)
+    await sseRequest({
+        target: Target.BACKEND,
+        url: sseUrl,
+        params: { chat, hash },
+        method: 'GET',
+    }, (chunk) => 
     {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        chunk.split(/\r?\n\r?\n/).filter(part => part.trim() !== '').forEach(block =>
+        const { event, data } = chunk;
+        if (event === 'message') try 
         {
-            const parts = block.split(/\n|\r/).filter(part => part.trim() !== '');
-            let data = '';
-            let event = '';
-            for (const part of parts)
-            {
-                if (part.startsWith('data: ')) data += part.slice(6) + '\n';
-                if (part.startsWith('event: ')) event += part.slice(7) + '\n';
-            }
-            if (data.endsWith('\n')) data = data.slice(0, -1);
-            if (event.endsWith('\n')) event = event.slice(0, -1);
-            if (event === 'message') try 
-            { 
-                onMessage(JSON.parse(data)); 
-            } 
-            catch (e) 
-            { 
-                useNotification().addError(`Error parsing AI message`);
-            }
-            else if (event === 'finished')
-            {
-                onMessage({ content: null, reasoning_content: null, finished: true, banned: false });
-            }
-            else if (event === 'banned')
-            {
-                onMessage({ content: null, reasoning_content: null, finished: true, banned: true });
-            }
-        });
-    }
+            onMessage(JSON.parse(data));
+        }
+        catch (e) 
+        {
+            useNotification().addError(`Error parsing AI message`);
+        }
+        else if (event === 'finished')
+        {
+            onMessage({ content: null, reasoning_content: null, finished: true, banned: false });
+        }
+        else if (event === 'banned')
+        {
+            onMessage({ content: null, reasoning_content: null, finished: true, banned: true });
+        }
+        else if (event === 'name')
+        {
+            onChatNamed(JSON.parse(data).name);
+        }
+    });
 }
 
 const translateSSEUrl = '/ai/translate';
 export async function translateSSE(
     text: string,
+    lang0: string,
+    lang1: string,
+    twoWay: boolean,
     onMessage: (message: string) => void,
 )
 {
-    const req = await request(connectUrl(Target.BACKEND, translateSSEUrl), 'POST', {}, true, { text });
-
-    let ok = req.headers.get('Content-Type')?.startsWith('text/event-stream');
-    if (!ok) return checkResponse(req.json());
-
-    const reader = req.body.getReader();
-    const decoder = new TextDecoder();
-
-    while (true)
+    await sseRequest({
+        target: Target.BACKEND,
+        url: translateSSEUrl,
+        method: 'POST',
+        data: { lang0, lang1, twoWay, text },
+    }, (chunk) =>
     {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        chunk.split(/\r?\n\r?\n/).filter(part => part.trim() !== '').forEach(block =>
+        const { event, data } = chunk;
+        if (event === 'message') try 
         {
-            const parts = block.split(/\n|\r/).filter(part => part.trim() !== '');
-            let data = '';
-            let event = '';
-            for (const part of parts)
-            {
-                if (part.startsWith('data: ')) data += part.slice(6) + '\n';
-                if (part.startsWith('event: ')) event += part.slice(7) + '\n';
-            }
-            if (data.endsWith('\n')) data = data.slice(0, -1);
-            if (event.endsWith('\n')) event = event.slice(0, -1);
-            if (event === 'message') try 
-            {
-                onMessage(JSON.parse(data).text);
-            }
-            catch (e) 
-            {
-                useNotification().addError(`Error parsing AI message`);
-            }
-        });
-    }
+            onMessage(JSON.parse(data).text);
+        }
+        catch (e) 
+        {
+            useNotification().addError(`Error parsing AI message`);
+        }
+    });
+}
+
+const imageToTextUrl = '/ai/imageToText';
+export async function imageToText(image: string, markdown: boolean, onMessage: (message: string) => void)
+{
+    await sseRequest({
+        target: Target.BACKEND,
+        url: imageToTextUrl,
+        method: 'POST',
+        data: { image, markdown },
+    }, (chunk) =>
+    {
+        const { event, data } = chunk;
+        if (event === 'message') try 
+        {
+            onMessage(JSON.parse(data).text);
+        }
+        catch (e) 
+        {
+            useNotification().addError(`Error parsing AI message`);
+        }
+    });
 }

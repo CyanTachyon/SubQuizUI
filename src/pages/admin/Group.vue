@@ -434,7 +434,7 @@ function startQuiz()
 <template>
     <NotFound v-if="groupInfo === null" />
     <Loading v-else-if="knowledgePoints === undefined || groupInfo === undefined" class="loading" />
-    <Split v-else class="section-types-container" :initial-left-width="20" :min-left-width="15" :max-left-width="33.333">
+    <Split v-else class="section-types-container" initial-left-width="20%" min-right-width="390px" min-left-width="230px">
         <template #left>
             <Card class="sidebar">
                 <Text class="main-title" style="display: flex;">

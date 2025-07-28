@@ -33,6 +33,10 @@ const { options, placeholder, disappear, disabled, direction } = defineProps({
         type: String as () => 'up' | 'down',
         default: 'down',
         validator: (value: string) => ['up', 'down'].includes(value)
+    },
+    width: {
+        type: String,
+        default: '200px'
     }
 });
 
@@ -132,7 +136,6 @@ onUnmounted(() =>
     position: relative;
     display: inline-block;
     margin: 10px;
-    min-width: 200px;
 
     &.use-blur {
 

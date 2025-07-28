@@ -1,6 +1,7 @@
 import type {ResponseBody} from "../../dataClasses/ResponseBody.ts";
 import clientVersion from "../../../public/android_latest.json";
 import { getToken } from "../../utils/utils.tsx";
+import { checkResponse } from "./checkResponse.ts";
 export enum Target
 {
     EMPTY = 0,
@@ -70,6 +71,55 @@ export async function sendRequest<DATA>(data: RequestData): Promise<ResponseBody
         data.withToken,
         data.data
     ).then(response => response.json() as Promise<ResponseBody<DATA>>)
+}
+
+export interface SseChunk
+{
+    event: string;
+    data: string;
+}
+export async function sseRequest(
+    data: RequestData,
+    onMessage: (chunk: SseChunk) => void
+) 
+{
+    if (data.params === undefined) data.params = {};
+    if (data.withToken === undefined) data.withToken = true;
+    const req = await request(connectUrl(data.target, data.url, data.params), data.method, {}, data.withToken, data.data);
+
+    let ok = req.headers.get('Content-Type')?.startsWith('text/event-stream');
+    if (!ok) return checkResponse(req.json());
+
+    const reader = req.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true)
+    {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        chunk.split(/\r?\n\r?\n/).filter(part => part.trim() !== '').forEach(block =>
+        {
+            const parts = block.split(/\n|\r/).filter(part => part.trim() !== '');
+            let data = '';
+            let event = '';
+            for (const part of parts)
+            {
+                if (part.startsWith('data: ')) 
+                {
+                    if (data.length > 0) data += '\n';
+                    data += part.slice(6);
+                }
+                if (part.startsWith('event: '))
+                {
+                    if (event.length > 0) event += '\n';
+                    event += part.slice(7);
+                }
+            }
+            onMessage({ event, data });
+        });
+    }    
 }
 
 export async function request(
