@@ -2,7 +2,7 @@
 import { ref, nextTick } from 'vue';
 import type { AnswerType } from '../dataClasses/Question';
 import type { Section } from '../dataClasses/Section';
-import { chatSSE, createChat, deleteChat, getChat, sendContent, type AiHistory, type AiMessage, type Model, type ModelInfo } from '../networks/backend/ai';
+import { chatSSE, createChat, deleteChat, getChat, sendContent, type AiHistory, type AiMessage, type Model, type ModelInfo, } from '../networks/backend/ai';
 import Input from '../components/Input.vue';
 import { useNotification } from '../stores/notification';
 import LoadingIcon from 'vue-material-design-icons/Loading.vue';
@@ -22,13 +22,17 @@ import { Capacitor } from '@capacitor/core';
 import { TrashIcon } from '@heroicons/vue/16/solid';
 import ContentCopyIcon from 'vue-material-design-icons/ContentCopy.vue';
 import FileQuestionIcon from 'vue-material-design-icons/FileQuestion.vue';
+import ToolsIcon from 'vue-material-design-icons/Tools.vue';
 import Button from '../components/Button.vue';
 
+export type DisplayMessage = AiMessage & {
+    showReasoning: boolean;
+};
 export type AiInfo = Chat & {
-    histories: (AiHistory & { showReasoning: boolean; })[];
+    histories: (AiHistory & { messages: DisplayMessage[]})[]
     showAnswering: boolean;
     inAnswering: boolean;
-}
+};
 
 const props = defineProps<{
     info: ChatId | Section<AnswerType, AnswerType, string>;
@@ -42,43 +46,74 @@ const historiesContainer = ref<HTMLElement>();
 const shouldAutoScroll = ref(true);
 
 // 检查是否滚动到底部
-const isScrolledToBottom = () => {
+const isScrolledToBottom = () => 
+{
     if (!historiesContainer.value) return true;
     const { scrollTop, scrollHeight, clientHeight } = historiesContainer.value;
     return scrollTop + clientHeight >= scrollHeight - 5; // 5px tolerance
 };
 
 // 滚动到底部
-const scrollToBottom = () => {
+const scrollToBottom = () => 
+{
     if (!historiesContainer.value) return;
-    nextTick(() => {
+    nextTick(() => 
+    {
         historiesContainer.value!.scrollTop = historiesContainer.value!.scrollHeight;
     });
 };
 
 // 处理滚动事件
-const handleScroll = () => {
+const handleScroll = () => 
+{
     shouldAutoScroll.value = isScrolledToBottom();
 };
 
-const onMessage = (message: AiMessage & { finished: boolean, banned: boolean; }) => 
+const onMessage = (message: AiMessage & { finished: boolean, banned: boolean }) => 
 {
     if (info.value.histories[info.value.histories.length - 1].role !== 'assistant')
     {
         info.value.histories.push({
             role: 'assistant',
-            reasoning_content: '',
-            content: '',
-            showReasoning: true,
+            messages: [],
         });
     }
-    if (message.content) info.value.histories[info.value.histories.length - 1].content += message.content;
-    if (message.reasoning_content) info.value.histories[info.value.histories.length - 1].reasoning_content += message.reasoning_content;
+
+    const last = info.value.histories[info.value.histories.length - 1] as AiHistory & { messages: DisplayMessage[] };
+
+    if (message.tool_call)
+    {
+        last.messages.push({
+            content: '',
+            reasoning_content: '',
+            showReasoning: false,
+            tool_call: message.tool_call,
+        });
+        return;
+    }
+
+    let lastMessage: DisplayMessage;
+    if (last.messages.length <= 0 || last.messages[last.messages.length - 1].tool_call)
+    {
+        lastMessage = {
+            content: '',
+            reasoning_content: '',
+            showReasoning: false,
+        };
+        last.messages.push(lastMessage);
+    }
+    else
+    {
+        lastMessage = last.messages[last.messages.length - 1];
+    }
+
+    if (message.content) lastMessage.content += message.content;
+    if (message.reasoning_content) lastMessage.reasoning_content += message.reasoning_content;
 
     if (message.banned) 
     {
-        info.value.histories[info.value.histories.length - 1].content = "对不起，该聊天无法继续";
-        info.value.histories[info.value.histories.length - 1].reasoning_content = '';
+        lastMessage.content = "对不起，该聊天无法继续";
+        lastMessage.reasoning_content = '';
     }
     else if (message.finished) 
     {
@@ -101,7 +136,10 @@ const init = async () =>
             inAnswering: false,
             histories: chat.histories.map((history) => ({
                 ...history,
-                showReasoning: false,
+                messages: history.messages.map((message) => ({
+                    ...message,
+                    showReasoning: false,
+                })),
             })),
         }
     }
@@ -125,20 +163,24 @@ const init = async () =>
     {
         info.value.histories.push({
             role: 'assistant',
-            reasoning_content: '',
-            content: '',
-            showReasoning: true,
+            messages: [
+                {
+                    reasoning_content: '',
+                    content: '',
+                    showReasoning: true,
+                }
+            ]
         });
-    }
 
-    info.value.showAnswering = true;
-    info.value.inAnswering = true;
-    chatSSE(
-        info.value.id,
-        info.value.hash,
-        onMessage,
-        (title) => props.onChatNamed(info.value.id, title)
-    ).finally(() => info.value.inAnswering = info.value.showAnswering = false);
+        info.value.showAnswering = true;
+        info.value.inAnswering = true;
+        chatSSE(
+            info.value.id,
+            info.value.hash,
+            onMessage,
+            (title) => props.onChatNamed(info.value.id, title)
+        ).finally(() => info.value.inAnswering = info.value.showAnswering = false);
+    }
 };
 init().then(() => { loading.value = false; nextTick(scrollToBottom); });
 
@@ -227,15 +269,15 @@ function onSubmit(event: KeyboardEvent)
 
     info.value.histories.push({
         role: 'user',
-        reasoning_content: null,
-        content: input.value,
-        showReasoning: true,
+        messages: [
+            {
+                content: input.value,
+            }
+        ]
     });
     info.value.histories.push({
         role: 'assistant',
-        reasoning_content: '',
-        content: '',
-        showReasoning: true,
+        messages: []
     });
     input.value = '';
 
@@ -263,7 +305,7 @@ function onSubmit(event: KeyboardEvent)
         if (
             info.value.histories.length > 0 && 
             info.value.histories[info.value.histories.length - 1].role === 'assistant' &&
-            info.value.histories[info.value.histories.length - 1].content === ''
+            info.value.histories[info.value.histories.length - 1].messages.length === 0
         ) init();
     });
 }
@@ -308,28 +350,37 @@ function copyToClipboard(content: string | null)
                 </Text>
                 <div class="message-box" :class="item.role" v-for="(item, index) in info.histories" :key="index" >
                     <Text class="message" :class="item.role">
-                        <div class="reasoning" v-if="item.reasoning_content">
-                            <div class="reasoning-header" @click="item.showReasoning = !item.showReasoning">
-                                <ChevronDownIcon v-if="item.showReasoning" class="icon" />
-                                <ChevronRightIcon v-else class="icon" />
-                                思考过程
+                        <template v-for="msg in item.messages">
+                            <div class="reasoning" v-if="msg.reasoning_content">
+                                <Button class="header" style="cursor: pointer;" @click="msg.showReasoning = !msg.showReasoning">
+                                    <ChevronDownIcon v-if="msg.showReasoning" class="icon" />
+                                    <ChevronRightIcon v-else class="icon" />
+                                    思考过程
+                                </Button>
+                                <Text v-markdown="{ markdown: true, content: msg.reasoning_content, section: info.section?.id }" class="reasoning-content" v-if="msg.showReasoning" />
                             </div>
-                            <Text v-markdown="{ markdown: true, content: item.reasoning_content, section: info.section?.id }" class="reasoning-content" v-if="item.showReasoning" />
-                        </div>
-                        <Text class="content" v-if="item.content" v-markdown="{ markdown: item.role === 'assistant', content: item.content, section: info.section?.id }" />
-                        <div class="loading-icon" v-if="index === info.histories.length - 1 && info.showAnswering" :key="index">
+                            <Text class="content" v-if="msg.content" v-markdown="{ markdown: item.role === 'assistant', content: msg.content, section: info.section?.id }" />
+                            <Button class="header" v-if="msg.tool_call" disabled>
+                                <ToolsIcon class="icon" :size="20" style="margin-right: 4px;"/>
+                                {{ msg.tool_call }}
+                            </Button>
+                        </template>
+                        <div class="loading-icon" style="margin: 0 10px;" v-if="index === info.histories.length - 1 && info.showAnswering" :key="index">
                             <LoadingIcon />
                         </div>
                     </Text>
-                    <div v-if="index !== info.histories.length - 1 || !info.showAnswering" class="copy-button"> <ContentCopyIcon :size="20" class="icon" @click="copyToClipboard(item.content)"/> </div>
+                    <div v-if="index !== info.histories.length - 1 || !info.showAnswering" class="copy-button"> <ContentCopyIcon :size="20" class="icon" @click="copyToClipboard(item.messages.map(m => m.content).join('\n'))"/> </div>
                 </div>
             </div>
             <Input v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
             <Text class="bottom-bar">
-                <SelectMenu :model-value="model" :options="models.map(m => ({ label: m.displayName, value: m.model }))" class="model-name quiz-ai" :placeholder="'选择模型'" @update:model-value="changeModel" :direction="'up'"/>
-                <Button @click="changeSearching" :down="searching">联网搜索</Button>
+                <SelectMenu :model-value="model" :options="models.map(m => ({ label: m.displayName, value: m.model }))" class="model-name" :placeholder="'选择模型'" @update:model-value="changeModel" :direction="'up'"/>
+                <!-- <Button @click="changeSearching" :down="searching">联网搜索</Button> -->
                 <span class="send" @click="onSubmit(null)">
-                    发送
+                    <div class="loading-icon" v-if="info.inAnswering">
+                        <LoadingIcon />
+                    </div>
+                    <span v-else>发送</span>
                 </span>
             </Text>
         </template>
@@ -434,27 +485,25 @@ quiz-loading {
     }
     .message {
         width: fit-content;
+        max-width: 100%;
         padding: 0.5rem 1rem;
         border-radius: 0.5rem;
 
-        .reasoning {
-            .reasoning-header {
-                cursor: pointer;
-                padding: 0.5rem 1rem;
-                border-radius: 0.5rem;
-                margin: 10px 10px 10px 0;
-                width: fit-content;
-                font-weight: bold;
-                background-color: rgba(125, 125, 125, 0.4);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.5rem;
+        .header {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 0;
+            gap: 3px;
 
-                .icon {
-                    margin: -3px;
-                }
+            .icon {
+                margin: -3px;
+                margin-right: 2px;
             }
+        }
+
+        .reasoning {
 
             .reasoning-content {
                 border-left: gray 3px solid;
@@ -488,7 +537,7 @@ quiz-loading {
     right: 0;
     margin-left: auto;
     align-self: flex-end;
-    background-color: rgba(96, 178, 139, 0.2);
+    background-color: rgba(69, 175, 195, 0.2);
 
     .content {
         white-space: pre-wrap;
@@ -496,14 +545,42 @@ quiz-loading {
 }
 
 .message-box.assistant {
-    max-width: 95%;
+    max-width: 100%;
+    &::before {
+        content: 'SubQuiz AI';
+        font-size: 1.5rem;
+        font-weight: bolder;
+        margin: 18px;
+        margin-bottom: 30px;
+    }
+    .message {
+        padding-bottom: 0;
+        &::after {
+            content: '';
+            border-bottom: 1px solid var(--color);
+            opacity: 0.2;
+            width: 100%;
+            height: 2px;
+            display: block;
+            margin: 10px 0 5px 0;
+        }
+    }
+    .copy-button {
+        margin: 0;
+        .icon {
+            margin: 0;
+            margin-left: 15px;
+        }
+    }
 }
 
 .message.assistant {
     left: 0;
     margin-right: auto;
     align-self: flex-start;
-    background-color: rgba(69, 175, 195, 0.2);
+    .content {
+        margin-left: 3px;
+    }
 }
 
 .bottom-bar {
@@ -514,25 +591,10 @@ quiz-loading {
     min-height: 60px;
     max-height: 60px;
 
-    span.model-name {
-        cursor: pointer;
-        bottom: 0;
-        padding: 0.5rem 1rem;
-        border-radius: 1rem;
-        margin: 10px;
-        border: 1px solid rgba(98, 215, 123, 0.4);
-        background-color: transparent;
-        margin-top: auto;
-    }
-    span.model-name.bdfz-helper {
-        width: 165px;
-        min-width: 165px;
-        max-width: 165px;
-    }
-    span.model-name.quiz-ai {
-        width: 105px;
-        min-width: 105px;
-        max-width: 105px;
+    .model-name {
+        width: 181px;
+        min-width: 181px;
+        max-width: 181px;
     }
     span.model-name.active {
         background-color: rgba(98, 215, 123, 0.4);

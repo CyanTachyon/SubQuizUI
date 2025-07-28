@@ -7,13 +7,15 @@ import { useNotification } from "../../stores/notification";
 import { checkResponse } from "../utils/checkResponse";
 import { sendRequest, sseRequest, Target } from "../utils/sendRequest";
 
-export interface AiMessage 
-{
-    content: string | null;
-    reasoning_content: string | null;
+export type AiMessage = {
+    content?: string;
+    reasoning_content?: string;
+    tool_call?: string;
 }
-
-export type AiHistory = { role: 'user' | 'assistant'; } & AiMessage;
+export type AiHistory = {
+    role: 'assistant' | 'user';
+    messages: AiMessage[];
+};
 export type Model = string;
 
 const getChatUrl = '/ai/chat/{chat}';
@@ -129,11 +131,11 @@ export async function chatSSE(
         }
         else if (event === 'finished')
         {
-            onMessage({ content: null, reasoning_content: null, finished: true, banned: false });
+            onMessage({ content: '', reasoning_content: '', finished: true, banned: false });
         }
         else if (event === 'banned')
         {
-            onMessage({ content: null, reasoning_content: null, finished: true, banned: true });
+            onMessage({ content: '', reasoning_content: '', finished: true, banned: true });
         }
         else if (event === 'name')
         {
