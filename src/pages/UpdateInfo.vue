@@ -150,6 +150,14 @@ const updateInfo: UpdateInfo[] = ([
             '- 修复已知问题\n'
     },
     {
+        date: '2025-07-28',
+        version: '3.1.0',
+        description: '' +
+            '- 添加AI答疑助手的工具调用功能\n' +
+            '- AI答疑助手UI优化\n' +
+            '- 修复已知问题\n'
+    },
+    {
         version: 'TODO LIST',
         description: '以下是预计添加的新功能，但我开发速度有限，所以别急^v^\n' +
             "1. 简答/填空允许提交图片\n" +

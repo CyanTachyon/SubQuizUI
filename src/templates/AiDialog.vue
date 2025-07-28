@@ -24,6 +24,8 @@ import ContentCopyIcon from 'vue-material-design-icons/ContentCopy.vue';
 import FileQuestionIcon from 'vue-material-design-icons/FileQuestion.vue';
 import ToolsIcon from 'vue-material-design-icons/Tools.vue';
 import Button from '../components/Button.vue';
+import LightbulbOnIcon from 'vue-material-design-icons/LightbulbOn.vue';
+import LightbulbOutlineIcon from 'vue-material-design-icons/LightbulbOutline.vue';
 
 export type DisplayMessage = AiMessage & {
     showReasoning: boolean;
@@ -83,6 +85,8 @@ const onMessage = (message: AiMessage & { finished: boolean, banned: boolean }) 
 
     if (message.tool_call)
     {
+        // 新消息出现，收回上一个消息的思考过程
+        if (last.messages.length) last.messages[last.messages.length - 1].showReasoning = false;
         last.messages.push({
             content: '',
             reasoning_content: '',
@@ -95,10 +99,12 @@ const onMessage = (message: AiMessage & { finished: boolean, banned: boolean }) 
     let lastMessage: DisplayMessage;
     if (last.messages.length <= 0 || last.messages[last.messages.length - 1].tool_call)
     {
+        // 新消息出现，收回上一个消息的思考过程
+        if (last.messages.length) last.messages[last.messages.length - 1].showReasoning = false;
         lastMessage = {
             content: '',
             reasoning_content: '',
-            showReasoning: false,
+            showReasoning: true,
         };
         last.messages.push(lastMessage);
     }
@@ -107,6 +113,8 @@ const onMessage = (message: AiMessage & { finished: boolean, banned: boolean }) 
         lastMessage = last.messages[last.messages.length - 1];
     }
 
+    // 收到第一条正文时，收回思考过程
+    if (message.content && !lastMessage.content) lastMessage.showReasoning = false;
     if (message.content) lastMessage.content += message.content;
     if (message.reasoning_content) lastMessage.reasoning_content += message.reasoning_content;
 
@@ -171,28 +179,27 @@ const init = async () =>
                 }
             ]
         });
-
         info.value.showAnswering = true;
-        info.value.inAnswering = true;
-        chatSSE(
-            info.value.id,
-            info.value.hash,
-            onMessage,
-            (title) => props.onChatNamed(info.value.id, title)
-        ).finally(() => info.value.inAnswering = info.value.showAnswering = false);
     }
+
+    info.value.inAnswering = true;
+    chatSSE(
+        info.value.id,
+        info.value.hash,
+        onMessage,
+        (title) => props.onChatNamed(info.value.id, title)
+    ).finally(() => info.value.inAnswering = info.value.showAnswering = false);
 };
 init().then(() => { loading.value = false; nextTick(scrollToBottom); });
 
 const input = ref('');
 
 const model = ref<Model>('');
-const searching = ref(false);
 const models = ref<ModelInfo[]>([
     {
         model: '',
         displayName: "加载中...",
-        description: "正在加载模型信息，请稍候。",
+        toolable: false,
     }
 ]);
 
@@ -207,18 +214,12 @@ const models = ref<ModelInfo[]>([
     {
         model.value = models.value[0].model;
     }
-    searching.value = !!Boolean(await storageGet('quiz-ai-searching'));
 })();
 
 function changeModel(newModel: Model)
 {
     model.value = newModel;
     storageSet('quiz-ai-model', newModel);
-}
-function changeSearching()
-{
-    searching.value = !searching.value;
-    storageSet('quiz-ai-searching', searching.value + '');
 }
 
 function isMobileDevice()
@@ -330,6 +331,18 @@ function copyToClipboard(content: string | null)
     });
 }
 
+function showIntelligentTips(isEnabled: boolean)
+{
+    if (isEnabled)
+    {
+        useNotification().addInfo('该模型支持高级功能！');
+    } 
+    else
+    {
+        useNotification().addWarning('该模型不支持高级功能, 建议切换到支持的模型以获得更好的体验。');
+    }
+}
+
 </script>
 
 <template>
@@ -349,7 +362,7 @@ function copyToClipboard(content: string | null)
                     <span>{{ info.section ? "题目解析没看懂？" : "在题目解析页面点击AI标识" }}向AI提问</span>
                 </Text>
                 <div class="message-box" :class="item.role" v-for="(item, index) in info.histories" :key="index" >
-                    <Text class="message" :class="item.role">
+                    <Text class="message" :class="[item.role, index === info.histories.length - 1 && info.showAnswering ? 'answering' : 'done']">
                         <template v-for="msg in item.messages">
                             <div class="reasoning" v-if="msg.reasoning_content">
                                 <Button class="header" style="cursor: pointer;" @click="msg.showReasoning = !msg.showReasoning">
@@ -359,7 +372,7 @@ function copyToClipboard(content: string | null)
                                 </Button>
                                 <Text v-markdown="{ markdown: true, content: msg.reasoning_content, section: info.section?.id }" class="reasoning-content" v-if="msg.showReasoning" />
                             </div>
-                            <Text class="content" v-if="msg.content" v-markdown="{ markdown: item.role === 'assistant', content: msg.content, section: info.section?.id }" />
+                            <Text class="content" v-if="msg.content.trim()" v-markdown="{ markdown: item.role === 'assistant', content: msg.content, section: info.section?.id }" />
                             <Button class="header" v-if="msg.tool_call" disabled>
                                 <ToolsIcon class="icon" :size="20" style="margin-right: 4px;"/>
                                 {{ msg.tool_call }}
@@ -375,7 +388,8 @@ function copyToClipboard(content: string | null)
             <Input v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
             <Text class="bottom-bar">
                 <SelectMenu :model-value="model" :options="models.map(m => ({ label: m.displayName, value: m.model }))" class="model-name" :placeholder="'选择模型'" @update:model-value="changeModel" :direction="'up'"/>
-                <!-- <Button @click="changeSearching" :down="searching">联网搜索</Button> -->
+                <LightbulbOnIcon v-if="models.find(m => m.model === model)?.toolable" class="intelligent-icon" @click="showIntelligentTips(true)"/>
+                <LightbulbOutlineIcon v-else class="intelligent-icon" @click="showIntelligentTips(false)"/>
                 <span class="send" @click="onSubmit(null)">
                     <div class="loading-icon" v-if="info.inAnswering">
                         <LoadingIcon />
@@ -546,16 +560,22 @@ quiz-loading {
 
 .message-box.assistant {
     max-width: 100%;
+    right: 0;
     &::before {
         content: 'SubQuiz AI';
         font-size: 1.5rem;
         font-weight: bolder;
         margin: 18px;
-        margin-bottom: 30px;
+        margin-bottom: -20px;
+        font-family: 'Maple Mono NF CN';
+        font-style: italic;
     }
     .message {
         padding-bottom: 0;
-        &::after {
+        padding-top: 0;
+        width: unset;
+        right: 0;
+        &::before, &.done::after {
             content: '';
             border-bottom: 1px solid var(--color);
             opacity: 0.2;
@@ -596,15 +616,9 @@ quiz-loading {
         min-width: 181px;
         max-width: 181px;
     }
-    span.model-name.active {
-        background-color: rgba(98, 215, 123, 0.4);
-    }
-    span.tip {
-        opacity: 0.7;
-        height: 100%;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
+    .intelligent-icon {
+        cursor: pointer;
+        color: rgba(86, 135, 247, 0.8);
     }
     span.send {
         width: 64px;
@@ -617,6 +631,9 @@ quiz-loading {
         margin: 10px 10px 10px auto;
         right: 0;
         background-color: rgba(76, 107, 190, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 }
 

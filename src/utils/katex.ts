@@ -24,35 +24,24 @@ function createRenderer(options, newlineAfter)
     return (token) => katex.renderToString(token.text, { ...options, displayMode: token.displayMode }) + (newlineAfter ? '\n' : '');
 }
 
-function inlineKatex(options, renderer)
+function inlineKatex(_, renderer)
 {
-    const nonStandard = options && options.nonStandard;
     const ruleReg = inlineRuleNonStandard;
     return {
         name: 'inlineKatex',
         level: 'inline',
         start(src)
         {
-            let index;
             let indexSrc = src;
 
             while (indexSrc)
             {
-                index = indexSrc.indexOf('$');
-                if (index === -1)
-                {
-                    return;
-                }
-                const f = nonStandard ? index > -1 : index === 0 || indexSrc.charAt(index - 1) === ' ';
-                if (f)
-                {
-                    const possibleKatex = indexSrc.substring(index);
-
-                    if (possibleKatex.match(ruleReg))
-                    {
-                        return index;
-                    }
-                }
+                let index0 = indexSrc.indexOf('$');
+                let index1 = indexSrc.indexOf('\\(');
+                const index = index0 === -1 ? index1 : index1 === -1 ? index0 : Math.min(index0, index1);
+                if (index === -1) return;
+                const possibleKatex = indexSrc.substring(index);
+                if (possibleKatex.match(ruleReg)) return index;
                 indexSrc = indexSrc.substring(index + 1).replace(/^\$+/, '');
             }
         },
@@ -78,6 +67,21 @@ function blockKatex(_, renderer)
     return {
         name: 'blockKatex',
         level: 'block',
+        start(src)
+        {
+            let indexSrc = src;
+
+            while (indexSrc)
+            {
+                let index0 = indexSrc.indexOf('$');
+                let index1 = indexSrc.indexOf('\\[');
+                const index = index0 === -1 ? index1 : index1 === -1 ? index0 : Math.min(index0, index1);
+                if (index === -1) return;
+                const possibleKatex = indexSrc.substring(index);
+                if (possibleKatex.match(blockRule)) return index;
+                indexSrc = indexSrc.substring(index + 1).replace(/^\$+/, '');
+            }
+        },
         tokenizer(src: string, _)
         {
             const match = src.match(blockRule);

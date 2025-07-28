@@ -254,8 +254,6 @@ h1 {
     margin-bottom: 20px;
 }
 
-@import url("https://fontsapi.zeoseven.com/442/main/result.css");
-
 quiz-messages * {
     font-family: 'Maple Mono NF CN';
 }

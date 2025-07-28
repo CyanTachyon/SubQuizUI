@@ -102,7 +102,7 @@ export interface ModelInfo
 {
     model: Model;
     displayName: string;
-    description: string;
+    toolable: boolean;
 }
 
 const sseUrl = '/ai/chat/sse';
