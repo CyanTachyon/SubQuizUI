@@ -92,33 +92,42 @@ export async function sseRequest(
 
     const reader = req.body.getReader();
     const decoder = new TextDecoder();
+    const onChunk = chunk =>
+    {
+        const parts = chunk.split(/\n|\r/).filter(part => part.trim() !== '');
+        let data = '';
+        let event = '';
+        for (const part of parts)
+        {
+            if (part.startsWith('data: ')) 
+            {
+                if (data.length > 0) data += '\n';
+                data += part.slice(6);
+            }
+            if (part.startsWith('event: '))
+            {
+                if (event.length > 0) event += '\n';
+                event += part.slice(7);
+            }
+        }
+        onMessage({ event, data });
+    };
+
+    let last = '';
 
     while (true)
     {
         const { value, done } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        chunk.split(/\r?\n\r?\n/).filter(part => part.trim() !== '').forEach(block =>
+        if (done) 
         {
-            const parts = block.split(/\n|\r/).filter(part => part.trim() !== '');
-            let data = '';
-            let event = '';
-            for (const part of parts)
-            {
-                if (part.startsWith('data: ')) 
-                {
-                    if (data.length > 0) data += '\n';
-                    data += part.slice(6);
-                }
-                if (part.startsWith('event: '))
-                {
-                    if (event.length > 0) event += '\n';
-                    event += part.slice(7);
-                }
-            }
-            onMessage({ event, data });
-        });
+            if (last) onChunk(last);
+            break;
+        }
+
+        const decoded = last + decoder.decode(value);
+        const chunks = decoded.split(/\r?\n\r?\n/);
+        last = chunks.pop() || '';
+        chunks.filter(part => part.trim() !== '').forEach(onChunk);
     }    
 }
 
