@@ -1,4 +1,4 @@
-import { createApp, ref } from "vue";
+import { createApp, ref, type DefineComponent } from "vue";
 import { Capacitor } from '@capacitor/core';
 import { connectUrl, Target } from "../networks/utils/sendRequest.ts";
 import { safeRedirect } from "./redirect.ts";
@@ -17,6 +17,7 @@ import { login } from "../networks/backend/oauth.ts";
 import { ScreenOrientation } from "@capacitor/screen-orientation";
 import { storageGet, storageRemove, storageSet } from "./storage.ts";
 import { getScale } from "../main.ts";
+import { Clipboard } from "@capacitor/clipboard";
 
 export async function getToken()
 {
@@ -97,7 +98,7 @@ export function replaceUrl(url: string = location.pathname, query: Record<string
 }
 
 export function dialog(
-    innerHtml: JSX.Element | string,
+    innerHtml: JSX.Element | string | DefineComponent,
     onClose: () => void = () => {},
 )
 {
@@ -225,5 +226,31 @@ export async function checkUpdate(reason: CheckUpdateReason)
             versionInfo.value = null;
             useNotification().addInfo(`当前版本已是最新版本：${currentVersion.version}`);
         }
+    }
+}
+
+export function copyToClipboard(text: string)
+{
+    if (Capacitor.getPlatform() === 'web')
+    {
+        navigator.clipboard.writeText(text).then(() => 
+        {
+            useNotification().addSuccess('已复制到剪贴板');
+        }).catch(() => 
+        {
+            useNotification().addError('复制失败，请手动复制');
+        });
+    }
+    else
+    {
+        Clipboard.write({
+            string: text,
+        }).then(() => 
+        {
+            useNotification().addSuccess('已复制到剪贴板');
+        }).catch(() => 
+        {
+            useNotification().addError('复制失败，请手动复制');
+        })
     }
 }

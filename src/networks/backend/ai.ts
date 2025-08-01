@@ -7,10 +7,12 @@ import { useNotification } from "../../stores/notification";
 import { checkResponse } from "../utils/checkResponse";
 import { sendRequest, sseRequest, Target } from "../utils/sendRequest";
 
+export type ToolDataInfoType = 'MARKDOWN' | 'URL' | 'TEXT' | 'HTML';
 export type AiMessage = {
     content?: string;
     reasoning_content?: string;
     tool_call?: string;
+    type?: null | ToolDataInfoType;
 }
 export type AiHistory = {
     role: 'assistant' | 'user';
@@ -88,6 +90,17 @@ export async function sendContent(chatId: number, content: string, model: Model,
     );
 }
 
+const cancelChatUrl = '/ai/chat/{chat}/cancel';
+export async function cancelChat(chat: ChatId): Promise<void>
+{
+    return checkResponse<void>(sendRequest({
+        target: Target.BACKEND,
+        url: cancelChatUrl,
+        method: 'POST',
+        params: { chat }
+    }));
+}
+
 const aiModelsUrl = '/ai/chat/models';
 export async function getAiModels(): Promise<ModelInfo[]>
 {
@@ -131,17 +144,34 @@ export async function chatSSE(
         }
         else if (event === 'finished')
         {
-            onMessage({ content: '', reasoning_content: '', finished: true, banned: false });
+            onMessage({ content: '', reasoning_content: '', type: null, finished: true, banned: false });
         }
         else if (event === 'banned')
         {
-            onMessage({ content: '', reasoning_content: '', finished: true, banned: true });
+            onMessage({ content: '', reasoning_content: '', type: null, finished: true, banned: true });
         }
         else if (event === 'name')
         {
             onChatNamed(JSON.parse(data).name);
         }
     });
+}
+
+export interface ToolDataInfo
+{
+    type: ToolDataInfoType;
+    value: string;
+}
+
+const getToolDataUrl = '/ai/chat/toolData';
+export async function getToolData(type: string, path: string): Promise<ToolDataInfo>
+{
+    return checkResponse<ToolDataInfo>(sendRequest({
+        target: Target.BACKEND,
+        url: getToolDataUrl,
+        method: 'GET',
+        params: { type, path }
+    }));
 }
 
 const translateSSEUrl = '/ai/translate';

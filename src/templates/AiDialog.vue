@@ -2,11 +2,11 @@
 import { ref, nextTick } from 'vue';
 import type { AnswerType } from '../dataClasses/Question';
 import type { Section } from '../dataClasses/Section';
-import { chatSSE, createChat, deleteChat, getChat, sendContent, type AiHistory, type AiMessage, type Model, type ModelInfo, } from '../networks/backend/ai';
+import { cancelChat, chatSSE, createChat, deleteChat, getChat, sendContent, type AiHistory, type AiMessage, type Model, type ModelInfo, type ToolDataInfo, } from '../networks/backend/ai';
 import Input from '../components/Input.vue';
 import { useNotification } from '../stores/notification';
 import LoadingIcon from 'vue-material-design-icons/Loading.vue';
-import { dialog } from '../utils/utils';
+import { copyToClipboard, dialog } from '../utils/utils';
 import ChevronRightIcon from 'vue-material-design-icons/ChevronRight.vue';
 import ChevronDownIcon from 'vue-material-design-icons/ChevronDown.vue';
 import type { Chat } from '../dataClasses/Chat';
@@ -26,6 +26,9 @@ import ToolsIcon from 'vue-material-design-icons/Tools.vue';
 import Button from '../components/Button.vue';
 import LightbulbOnIcon from 'vue-material-design-icons/LightbulbOn.vue';
 import LightbulbOutlineIcon from 'vue-material-design-icons/LightbulbOutline.vue';
+import { getThemes } from '../stores/theme';
+import ToolDataShower from './ToolDataShower.vue';
+import StopCircleOutlineIcon from "vue-material-design-icons/StopCircleOutline.vue";
 
 export type DisplayMessage = AiMessage & {
     showReasoning: boolean;
@@ -71,6 +74,26 @@ const handleScroll = () =>
     shouldAutoScroll.value = isScrolledToBottom();
 };
 
+const onNamed = (title: string) => 
+{
+    if (!info.value || !info.value.id) return;
+
+    let index = 0;
+    const addChar = () =>
+    {
+        info.value.title = title.slice(0, index);
+        props.onChatNamed(info.value.id, title.slice(0, index));
+        index++;
+        if (index <= title.length) setTimeout(addChar, 50);
+        else
+        {
+            info.value.title = title;
+            props.onChatNamed(info.value.id, title);
+        }
+    };
+    addChar();
+};
+
 const onMessage = (message: AiMessage & { finished: boolean, banned: boolean }) => 
 {
     if (info.value.histories[info.value.histories.length - 1].role !== 'assistant')
@@ -83,21 +106,18 @@ const onMessage = (message: AiMessage & { finished: boolean, banned: boolean }) 
 
     const last = info.value.histories[info.value.histories.length - 1] as AiHistory & { messages: DisplayMessage[] };
 
-    if (message.tool_call)
+    if (message.tool_call || message.type)
     {
-        // 新消息出现，收回上一个消息的思考过程
         if (last.messages.length) last.messages[last.messages.length - 1].showReasoning = false;
         last.messages.push({
-            content: '',
-            reasoning_content: '',
+            ...message,
             showReasoning: false,
-            tool_call: message.tool_call,
         });
         return;
     }
 
     let lastMessage: DisplayMessage;
-    if (last.messages.length <= 0 || last.messages[last.messages.length - 1].tool_call)
+    if (last.messages.length <= 0 || last.messages[last.messages.length - 1].tool_call || last.messages[last.messages.length - 1].type)
     {
         // 新消息出现，收回上一个消息的思考过程
         if (last.messages.length) last.messages[last.messages.length - 1].showReasoning = false;
@@ -105,6 +125,7 @@ const onMessage = (message: AiMessage & { finished: boolean, banned: boolean }) 
             content: '',
             reasoning_content: '',
             showReasoning: true,
+            type: null,
         };
         last.messages.push(lastMessage);
     }
@@ -171,13 +192,7 @@ const init = async () =>
     {
         info.value.histories.push({
             role: 'assistant',
-            messages: [
-                {
-                    reasoning_content: '',
-                    content: '',
-                    showReasoning: true,
-                }
-            ]
+            messages: []
         });
         info.value.showAnswering = true;
     }
@@ -187,7 +202,7 @@ const init = async () =>
         info.value.id,
         info.value.hash,
         onMessage,
-        (title) => props.onChatNamed(info.value.id, title)
+        onNamed,
     ).finally(() => info.value.inAnswering = info.value.showAnswering = false);
 };
 init().then(() => { loading.value = false; nextTick(scrollToBottom); });
@@ -232,6 +247,14 @@ function onSubmit(event: KeyboardEvent)
 {
     if (event && (event.shiftKey || isMobileDevice())) return;
     event?.preventDefault();
+
+    // 取消回答
+    if (info.value.showAnswering && event === null)
+    {
+        cancelChat(info.value.id);
+        return;
+    }
+
     if (input.value.trim() === '' || info.value.showAnswering) return;
     else if (info.value.inAnswering) 
     {
@@ -293,7 +316,7 @@ function onSubmit(event: KeyboardEvent)
             info.value.id,
             info.value.hash,  
             onMessage,
-            (title) => props.onChatNamed(info.value.id, title)
+            onNamed,
         )
     }
     finally
@@ -319,18 +342,6 @@ function openSection()
     </div>, () => {close();});
 }
 
-function copyToClipboard(content: string | null)
-{
-    if (!content) return;
-    navigator.clipboard.writeText(content).then(() =>
-    {
-        useNotification().addSuccess('已复制到剪贴板');
-    }).catch(() =>
-    {
-        useNotification().addError('复制失败');
-    });
-}
-
 function showIntelligentTips(isEnabled: boolean)
 {
     if (isEnabled)
@@ -343,10 +354,31 @@ function showIntelligentTips(isEnabled: boolean)
     }
 }
 
+const bdfzData = ref<{ [key: string]: Record<string, ToolDataInfo> }>({});
+
+function parseHtml(ele: HTMLElement)
+{
+    ele.querySelectorAll('tool_data').forEach((toolDataEle: HTMLElement, index: number) =>
+    {
+        const path = toolDataEle.getAttribute('path');
+        const type = toolDataEle.getAttribute('type');
+        toolDataEle.innerHTML = '' + (index + 1);
+        toolDataEle.classList.add('tool-data-link');
+        if (path) toolDataEle.onclick = () =>
+        {
+            const close = dialog(<ToolDataShower type={type} path={path} dataset={bdfzData} close={() => close()} />, () => { close(); });
+        }
+    });
+}
+
 </script>
 
 <template>
-    <Card class="quiz-ai-dialog">
+    <Card class="quiz-ai-dialog" :style="{ 
+        '--pin-bgcolor': getThemes().isDark ? 'var(--glass-button-highlight-border)' : 'unset',
+        '--pin-border-color': getThemes().isDark ? 'unset' : 'var(--glass-button-highlight-border)',
+        '--pin-text-color': getThemes().isDark ? 'var(--color)' : 'var(--glass-button-highlight-border)',
+    }">
         <Loading v-if="loading"></Loading>
         <template v-else>
             <div style="display: flex; align-items: center; justify-content: center; height: 60px; padding: 0 10px; font-size: 1.2rem; font-weight: bold; gap: 10px; position: relative; min-height: 60px;">
@@ -364,19 +396,20 @@ function showIntelligentTips(isEnabled: boolean)
                 <div class="message-box" :class="item.role" v-for="(item, index) in info.histories" :key="index" >
                     <Text class="message" :class="[item.role, index === info.histories.length - 1 && info.showAnswering ? 'answering' : 'done']">
                         <template v-for="msg in item.messages">
-                            <div class="reasoning" v-if="msg.reasoning_content">
+                            <div class="reasoning" v-if="msg.reasoning_content && msg.reasoning_content.trim()">
                                 <Button class="header" style="cursor: pointer;" @click="msg.showReasoning = !msg.showReasoning">
                                     <ChevronDownIcon v-if="msg.showReasoning" class="icon" />
                                     <ChevronRightIcon v-else class="icon" />
                                     思考过程
                                 </Button>
-                                <Text v-markdown="{ markdown: true, content: msg.reasoning_content, section: info.section?.id }" class="reasoning-content" v-if="msg.showReasoning" />
+                                <Text v-markdown="{ markdown: true, content: msg.reasoning_content, section: info.section?.id, parseHtml }" class="reasoning-content" v-if="msg.showReasoning" />
                             </div>
-                            <Text class="content" v-if="msg.content.trim()" v-markdown="{ markdown: item.role === 'assistant', content: msg.content, section: info.section?.id }" />
+                            <Text class="content" v-if="msg.content && msg.content.trim() && !msg.type" v-markdown="{ markdown: item.role === 'assistant', content: msg.content, section: info.section?.id, parseHtml }" />
                             <Button class="header" v-if="msg.tool_call" disabled>
                                 <ToolsIcon class="icon" :size="20" style="margin-right: 4px;"/>
                                 {{ msg.tool_call }}
                             </Button>
+                            <ToolDataShower v-if="msg.type" :inline="true" :custom-info="{ type: msg.type, value: msg.content }"/>
                         </template>
                         <div class="loading-icon" style="margin: 0 10px;" v-if="index === info.histories.length - 1 && info.showAnswering" :key="index">
                             <LoadingIcon />
@@ -391,7 +424,10 @@ function showIntelligentTips(isEnabled: boolean)
                 <LightbulbOnIcon v-if="models.find(m => m.model === model)?.toolable" class="intelligent-icon" @click="showIntelligentTips(true)"/>
                 <LightbulbOutlineIcon v-else class="intelligent-icon" @click="showIntelligentTips(false)"/>
                 <span class="send" @click="onSubmit(null)">
-                    <div class="loading-icon" v-if="info.inAnswering">
+                    <div v-if="info.showAnswering">
+                        <StopCircleOutlineIcon class="icon" />
+                    </div>
+                    <div class="loading-icon" v-else-if="info.inAnswering">
                         <LoadingIcon />
                     </div>
                     <span v-else>发送</span>
@@ -618,7 +654,8 @@ quiz-loading {
     }
     .intelligent-icon {
         cursor: pointer;
-        color: rgba(86, 135, 247, 0.8);
+        // color: rgba(86, 135, 247, 0.8);
+        color: var(--glass-button-highlight-border);
     }
     span.send {
         width: 64px;
@@ -651,5 +688,22 @@ quiz-loading {
     width: 1.5rem;
     height: 1.5rem;
     animation: loading 1s linear infinite;
+}
+
+:deep(.tool-data-link) {
+    background-color: var(--pin-bgcolor);
+    border: 2px solid var(--pin-border-color);
+    color: var(--pin-text-color);
+    display: inline-flex;
+    width: 1.25rem;
+    height: 1.25rem;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+    border-radius: 0.40rem;
+    cursor: pointer;
+    user-select: none;
+    margin-left: 5px;
+    margin-right: 5px;
 }
 </style>

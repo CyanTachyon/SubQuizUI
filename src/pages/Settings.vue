@@ -55,8 +55,8 @@ const theme = useTheme();
 const notification = useNotification();
 
 const themeOptions = [
-    { value: 'light', label: '浅色模式', icon: Night },
-    { value: 'dark', label: '深色模式', icon: Sun },
+    { value: 'light', label: '浅色模式', icon: Sun },
+    { value: 'dark', label: '深色模式', icon: Night },
     { value: 'unset', label: '跟随系统', icon: Auto }
 ] as const;
 
@@ -131,8 +131,7 @@ const handleScaleChange = (newScale: number) =>
                     <h2 class="section-title">外观主题</h2>
                 </Text>
                 <div class="theme-options">
-                    <Button v-for="option in themeOptions" :key="option.value" class="theme-option"
-                        :down="getThemes().theme === option.value" @click="handleThemeChange(option.value)">
+                    <Button v-for="option in themeOptions" :key="option.value" class="theme-option" :down="getThemes().theme === option.value" @click="handleThemeChange(option.value)">
                         <component :is="option.icon" :size="50"></component>
                         <Text>
                             <span class="theme-label">{{ option.label }}</span>

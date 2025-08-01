@@ -24,6 +24,9 @@ svg {
 }
 
 :root {
+    --dark: 0;
+    --light: 1;
+
     --color: #{$light-color};
 
     --glass-background: #{$light-glass-background};
@@ -47,6 +50,9 @@ svg {
 }
 
 [quiz-theme='dark'] {
+    --dark: 1;
+    --light: 0;
+
     --color: #{$dark-color};
     
     --glass-background: #{$dark-glass-background};

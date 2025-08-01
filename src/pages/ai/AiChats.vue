@@ -57,24 +57,7 @@ function handleScroll(event: Event)
 function onChatNamed(id: ChatId, title: string)
 {
     const chat = chats.value.find(c => c.id === id);
-    if (chat) 
-    {
-        let index = 0;
-        const addChar = () =>
-        {
-            chat.title = title.slice(0, index);
-            index++;
-            if (index <= title.length)
-            {
-                setTimeout(addChar, 50);
-            } 
-            else
-            {
-                chat.title = title;
-            }
-        };
-        addChar();
-    }
+    if (chat) chat.title = title;
 }
 
 function onNewChat(id: ChatId)

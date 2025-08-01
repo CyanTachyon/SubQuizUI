@@ -53,6 +53,8 @@ const router = useRouter();
         gap: 1rem;
         flex-wrap: wrap;
         justify-content: center;
+        overflow-y: auto;
+        scrollbar-width: none;
 
         .tool {
             cursor: pointer;

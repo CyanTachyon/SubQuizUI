@@ -11,6 +11,7 @@ import { useNotification } from '../../stores/notification';
 import { translateSSE } from '../../networks/backend/ai';
 import SelectMenu from '../../components/SelectMenu.vue';
 import SwapHorizontalIcon from 'vue-material-design-icons/SwapHorizontal.vue';
+import { copyToClipboard } from '../../utils/utils';
 
 const input = ref('');
 const output = ref('');
@@ -37,8 +38,7 @@ function copy()
         useNotification().addWarning('没有内容可复制');
         return;
     }
-    navigator.clipboard.writeText(output.value);
-    useNotification().addSuccess('已复制到剪贴板');
+    copyToClipboard(output.value);
 }
 
 function translate() 

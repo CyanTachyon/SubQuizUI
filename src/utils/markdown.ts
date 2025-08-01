@@ -31,7 +31,7 @@ if (!arrayProto.at) arrayProto.at = function (index: number)
     return this[index < 0 ? this.length + index : index];
 };
 
-export function sectionMarkdownToHtml(section: SectionId, markdown: string): string
+function sectionMarkdownToHtml(section: SectionId, markdown: string): string
 {
     return markdownToHtml(markdown, connectUrl(Target.CDN, '/section_images/' + section + '/'));
 }
@@ -55,7 +55,7 @@ function supportsMathML()
     }
 }
 
-export function markdownToHtml(markdown: string, imgBaseUrl?: string): string 
+function markdownToHtml(markdown: string, imgBaseUrl?: string): string 
 {
     const renderer = new marked.Renderer();
     if (imgBaseUrl) renderer.image = function (info) 
@@ -79,7 +79,7 @@ export function markdownToHtml(markdown: string, imgBaseUrl?: string): string
         const scope = starryNight.flagToScope(lang);
         if (!scope) return `<code>${code}</code>`;
         return `<code>` + toHtml(starryNight.highlight(code, scope)) + `</code>`;
-    }
+    };
     const res = marked.parse(markdown, { renderer }) as string;
     const html = `<quiz-markdown-body class="markdown-body">${res}</quiz-markdown-body>`;
     const tempDiv = document.createElement('div');
@@ -94,6 +94,7 @@ export interface MarkdownContent
     markdown?: boolean;
     section?: number;
     content: string;
+    parseHtml?: (ele: HTMLElement) => void;
 }
 
 export const vMarkdown: Directive<any, MarkdownContent> = {
@@ -109,11 +110,16 @@ export const vMarkdown: Directive<any, MarkdownContent> = {
 
 function updateMarkdown(el: HTMLElement, binding: MarkdownContent) 
 {
-    const { markdown, content, section } = binding;
+    const { markdown, content, section, parseHtml } = binding;
     if (markdown !== false)
     {
-        if (section) el.innerHTML = sectionMarkdownToHtml(section, content);
-        else el.innerHTML = markdownToHtml(content);
+        const tmpDiv = document.createElement('div');
+        tmpDiv.className = 'quiz-markdown-tmp-div';
+        if (section) tmpDiv.innerHTML = sectionMarkdownToHtml(section, content);
+        else tmpDiv.innerHTML = markdownToHtml(content);
+        if (parseHtml) parseHtml(tmpDiv.firstElementChild as HTMLElement);
+        el.innerHTML = '';
+        el.appendChild(tmpDiv.firstElementChild as HTMLElement);
     }
     else el.innerText = content;
 }

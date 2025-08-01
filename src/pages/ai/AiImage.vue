@@ -7,6 +7,7 @@ import LoadingIcon from 'vue-material-design-icons/Loading.vue';
 import { useNotification } from '../../stores/notification';
 import ArrowLeftIcon from 'vue-material-design-icons/ArrowLeft.vue';
 import ContentCopyIcon from 'vue-material-design-icons/ContentCopy.vue';
+import { copyToClipboard } from '../../utils/utils';
 const img = ref('');
 
 function selectImage() 
@@ -40,7 +41,8 @@ function toText(markdown: boolean)
     imageToText(img.value, markdown, (message) =>
     {
         res.value = res.value + message;
-    }).finally(() => {
+    }).finally(() => 
+    {
         loading.value = false;
     });
 }
@@ -48,8 +50,7 @@ function toText(markdown: boolean)
 function copy() 
 {
     if (!res.value) useNotification().addWarning('没有内容可复制');
-    else useNotification().addSuccess('已复制到剪贴板');
-    navigator.clipboard.writeText(res.value);   
+    copyToClipboard(res.value);
 }
 
 </script>
@@ -67,7 +68,7 @@ function copy()
             <Button @click="toText(false)">识别为纯文本</Button>
             <Button @click="toText(true)">识别为富文本</Button>
         </div>
-        <div v-if="res" style="max-width: calc(min(1024px, 100%)); height: 100%;">
+        <div v-if="res" style="max-width: calc(min(1024px, 100%)); height: 100%; display: flex; flex-direction: column; overflow: hidden;">
             <div style="display: flex; min-width: 512px;">
                 <Button @click="res = ''"  style="height: 44px; width: 44px; left: 0; margin-right: auto; display: flex; align-items: center; text-align: center; justify-content: center;">
                     <ArrowLeftIcon v-if="!loading"/>
@@ -83,7 +84,7 @@ function copy()
                     </div>
                 </Button>
             </div>
-            <div style="padding: 13px;" v-markdown="{ content: res, markdown: md }"/>
+            <div style="padding: 13px; overflow-y: auto; scrollbar-width: none; user-select: all;" v-markdown="{ content: res, markdown: md }"/>
         </div>
     </Card>
 </template>

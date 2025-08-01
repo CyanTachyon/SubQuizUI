@@ -5,7 +5,8 @@ const themeInfo = ref({
     useBlur: true,
     useGlass: true,
     theme: 'unset' as 'light' | 'dark' | 'unset',
-    background: '' as string
+    background: '' as string,
+    isDark: false as boolean,
 });
 
 const actions = {
@@ -60,9 +61,15 @@ const actions = {
     applyTheme: () =>
     {
         if (themeInfo.value.theme === 'dark' || (themeInfo.value.theme === 'unset' && window.matchMedia('(prefers-color-scheme: dark)').matches))
+        {
             document.documentElement.setAttribute('quiz-theme', 'dark');
+            themeInfo.value.isDark = true;
+        }
         else 
+        {
             document.documentElement.removeAttribute('quiz-theme');
+            themeInfo.value.isDark = false;
+        }
         if (themeInfo.value.background) document.body.style.backgroundImage = `url(${themeInfo.value.background})`;
         else document.body.style.backgroundImage = '';
     },
