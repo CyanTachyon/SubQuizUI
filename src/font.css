@@ -10,6 +10,12 @@
         url('/src/assets/fonts/SubQuiz_font_chinese.ttf') format('truetype');
 }
 
+@font-face {
+    font-family: 'Times New Roman';
+    src: url('/src/assets/fonts/katex/times.woff2') format('woff2'),
+        url('/src/assets/fonts/katex/times.ttf') format('truetype');
+}
+
 /*****  katex fonts *****/
 
 @font-face {

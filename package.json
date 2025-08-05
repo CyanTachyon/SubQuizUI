@@ -1,9 +1,9 @@
 {
   "name": "subquiz",
   "private": true,
-  "version": "3.1.2.1",
-  "versionId": 30102001,
-  "minVersionId": 30102001,
+  "version": "3.1.2.9",
+  "versionId": 30102009,
+  "minVersionId": 30102008,
   "downloadUrl": "https://quiz.bdfzscc.com/SubQuiz.apk",
   "type": "module",
   "scripts": {
@@ -20,6 +20,7 @@
     "@capacitor/clipboard": "^7.0.1",
     "@capacitor/core": "^7.0.1",
     "@capacitor/device": "^7.0.0",
+    "@capacitor/file-transfer": "^1.0.2",
     "@capacitor/filesystem": "^7.0.0",
     "@capacitor/preferences": "^7.0.1",
     "@capacitor/screen-orientation": "^7.0.1",
@@ -29,6 +30,7 @@
     "@heroicons/vue": "^2.2.0",
     "@wooorm/starry-night": "^3.8.0",
     "ansi_up": "^6.0.2",
+    "desmos": "^1.5.4",
     "hast-util-to-html": "^9.0.5",
     "html2canvas": "^1.4.1",
     "katex": "^0.16.22",

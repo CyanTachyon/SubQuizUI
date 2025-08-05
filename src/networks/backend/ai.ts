@@ -7,7 +7,7 @@ import { useNotification } from "../../stores/notification";
 import { checkResponse } from "../utils/checkResponse";
 import { sendRequest, sseRequest, Target } from "../utils/sendRequest";
 
-export type ToolDataInfoType = 'MARKDOWN' | 'URL' | 'TEXT' | 'HTML';
+export type ToolDataInfoType = 'MARKDOWN' | 'URL' | 'TEXT' | 'HTML' | 'FILE' | 'PAGE' | 'IMAGE' | 'MATH';
 export type AiMessage = {
     content?: string;
     reasoning_content?: string;

@@ -15,6 +15,10 @@
     font-family: KaTeX_Main, Times New Roman, serif;
 }
 
+.math * {
+    font-family: KaTeX_Main, Times New Roman, serif;
+}
+
 .katex .katex-version::after {
     content: "0.16.21";
 }

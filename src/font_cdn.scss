@@ -15,6 +15,12 @@ $cdn: "https://cdn.bdfzscc.com/fonts/";
 }
 
 @font-face {
+    font-family: 'Times New Roman';
+    src: url($cdn + 'katex/times.woff2') format('woff2'),
+        url($cdn + 'katex/times.ttf') format('truetype');
+}
+
+@font-face {
     font-family: "KaTeX_AMS";
     src: url($cdn + 'katex/KaTeX_AMS-Regular.woff2') format("woff2"), url($cdn + 'katex/KaTeX_AMS-Regular.woff') format("woff"), url($cdn + 'katex/KaTeX_AMS-Regular.ttf') format("truetype");
     font-weight: normal;

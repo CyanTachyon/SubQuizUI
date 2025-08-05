@@ -15,10 +15,9 @@ import RobotExcitedOutlineIcon from "vue-material-design-icons/RobotExcitedOutli
 import { createAnimationsController } from "../../utils/AnimationsController.ts";
 import Button from "../../components/Button.vue";
 import Image from "../../components/Image.vue";
-import { safeRedirect } from "../../utils/redirect.ts";
 import { useUser } from "../../stores/user.ts";
 import { sleep } from "../../utils/sleep.ts";
-import { tryLogin } from "../../utils/utils.tsx";
+import { tryLogin, tryOpenSSO } from "../../utils/utils.tsx";
 import { useRouter } from "vue-router";
 import SidebarItem from "./SidebarItem.vue";
 import SettingIcon from "vue-material-design-icons/CogOutline.vue";
@@ -59,7 +58,7 @@ let user = useUser();
 
 function gotoSSO()
 {
-    if (user.userId()) safeRedirect(environment.ssoFrontend);
+    if (user.userId()) tryOpenSSO('/');
     else tryLogin();
 }
 

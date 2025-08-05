@@ -358,7 +358,7 @@ const bdfzData = ref<{ [key: string]: Record<string, ToolDataInfo> }>({});
 
 function parseHtml(ele: HTMLElement)
 {
-    ele.querySelectorAll('tool_data').forEach((toolDataEle: HTMLElement, index: number) =>
+    ele.querySelectorAll('tool_data, data').forEach((toolDataEle: HTMLElement, index: number) =>
     {
         const path = toolDataEle.getAttribute('path');
         const type = toolDataEle.getAttribute('type');
@@ -369,6 +369,17 @@ function parseHtml(ele: HTMLElement)
             const close = dialog(<ToolDataShower type={type} path={path} dataset={bdfzData} close={() => close()} />, () => { close(); });
         }
     });
+}
+
+function copy(messages: DisplayMessage[])
+{
+    const content = messages.map(m => 
+    {
+        if (m.type) return '';
+        if (m.content) return m.content.trim();
+    }).filter(m => m).join('\n\n');
+    const dataTagReg = /<(tool_)?data[^>]*>/g;
+    copyToClipboard(content.replace(dataTagReg, ''));
 }
 
 </script>
@@ -389,7 +400,7 @@ function parseHtml(ele: HTMLElement)
                 <FileQuestionIcon />
                 点击查看题目内容
             </Text>
-            <div @scroll="handleScroll" class="histories" :class="info.histories.length === 0 ? 'empty' : ''" ref="historiesContainer">
+            <div @scroll="handleScroll" class="histories scrollbar" :class="info.histories.length === 0 ? 'empty' : ''" ref="historiesContainer">
                 <Text v-if="info.histories.length === 0" class="message empty">
                     <span>{{ info.section ? "题目解析没看懂？" : "在题目解析页面点击AI标识" }}向AI提问</span>
                 </Text>
@@ -415,7 +426,7 @@ function parseHtml(ele: HTMLElement)
                             <LoadingIcon />
                         </div>
                     </Text>
-                    <div v-if="index !== info.histories.length - 1 || !info.showAnswering" class="copy-button"> <ContentCopyIcon :size="20" class="icon" @click="copyToClipboard(item.messages.map(m => m.content).join('\n'))"/> </div>
+                    <div v-if="index !== info.histories.length - 1 || !info.showAnswering" class="copy-button"> <ContentCopyIcon :size="20" class="icon" @click="copy(item.messages)"/> </div>
                 </div>
             </div>
             <Input v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
@@ -481,7 +492,6 @@ quiz-loading {
     flex-direction: column;
     flex-grow: 1;
     overflow: auto;
-    scrollbar-width: none;
 }
 
 .histories.empty {

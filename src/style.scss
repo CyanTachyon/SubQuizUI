@@ -11,6 +11,18 @@
     font-weight: 600;
 }
 
+.scrollbar::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+    background: transparent;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+    background: var(--glass-button-highlight-border);
+    opacity: 0.5;
+    border-radius: 10px;
+}
+
 :focus,
 :focus-within,
 :focus-visible
