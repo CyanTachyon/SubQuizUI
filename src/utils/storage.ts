@@ -11,12 +11,12 @@ export async function storageGet(key: string, defaultValue?: string): Promise<st
     return value;
 }
 
-export function storageSet(key: string, value: string): void
+export async function storageSet(key: string, value: string): Promise<void>
 {
-    Capacitor.getPlatform() === 'web' ? localStorage.setItem(key, value) : Preferences.set({ key, value });
+    Capacitor.getPlatform() === 'web' ? localStorage.setItem(key, value) : await Preferences.set({ key, value });
 }
 
-export function storageRemove(key: string): void
+export async function storageRemove(key: string): Promise<void>
 {
-    Capacitor.getPlatform() === 'web' ? localStorage.removeItem(key) : Preferences.remove({ key });
+    Capacitor.getPlatform() === 'web' ? localStorage.removeItem(key) : await Preferences.remove({ key });
 }

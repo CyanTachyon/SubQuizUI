@@ -23,10 +23,10 @@ export async function getToken()
 {
     return await storageGet('token');
 }
-export function setToken(token: string | null)
+export async function setToken(token: string | null)
 {
-    if (token !== null) storageSet('token', token);
-    else storageRemove('token');
+    if (token !== null) await storageSet('token', token);
+    else await storageRemove('token');
 }
 
 export function tryLogin()
@@ -34,9 +34,12 @@ export function tryLogin()
     tryOpenSSO('/oauth?needAuthorize=' + environment.ssoServiceId);
 }
 
+let isSeiueDialogOpen = false;
 export function tryBindSeiue()
 {
-    const close = dialog(<RealNameRequired close={ () => { close(); } }/>);
+    if (isSeiueDialogOpen) return;
+    isSeiueDialogOpen = true;
+    const close = dialog(<RealNameRequired close={ () => { close(); isSeiueDialogOpen = false; } }/>);
 }
 
 if (Capacitor.getPlatform() !== 'web')

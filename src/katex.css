@@ -23,7 +23,7 @@
     content: "0.16.21";
 }
 
-.katex .katex-mathml {
+/* .katex .katex-mathml { */
     /* Accessibility hack to only show to screen readers
    Found at: http://a11yproject.com/posts/how-to-hide-content/ */
     /* position: absolute;
@@ -33,11 +33,11 @@
     height: 1px;
     width: 1px;
     overflow: hidden; */
-}
+/* } */
 
-.katex .katex-html {
+/* .katex .katex-html { */
     /* \newline is an empty block at top level, between .base elements */
-}
+/* } */
 
 .katex .katex-html>.newline {
     display: block;

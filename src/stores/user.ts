@@ -5,6 +5,7 @@ import { avatarUrl } from "../networks/sso/avatar.ts";
 import { isAdmin, Permission } from "../dataClasses/Permission.ts";
 import { ref } from 'vue';
 import { InAppBrowser } from "@capgo/inappbrowser";
+import { Capacitor } from "@capacitor/core";
 
 const user = ref(null as (UserInfo | null));
 
@@ -22,8 +23,11 @@ const actions = {
     {
         user.value = null;
         setToken(null);
-        InAppBrowser.clearAllCookies();
-        InAppBrowser.clearCache();
+        if (Capacitor.getPlatform() !== 'web')
+        {
+            InAppBrowser.clearAllCookies();
+            InAppBrowser.clearCache();
+        }
     },
     userId: () =>
     {
@@ -49,11 +53,11 @@ const actions = {
         if (user.value === null) return false;
         return user.value.permission === Permission.ROOT;
     },
-    setUser: (u: UserInfo | null) =>
+    setUser: (u: UserInfo | string | null) =>
     {
-        user.value = u;
-        if (u === null) setToken(null);
-        else setToken(u.id.toString());
+        if (typeof u === 'string') setToken(u);
+        else if (u !== null) user.value = u;
+        else setToken(null);
     }
 }
 

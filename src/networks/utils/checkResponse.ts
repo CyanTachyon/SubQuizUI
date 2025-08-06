@@ -26,7 +26,7 @@ function defaultOnFail<T>(response: ResponseBody<T>): T
     let error = new ResponseError(response);
     if (response.code === 451) 
     {
-        useUser().setUser(response.data as UserInfo);
+        useUser().setUser(response.data as (UserInfo | string));
         tryBindSeiue();
     }
     else if (response.code === 401) tryLogin();

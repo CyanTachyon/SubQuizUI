@@ -23,6 +23,9 @@ const user = useUser();
             <quiz-username>{{ user.userName() }}</quiz-username>
         </quiz-user-box>
         <div style="display: flex;">
+            注意，需绑定学生账户才能使用相关功能
+        </div>
+        <div style="display: flex;">
             <Button @click="() => { close(); tryOpenSSO('/info?intent=seiue&userId=' + user.userId()); }">
                 绑定希悦
             </Button>
