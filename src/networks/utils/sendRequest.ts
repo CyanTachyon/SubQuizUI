@@ -1,7 +1,7 @@
 import type {ResponseBody} from "../../dataClasses/ResponseBody.ts";
 import clientVersion from "../../../public/android_latest.json";
-import { getToken } from "../../utils/utils.tsx";
 import { checkResponse } from "./checkResponse.ts";
+import { useUser } from "../../stores/user.ts";
 export enum Target
 {
     EMPTY = 0,
@@ -149,7 +149,7 @@ export async function request(
         data.headers['Content-Type'] = 'application/json';
     }
     data.headers['Accept'] = '*/*';
-    data.headers['Authorization'] = withToken ? `Bearer ${await getToken()}` : '';
+    data.headers['Authorization'] = withToken ? `Bearer ${useUser().getToken()}` : '';
     data.headers['X-Client-Version'] = clientVersion.versionCode;
     return fetch(url, data)
 }

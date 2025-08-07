@@ -1,4 +1,3 @@
-import { setToken, getToken } from "../utils/utils.tsx";
 import type { UserInfo } from "../dataClasses/User.ts";
 import { getUserInfo } from "../networks/backend/user.ts";
 import { avatarUrl } from "../networks/sso/avatar.ts";
@@ -6,23 +5,27 @@ import { isAdmin, Permission } from "../dataClasses/Permission.ts";
 import { ref } from 'vue';
 import { InAppBrowser } from "@capgo/inappbrowser";
 import { Capacitor } from "@capacitor/core";
+import { storageGet, storageRemove, storageSet } from "../utils/storage.ts";
 
 const user = ref(null as (UserInfo | null));
+const token = ref<string | null>(null);
 
 const actions = {
     reload: async () =>
     {
-        if (!await getToken())
+        if (!await storageGet('token'))
         {
             actions.logout();
             return;
         }
+        token.value = await storageGet('token');
         getUserInfo().then(u => user.value = u as UserInfo);
     },
     logout: () =>
     {
         user.value = null;
-        setToken(null);
+        token.value = null;
+        actions.login(null);
         if (Capacitor.getPlatform() !== 'web')
         {
             InAppBrowser.clearAllCookies();
@@ -55,9 +58,19 @@ const actions = {
     },
     setUser: (u: UserInfo | string | null) =>
     {
-        if (typeof u === 'string') setToken(u);
+        if (typeof u === 'string') actions.login(u);
         else if (u !== null) user.value = u;
-        else setToken(null);
+        else actions.login(null);
+    },
+    getToken: () =>
+    {
+        return token.value;
+    },
+    login: async (token_: string | null) =>
+    {
+        if (token_ !== null) await storageSet('token', token_);
+        else await storageRemove('token');
+        token.value = token_;
     }
 }
 

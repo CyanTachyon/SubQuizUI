@@ -4,8 +4,9 @@ import type { AnswerType } from "../../dataClasses/Question";
 import type { Section } from "../../dataClasses/Section";
 import type { Slice } from "../../dataClasses/Slice";
 import { useNotification } from "../../stores/notification";
+import { useUser } from "../../stores/user";
 import { checkResponse } from "../utils/checkResponse";
-import { sendRequest, sseRequest, Target } from "../utils/sendRequest";
+import { connectUrl, sendRequest, sseRequest, Target } from "../utils/sendRequest";
 
 export type ToolDataInfoType = 'MARKDOWN' | 'URL' | 'TEXT' | 'HTML' | 'FILE' | 'PAGE' | 'IMAGE' | 'MATH';
 export type AiMessage = {
@@ -118,7 +119,7 @@ export interface ModelInfo
     toolable: boolean;
 }
 
-const sseUrl = '/ai/chat/sse';
+const sseUrl = '/ai/chat/{chat}/sse';
 export async function chatSSE(
     chat: ChatId,
     hash: string,
@@ -163,15 +164,37 @@ export interface ToolDataInfo
     value: string;
 }
 
-const getToolDataUrl = '/ai/chat/toolData';
-export async function getToolData(type: string, path: string): Promise<ToolDataInfo>
+const getToolDataUrl = '/ai/chat/{chat}/toolData';
+export async function getToolData(chat: ChatId, type: string, path: string): Promise<ToolDataInfo>
 {
     return checkResponse<ToolDataInfo>(sendRequest({
         target: Target.BACKEND,
         url: getToolDataUrl,
         method: 'GET',
-        params: { type, path }
+        params: { chat, type, path }
     }));
+}
+
+export interface FileInfo
+{
+    name: string;
+    type: ToolDataInfoType;
+}
+
+const getFileInfoUrl = '/ai/chat/{chat}/file/{file}/info';
+export async function getFileInfo(chat: ChatId, file: string): Promise<FileInfo>
+{
+    return checkResponse<FileInfo>(sendRequest({
+        target: Target.BACKEND,
+        url: getFileInfoUrl,
+        method: 'GET',
+        params: { chat, file }
+    }));
+}
+
+export function getFileUrl(chat: ChatId, file: string, download: boolean = false): string
+{
+    return connectUrl(Target.BACKEND, '/ai/chat/{chat}/file/{file}/data', { chat, file, token: useUser().getToken(), download });
 }
 
 const translateSSEUrl = '/ai/translate';

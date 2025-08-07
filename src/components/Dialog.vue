@@ -33,7 +33,7 @@ onMounted(() =>
 
 <template>
     <dialog ref="ele" @close="onClose()" @click.self="onClose()" @keydown.esc="onClose()">
-        <Card class="dialog-wrapper">
+        <Card class="dialog-wrapper" :scroll="true">
             <slot/>
         </Card>
     </dialog>
@@ -47,6 +47,15 @@ dialog {
     --transition: static;
     -webkit-user-select: none;
     user-select: none;
+    display: flex;
+    max-width: 100%;
+    max-height: 100%;
+    min-width: 100%;
+    min-height: 100%;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
 }
 
 dialog:focus {
@@ -59,10 +68,13 @@ dialog::backdrop {
 }
 
 .dialog-wrapper {
-    width: 100%;
-    height: 100%;
     color: var(--color);
     padding: 1rem;
     margin: 0;
+    max-width: 85%;
+    max-height: 85%;
+    display: flex;
+    width: fit-content;
+    height: fit-content;
 }
 </style>

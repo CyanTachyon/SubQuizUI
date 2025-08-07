@@ -1,15 +1,17 @@
 <script lang="ts" setup>
-import { computed, ref, onUnmounted, onMounted } from 'vue';
-import { getToolData, type ToolDataInfo } from '../networks/backend/ai';
+import { computed, ref, onUnmounted, onMounted, watch } from 'vue';
+import { getFileInfo, getFileUrl, getToolData, type ToolDataInfo } from '../networks/backend/ai';
 import { safeRedirect } from '../utils/redirect';
 import Button from '../components/Button.vue';
 import { copyToClipboard } from '../utils/utils';
 import html2canvas from 'html2canvas';
 import { useNotification } from '../stores/notification';
-import { downloadFile } from '../utils/downloadFile';
 import Desmos from 'desmos';
+import type { ChatId } from '../dataClasses/Ids';
 
-const { type, path, close: close_, dataset, customInfo } = defineProps<{
+const { chat, type, path, close: close_, dataset, customInfo } = defineProps<{
+    chat: ChatId,
+
     type?: string,
     path?: string,
     dataset?: ReturnType<typeof ref<{ [key: string]: Record<string, ToolDataInfo>; }>>,
@@ -25,6 +27,11 @@ const close = () =>
     if (close_) close_();
 };
 
+function parseUrl(url: string): string
+{
+    if (url.startsWith('uuid:')) return getFileUrl(chat, url.substring(5));
+    else return url;
+}
 
 function getData(type: string, path: string): ToolDataInfo
 {
@@ -41,7 +48,7 @@ function getData(type: string, path: string): ToolDataInfo
     // 否则，设置为加载中状态
     dataset.value[type] = dataset.value[type] || {};
     dataset.value[type][path] = null;
-    getToolData(type, path).then((data) =>
+    getToolData(chat, type, path).then((data) =>
     {
         dataset.value[type][path] = data;
     });
@@ -58,7 +65,7 @@ const images = computed(() =>
 {
     if (info.value.type === 'IMAGE') 
     {
-        return info.value.value.split('\n').map((url) => url.trim()).filter((url) => url);
+        return info.value.value.split('\n').map((url) => parseUrl(url.trim())).filter((url) => url);
     }
     return [];
 });
@@ -71,6 +78,24 @@ const math = computed(() =>
     }
     return '';
 });
+
+const fileName = ref('');
+const fileUrl = ref('');
+const updateFileName = async() => 
+{
+    if (info.value.type === 'FILE') 
+    {
+        const uuid = info.value.value.trim();
+        fileName.value = (await getFileInfo(chat, uuid)).name;
+        fileUrl.value = getFileUrl(chat, uuid, true);
+    }
+    else 
+    {
+        fileName.value = '';
+        fileUrl.value = '';
+    }
+};
+watch(() => info.value.value, updateFileName, { immediate: true });
 
 const desmos = ref<HTMLElement | null>(null);
 
@@ -208,12 +233,12 @@ const downloadImage = () =>
             打开外部网站:
             <br />
             <br />
-            <span>{{info.value}}</span>
+            <span>{{parseUrl(info.value)}}</span>
             <br />
             <br />
             <div style="display: flex;">
-                <Button @click="close(); copyToClipboard(info.value);" style="margin-left: auto;">复制</Button>
-                <Button @click="close(); safeRedirect(info.value, true);">打开</Button>
+                <Button @click="close(); copyToClipboard(parseUrl(info.value));" style="margin-left: auto;">复制</Button>
+                <Button @click="close(); safeRedirect(parseUrl(info.value), true);">打开</Button>
                 <Button @click="close()">取消</Button>
             </div>
         </div>
@@ -221,7 +246,7 @@ const downloadImage = () =>
             <div class="iframe-wrapper" ref="iframeWrapper" :style="{ height: iframeSize.height }">
                 <iframe 
                     :srcdoc="info.type === 'HTML' ? info.value : undefined"
-                    :src="info.type === 'PAGE' ? info.value : undefined" 
+                    :src="info.type === 'PAGE' ? parseUrl(info.value) : undefined" 
                     style="border: none;" 
                     ref="iframe"
                 ></iframe>
@@ -230,8 +255,8 @@ const downloadImage = () =>
             <Button v-if="info.value.startsWith('<!--show-download-image-->')" style="margin-left: auto; right: 0;" @click="downloadImage">截取图片</Button>
         </div>
         <div v-else-if="info.type === 'FILE'">
-            <Button @click="close(); downloadFile(info.value.split('\n')[0], info.value.split('\n')[1])" style="margin-left: auto; right: 0;">
-                下载文件 ({{ info.value.split('\n')[0] }})
+            <Button @click="close(); safeRedirect(fileUrl)" style="margin-left: auto; right: 0;">
+                下载文件 ({{ fileName }})
             </Button>
         </div>
         <div v-else-if="info.type === 'IMAGE'">
@@ -257,10 +282,10 @@ const downloadImage = () =>
 <style lang="scss" scoped>
 .container {
     padding: 10px;
-    max-height: 85vh;
-    max-width: 85vw;
-    overflow: auto;
     scrollbar-width: none;
+    width: 100%;
+    height: 100%;
+    overflow-y: scroll;
 }
 .container-inline {
     padding: 10px;

@@ -94,7 +94,7 @@ function gotoExam(exam: Exam)
     else 
     {
         const close = dialog(
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 20px;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 20px; height: fit-content; width: fit-content;">
                 开始考试：{exam.name}
                 <div style="margin-top: 10px; display: flex; flex-direction: row; gap: 10px;">
                     <Button onClick={() => { close(); router.push('/quiz?exam=' + exam.id); }}>

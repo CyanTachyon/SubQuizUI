@@ -158,8 +158,10 @@ quiz-card {
 .scroll-content {
     overflow-y: auto;
     scrollbar-width: none;
-    height: 100%;
-    width: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 quiz-card {

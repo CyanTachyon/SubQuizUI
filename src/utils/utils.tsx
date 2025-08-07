@@ -15,19 +15,8 @@ import Button from "@/components/Button.vue";
 import { InAppBrowser, ToolBarType } from "@capgo/inappbrowser";
 import { login } from "../networks/backend/oauth.ts";
 import { ScreenOrientation } from "@capacitor/screen-orientation";
-import { storageGet, storageRemove, storageSet } from "./storage.ts";
 import { getScale } from "../main.ts";
 import { Clipboard } from "@capacitor/clipboard";
-
-export async function getToken()
-{
-    return await storageGet('token');
-}
-export async function setToken(token: string | null)
-{
-    if (token !== null) await storageSet('token', token);
-    else await storageRemove('token');
-}
 
 export function tryLogin()
 {
@@ -114,7 +103,19 @@ export function dialog(
     const app = createApp({
         render()
         {
-            return <Dialog open={open.value} onClose={onClose} style={ `transform: scale(${getScale()});` }>{innerHtml}</Dialog>;
+            const scale = getScale();
+            const css = `
+                transform: scale(${scale});
+                transform-origin: center center;
+                width: ${100 / scale}%;
+                height: ${100 / scale}%;
+                min-width: ${100 / scale}%;
+                min-height: ${100 / scale}%;
+                max-width: ${100 / scale}%;
+                max-height: ${100 / scale}%;
+                overflow: hidden;
+            `;
+            return <Dialog open={open.value} onClose={onClose} style={css}>{innerHtml}</Dialog>;
         }
     }).directive('markdown', vMarkdown)
     app.mount(container);
@@ -135,7 +136,7 @@ export function inputDialog(
 {
     const input = ref<string | null>(defaultValue || null);
     const close = dialog(
-        <form autocomplete="off" onSubmit={ (event) => { event.preventDefault(); submit(input.value); close(); } }>
+        <form autocomplete="off" onSubmit={ (event) => { event.preventDefault(); submit(input.value); close(); } } style="height: fit-content; width: fit-content; display: flex; flex-direction: column; gap: 10px;">
             { content }
             <Input placeholder="Enter here" v-model={ input.value } class="dialog-input"/>
         </form>,

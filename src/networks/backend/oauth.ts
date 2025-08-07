@@ -1,7 +1,6 @@
 import {sendRequest, Target} from "../utils/sendRequest.ts";
 import {checkResponse} from "../utils/checkResponse.ts";
 import {useUser} from "../../stores/user.ts";
-import { setToken } from "../../utils/utils.tsx";
 
 const loginUrl = '/oauth/login'
 
@@ -14,6 +13,6 @@ export async function login(code: string)
         withToken: false,
         data: {code},
     })
-    setToken(res.data);
+    useUser().login(res.data);
     checkResponse(Promise.resolve(res)).finally(() => useUser().reload());
 }

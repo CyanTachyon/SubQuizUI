@@ -192,7 +192,7 @@ watch(knowledgePoints, (newValue) => {
 function createKP(folder: boolean)
 {
     inputDialog(
-        <>请输入新的${folder ? '文件夹' : '知识点'}名称</>,
+        <>请输入新的{folder ? '文件夹' : '知识点'}名称</>,
         (label: string) => {
             createKnowledgePoint({
                 name: label,
@@ -682,11 +682,6 @@ quiz-children-empty {
     height: 100%;
     width: 100%;
     font-size: 1.5em;
-}
-
-.dialog-input {
-    width: 100%;
-    margin: 20px 0;
 }
 
 quiz-sections-empty {

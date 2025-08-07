@@ -15,7 +15,7 @@ const user = useUser();
 </script>
 
 <template>
-    <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; padding-left: 3rem; padding-right: 3rem; --transition:static;">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; padding-left: 3rem; padding-right: 3rem; --transition:static; width: fit-content; height: fit-content;">
         <h2>您还未绑定希悦账户</h2>
 
         <quiz-user-box class="box">

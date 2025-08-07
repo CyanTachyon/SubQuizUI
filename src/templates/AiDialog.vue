@@ -366,7 +366,7 @@ function parseHtml(ele: HTMLElement)
         toolDataEle.classList.add('tool-data-link');
         if (path) toolDataEle.onclick = () =>
         {
-            const close = dialog(<ToolDataShower type={type} path={path} dataset={bdfzData} close={() => close()} />, () => { close(); });
+            const close = dialog(<ToolDataShower type={type} path={path} dataset={bdfzData} chat={info.value.id} close={() => close()} />, () => { close(); });
         }
     });
 }
@@ -420,7 +420,7 @@ function copy(messages: DisplayMessage[])
                                 <ToolsIcon class="icon" :size="20" style="margin-right: 4px;"/>
                                 {{ msg.tool_call }}
                             </Button>
-                            <ToolDataShower v-if="msg.type" :inline="true" :custom-info="{ type: msg.type, value: msg.content }"/>
+                            <ToolDataShower v-if="msg.type" :chat="info.id" :inline="true" :custom-info="{ type: msg.type, value: msg.content }"/>
                         </template>
                         <div class="loading-icon" style="margin: 0 10px;" v-if="index === info.histories.length - 1 && info.showAnswering" :key="index">
                             <LoadingIcon />

@@ -117,6 +117,10 @@ appEle.style = `
     transform-origin: top left;
     width: ${100 / scale}%;
     height: ${100 / scale}%;
+    min-width: ${100 / scale}%;
+    min-height: ${100 / scale}%;
+    max-width: ${100 / scale}%;
+    max-height: ${100 / scale}%;
     overflow: hidden;
 `;
 })();

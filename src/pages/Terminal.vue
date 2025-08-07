@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { connectUrl, Target } from "../networks/utils/sendRequest.ts";
-import { getToken } from "../utils/utils.tsx";
 import { useRouter } from "vue-router";
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { AnsiUp } from "ansi_up/ansi_up";
@@ -8,6 +7,7 @@ import Input from "../components/Input.vue";
 import { createAnimationsController } from "../utils/AnimationsController.ts";
 import { sleep } from "../utils/sleep.ts";
 import { $appearDuration, State, useTransitionStore } from "../stores/transition.ts";
+import { useUser } from "../stores/user.ts";
 
 document.title = '控制台 - SubQuiz';
 
@@ -108,7 +108,7 @@ async function openSocket(): Promise<WebSocket>
     {
         timer = null;
     }, 1000);
-    const socket_ = new WebSocket(url, ['Bearer', await getToken()]);
+    const socket_ = new WebSocket(url, ['Bearer', useUser().getToken()]);
     socket_.addEventListener('message', socketListener);
     socket_.addEventListener('close', socketCloseListener);
     return socket_;
