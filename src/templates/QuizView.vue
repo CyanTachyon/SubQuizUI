@@ -355,14 +355,7 @@ $answer-color-duration: 0.4s;
     white-space: pre-wrap;
 }
 
-.loading {
-    position: relative;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    height: 20%;
-    width: 30%;
-}
+
 
 .submit {
     display: block;

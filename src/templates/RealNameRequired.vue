@@ -30,7 +30,7 @@ const user = useUser();
                 绑定希悦
             </Button>
             <Button @click="() => { user.logout(); close(); safeRedirect(connectUrl(Target.FRONTEND, '/')) }">
-                退出登陆
+                退出登录
             </Button>
         </div>
     </div>

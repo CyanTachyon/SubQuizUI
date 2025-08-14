@@ -1,177 +1,267 @@
 <script setup lang="ts">
-import {onBeforeUnmount, onMounted, ref, watch} from "vue";
-import debounce from "../utils/debounce.ts";
-import {createAnimationsController} from "../utils/AnimationsController.ts";
-import {sleep} from "../utils/sleep.ts";
-import {$appearDuration, State, useTransitionStore} from "../stores/transition.ts";
-import { nextTick } from "vue";
+import Text from './Text.vue';
 
-const count = ref(6)
-const size = ref(200)
-const loaderEl = ref<HTMLElement | null>(null)
-const reload = ref(false);
-let observer: ResizeObserver;
+const type = Math.random() * Math.random() <= 0.5;
 
-const updateSize = (entries: ResizeObserverEntry[]) =>
-{
-    const {width, height} = entries[0].contentRect
-    if (!height) return;
-    const count0 = Math.floor(width * 3 / height)
-    const size0 = height * 5 / 6;
-    if (size0 !== size.value) size.value = size0
-    if (count0 !== count.value)
-    {
-        count.value = count0;
-        reload.value = true;
-        nextTick(() => reload.value = false)
-    }
-}
+const tips = [
+    '稍等片刻',
+    '加载好无聊啊',
+    '你知道吗？\nSubQuiz不由SubIT维护',
+    '你知道吗？\nSubQuiz完全由一位北大附中学生开发',
+    '你知道吗？\n“关于项目”中可以找到作者的联系方式',
+    '你知道吗？\nSubQuiz的代码托管在GitHub上',
+    '你知道吗？\nSubQuiz使用了Vue3+Kotlin',
+    '你知道吗？\nSubQuiz的开发者非常喜欢Kotlin',
+    '你知道吗？\n这道题看着很难，其实一点也不简单',
+    '你知道吗？\n反正我不知道',
+    '你知道吗？\nSubIT是北大附中最大的科技社团',
+    '你知道吗？\nAI答疑可以帮你制作PPT',
+    '你知道吗？\nAI答疑可以帮你制作思维导图',
+    '你知道吗？\n你可以去建议作者加功能哦\n虽然作者可能不会采纳^v^'
+]
 
-onMounted(() =>
-{
-    if (loaderEl.value?.parentElement)
-    {
-        observer = new ResizeObserver(debounce(updateSize, 300, true));
-        observer.observe(loaderEl.value)
-    }
-})
-
-onBeforeUnmount(() =>
-{
-    observer?.disconnect()
-})
-
-
-////////////////////////
-
-let controller = createAnimationsController();
-let className = ref('');
-
-function onDisappearChange(value: boolean, oldValue: boolean)
-{
-    if (value === oldValue) return;
-    controller.push([
-        () => className.value = value ? 'disappear' : 'appear',
-        () => sleep($appearDuration),
-        () => className.value = value ? 'disappeared' : '',
-    ])
-}
-
-function onTransitionChange(value: State, oldValue: State | undefined)
-{
-    if (value === oldValue || value === State.NONE) return;
-    if (value === State.ENTER) onDisappearChange(false, true);
-    else onDisappearChange(true, false);
-}
-
-let transitionStore = useTransitionStore();
-onMounted(() => {
-    if (loaderEl.value && window.getComputedStyle(loaderEl.value).getPropertyValue('--transition') !== 'static')
-    {
-        watch(() => transitionStore.state, onTransitionChange, {immediate: true});
-    }
-})
+const tip = tips[Math.floor(Math.random() * tips.length)];
 
 </script>
 
 <template>
-    <quiz-loading ref="loaderEl" :class="className">
-        <quiz-loading-element v-if="!reload" v-for="i in count" :style="'--x:' + (i - 1) + ';' + '--size:' + size + 'px;'"></quiz-loading-element>
-    </quiz-loading>
+    <Text class="loading">
+        <div v-if="type" class="loader0">
+            <div class="loader l1"></div>
+            <div class="loader l2"></div>
+        </div>
+        <div v-else class="loader1">
+            <div class="loader-square"></div>
+            <div class="loader-square"></div>
+            <div class="loader-square"></div>
+            <div class="loader-square"></div>
+            <div class="loader-square"></div>
+            <div class="loader-square"></div>
+            <div class="loader-square"></div>
+        </div>
+        <div class="tip">
+            {{ tip }}
+        </div>
+    </Text>
 </template>
 
-<style scoped lang="scss">
-
-quiz-loading {
+<style scoped lang="css">
+.loading {
     display: flex;
-    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    .tip {
+        min-width: fit-content;
+        max-width: fit-content;
+        width: fit-content;
+        margin-top: 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: -10px;
+        white-space: pre-wrap;
+    }
 }
-
-quiz-loading-element {
-    --x: 0;
-    --size: 200;
-
-    display: block;
-    position: relative;
-    width: calc(var(--size) * 0.2);
-    min-width: calc(var(--size) * 0.2);
-    max-width: calc(var(--size) * 0.2);
-    height: var(--size);
-    min-height: var(--size);
-    max-height: var(--size);
-    margin: calc(var(--size) * 0.1);
-    overflow: hidden;
-    border-radius: calc(var(--size) * 0.25);
-    border: calc(var(--size) / 100) solid var(--glass-border);
-}
-
-quiz-loading-element::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: calc(var(--size) * 0.18);
-    height: calc(var(--size) * 0.18);
-    z-index: 100;
+.loader0 {
+    border: 0 solid transparent;
     border-radius: 50%;
-    box-shadow: 0 calc(var(--size) * 2.1) 0 calc(var(--size) * 2) #2196f3,;
-    background-color: var(--glass-button-background);
+    width: 80px;
+    height: 80px;
 
-    animation: animate 2.5s ease-in-out infinite;
-    animation-delay: calc(var(--x) * -0.3s);
-    transform: translateY(calc(var(--size) * 0.8));
+    .loader {
+        width: inherit;
+        height: inherit;
+        position: absolute;
+    }
+
+    .loader::before,
+    .loader::after {
+        content: '';
+        border: 5px solid var(--color);
+        border-radius: 50%;
+        width: inherit;
+        height: inherit;
+        position: absolute;
+        opacity: 1;
+    }
+
+    .l1::before,
+    .l1::after {
+        animation: clockwiseZ 2.5s infinite;
+    }
+
+    .l2::after,
+    .l2::before {
+        animation: anticlockwiseZ 2.5s infinite;
+    }
 }
 
-@keyframes animate {
-    0% {
-        transform: translateY(calc(var(--size) * 0.8));
-        filter: hue-rotate(0deg);
+@keyframes clockwiseZ {
+
+    0%,
+    100% {
+        transform: rotateY(0);
     }
 
     50% {
-        transform: translateY(0px);
-        filter: hue-rotate(180deg);
-    }
-
-    100% {
-        transform: translateY(calc(var(--size) * 0.8));
-        filter: hue-rotate(360deg);
+        transform: rotateY(180deg) skew(-10deg, -5deg);
     }
 }
 
-@keyframes disappear {
-    0% {
-        opacity: 1;
+@keyframes anticlockwiseZ {
+
+    0%,
+    100% {
+        transform: rotateX(0);
     }
+
     50% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
+        transform: rotateX(-180deg) skew(10deg, 5deg);
     }
 }
 
-@keyframes appear {
+.loader1 {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    transform: rotate(45deg);
+
+    .loader-square {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 28px;
+        height: 28px;
+        margin: 2px;
+        border-radius: 0px;
+        background: white;
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        animation: square-animation 10s ease-in-out infinite both;
+    }
+
+    .loader-square:nth-of-type(0) {
+        animation-delay: 0s;
+    }
+
+    .loader-square:nth-of-type(1) {
+        animation-delay: -1.4285714286s;
+    }
+
+    .loader-square:nth-of-type(2) {
+        animation-delay: -2.8571428571s;
+    }
+
+    .loader-square:nth-of-type(3) {
+        animation-delay: -4.2857142857s;
+    }
+
+    .loader-square:nth-of-type(4) {
+        animation-delay: -5.7142857143s;
+    }
+
+    .loader-square:nth-of-type(5) {
+        animation-delay: -7.1428571429s;
+    }
+
+    .loader-square:nth-of-type(6) {
+        animation-delay: -8.5714285714s;
+    }
+
+    .loader-square:nth-of-type(7) {
+        animation-delay: -10s;
+    }
+}
+
+@keyframes square-animation {
     0% {
-        opacity: 0;
+        left: 0;
+        top: 0;
     }
+
+    10.5% {
+        left: 0;
+        top: 0;
+    }
+
+    12.5% {
+        left: 32px;
+        top: 0;
+    }
+
+    23% {
+        left: 32px;
+        top: 0;
+    }
+
+    25% {
+        left: 64px;
+        top: 0;
+    }
+
+    35.5% {
+        left: 64px;
+        top: 0;
+    }
+
+    37.5% {
+        left: 64px;
+        top: 32px;
+    }
+
+    48% {
+        left: 64px;
+        top: 32px;
+    }
+
     50% {
-        opacity: 1;
+        left: 32px;
+        top: 32px;
     }
+
+    60.5% {
+        left: 32px;
+        top: 32px;
+    }
+
+    62.5% {
+        left: 32px;
+        top: 64px;
+    }
+
+    73% {
+        left: 32px;
+        top: 64px;
+    }
+
+    75% {
+        left: 0;
+        top: 64px;
+    }
+
+    85.5% {
+        left: 0;
+        top: 64px;
+    }
+
+    87.5% {
+        left: 0;
+        top: 32px;
+    }
+
+    98% {
+        left: 0;
+        top: 32px;
+    }
+
     100% {
-        opacity: 1;
+        left: 0;
+        top: 0;
     }
-}
-
-.disappear {
-    animation: disappear $appear-duration ease-out forwards;
-}
-
-.appear {
-    animation: appear $appear-duration ease-in forwards;
-}
-
-.disappeared {
-    display: none;
 }
 </style>

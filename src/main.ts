@@ -33,6 +33,8 @@ import AiImage from './pages/ai/AiImage.vue';
 import { useUser } from './stores/user';
 import { useTheme } from './stores/theme';
 import { storageGet } from './utils/storage';
+import { defineCustomElements } from '@ionic/pwa-elements/loader';
+defineCustomElements(window);
 
 if (Capacitor.getPlatform() === 'web')
 {

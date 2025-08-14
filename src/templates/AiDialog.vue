@@ -1,12 +1,12 @@
 <script lang="tsx" setup>
-import { ref, nextTick } from 'vue';
+import { ref, nextTick, computed } from 'vue';
 import type { AnswerType } from '../dataClasses/Question';
 import type { Section } from '../dataClasses/Section';
-import { cancelChat, chatSSE, createChat, deleteChat, getChat, sendContent, type AiHistory, type AiMessage, type Model, type ModelInfo, type ToolDataInfo, } from '../networks/backend/ai';
+import { cancelChat, chatSSE, createChat, deleteChat, getChat, getContentText, mergeContent, sendContent, type AiHistory, type AiMessage, type Model, type ModelInfo, type ToolDataInfo, } from '../networks/backend/ai';
 import Input from '../components/Input.vue';
 import { useNotification } from '../stores/notification';
 import LoadingIcon from 'vue-material-design-icons/Loading.vue';
-import { copyToClipboard, dialog } from '../utils/utils';
+import { copyToClipboard, dialog, pickImage } from '../utils/utils';
 import ChevronRightIcon from 'vue-material-design-icons/ChevronRight.vue';
 import ChevronDownIcon from 'vue-material-design-icons/ChevronDown.vue';
 import type { Chat } from '../dataClasses/Chat';
@@ -20,6 +20,7 @@ import SelectMenu from '../components/SelectMenu.vue';
 import { storageGet, storageSet } from '../utils/storage';
 import { Capacitor } from '@capacitor/core';
 import { TrashIcon } from '@heroicons/vue/16/solid';
+import ImageOutlineIcon from 'vue-material-design-icons/ImageOutline.vue';
 import ContentCopyIcon from 'vue-material-design-icons/ContentCopy.vue';
 import FileQuestionIcon from 'vue-material-design-icons/FileQuestion.vue';
 import ToolsIcon from 'vue-material-design-icons/Tools.vue';
@@ -29,6 +30,8 @@ import LightbulbOutlineIcon from 'vue-material-design-icons/LightbulbOutline.vue
 import { getThemes } from '../stores/theme';
 import ToolDataShower from './ToolDataShower.vue';
 import StopCircleOutlineIcon from "vue-material-design-icons/StopCircleOutline.vue";
+import SyncIcon from "vue-material-design-icons/Sync.vue";
+import TrashCanIcon from "vue-material-design-icons/TrashCan.vue";
 
 export type DisplayMessage = AiMessage & {
     showReasoning: boolean;
@@ -113,6 +116,10 @@ const onMessage = (message: AiMessage & { finished: boolean, banned: boolean }) 
             ...message,
             showReasoning: false,
         });
+        if (shouldAutoScroll.value) 
+        {
+            scrollToBottom();
+        }
         return;
     }
 
@@ -135,21 +142,28 @@ const onMessage = (message: AiMessage & { finished: boolean, banned: boolean }) 
     }
 
     // 收到第一条正文时，收回思考过程
-    if (message.content && !lastMessage.content) lastMessage.showReasoning = false;
-    if (message.content) lastMessage.content += message.content;
+    if (getContentText(message.content) && !(getContentText(lastMessage.content).trim()) && lastMessage.reasoning_content) lastMessage.showReasoning = false;
+    if (message.content) lastMessage.content = mergeContent(lastMessage.content, message.content);
     if (message.reasoning_content) lastMessage.reasoning_content += message.reasoning_content;
 
     if (message.banned) 
     {
-        lastMessage.content = "对不起，该聊天无法继续";
-        lastMessage.reasoning_content = '';
+        last.messages = [
+            {
+                content: "对不起，该聊天无法继续",
+                reasoning_content: '',
+                showReasoning: false,
+            }
+        ]
+        info.value.showAnswering = false;
     }
     else if (message.finished) 
     {
         info.value.showAnswering = false;
     }
 
-    if (shouldAutoScroll.value) {
+    if (shouldAutoScroll.value) 
+    {
         scrollToBottom();
     }
 }
@@ -208,6 +222,40 @@ const init = async () =>
 init().then(() => { loading.value = false; nextTick(scrollToBottom); });
 
 const input = ref('');
+const inputImages = ref<string[]>([]);
+const uploadingImage = ref(false);
+const inputImagesWithoutPrefix = computed(() => 
+{
+    return inputImages.value.map((img) => img.replace(/^data:image\/[a-z]+;base64,/, ''));
+});
+
+function uploadImage()
+{
+    if (uploadingImage.value) return;
+    if (inputImages.value.length >= 5) 
+    {
+        useNotification().addWarning('一次最多只能上传5张图片');
+        return;
+    }
+
+    uploadingImage.value = true;
+    pickImage(1000_000).then((img0) => 
+    {
+        if (inputImages.value.includes(img0)) 
+        {
+            useNotification().addWarning('请勿重复上传相同图片');
+            return;
+        }
+        inputImages.value.push(img0);
+    }).finally(() => 
+    {
+        uploadingImage.value = false;
+    });
+}
+function deleteImage(img: string)
+{
+    inputImages.value = inputImages.value.filter(i => i !== img);
+}
 
 const model = ref<Model>('');
 const models = ref<ModelInfo[]>([
@@ -243,7 +291,7 @@ function isMobileDevice()
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
-function onSubmit(event: KeyboardEvent)
+function onSubmit(event: KeyboardEvent, regenerate = false)
 {
     if (event && (event.shiftKey || isMobileDevice())) return;
     event?.preventDefault();
@@ -255,10 +303,15 @@ function onSubmit(event: KeyboardEvent)
         return;
     }
 
-    if (input.value.trim() === '' || info.value.showAnswering) return;
-    else if (info.value.inAnswering) 
+    if ((input.value.trim() === '' && !regenerate) || info.value.showAnswering) return;
+    else if (info.value.inAnswering)
     {
         useNotification().addError('请求正在处理中，请稍等片刻。');
+        return;
+    }
+    else if (uploadingImage.value)
+    {
+        useNotification().addError('正在上传图片，请稍等片刻。');
         return;
     }
     info.value.inAnswering = true;
@@ -267,7 +320,7 @@ function onSubmit(event: KeyboardEvent)
     
     if (!info.value.id)
     {
-        const {id, user, hash} = await createChat(info.value.section, input.value, model.value)
+        const { id, user, hash } = await createChat(info.value.section, input.value, inputImagesWithoutPrefix.value, model.value)
         info.value.id = id;
         info.value.hash = hash;
         info.value.histories = [];
@@ -277,7 +330,58 @@ function onSubmit(event: KeyboardEvent)
     }
     else 
     {
-        const newHash = await sendContent(info.value.id, input.value, model.value, info.value.hash)
+        let content: string;
+        let images: string[];
+
+        if (regenerate)
+        {
+            let lstUserMessageIndex: number = -1;
+            for (let i = info.value.histories.length - 1; i >= 0; i--) 
+            {
+                if (info.value.histories[i].role === 'user') 
+                {
+                    lstUserMessageIndex = i;
+                    break;
+                }
+            }
+            if (lstUserMessageIndex !== -1) 
+            {
+                const content0 = info.value.histories[lstUserMessageIndex].messages[0].content;
+                if (typeof content0 === 'string')
+                    content = content0;
+                else 
+                {
+                    content = getContentText(content0);
+                    images = content0.filter(c => c.type === 'image_url').map(c => c.image_url.url);
+                }
+            }
+            while(info.value.histories.length > lstUserMessageIndex + 1)
+                info.value.histories.pop();
+        }
+        else
+        {
+            content = input.value;
+            images = inputImagesWithoutPrefix.value;
+            input.value = '';
+            inputImages.value = [];
+            info.value.histories.push({
+                role: 'user',
+                messages: [
+                    {
+                        content: content,
+                    }
+                ]
+            });
+        }
+
+        const newHash = await sendContent({
+            chatId: info.value.id, 
+            content: content,
+            images: images,
+            model: model.value, 
+            hash: info.value.hash,
+            regenerate: regenerate,
+        })
         if (newHash) 
         {
             info.value.hash = newHash;
@@ -288,22 +392,12 @@ function onSubmit(event: KeyboardEvent)
             info.value.showAnswering = false;
             return;
         }
-
     }
 
-    info.value.histories.push({
-        role: 'user',
-        messages: [
-            {
-                content: input.value,
-            }
-        ]
-    });
     info.value.histories.push({
         role: 'assistant',
         messages: []
     });
-    input.value = '';
 
     // 发送消息后自动滚动到底部
     shouldAutoScroll.value = true;
@@ -376,7 +470,7 @@ function copy(messages: DisplayMessage[])
     const content = messages.map(m => 
     {
         if (m.type) return '';
-        if (m.content) return m.content.trim();
+        if (m.content) return getContentText(m.content).trim();
     }).filter(m => m).join('\n\n');
     const dataTagReg = /<(tool_)?data[^>]*>/g;
     copyToClipboard(content.replace(dataTagReg, ''));
@@ -386,9 +480,9 @@ function copy(messages: DisplayMessage[])
 
 <template>
     <Card class="quiz-ai-dialog" :style="{ 
-        '--pin-bgcolor': getThemes().isDark ? 'var(--glass-button-highlight-border)' : 'unset',
-        '--pin-border-color': getThemes().isDark ? 'unset' : 'var(--glass-button-highlight-border)',
-        '--pin-text-color': getThemes().isDark ? 'var(--color)' : 'var(--glass-button-highlight-border)',
+        '--pin-bgcolor': getThemes().isDark ? 'var(--button-highlight-border)' : 'unset',
+        '--pin-border-color': getThemes().isDark ? 'unset' : 'var(--button-highlight-border)',
+        '--pin-text-color': getThemes().isDark ? 'var(--color)' : 'var(--button-highlight-border)',
     }">
         <Loading v-if="loading"></Loading>
         <template v-else>
@@ -415,18 +509,30 @@ function copy(messages: DisplayMessage[])
                                 </Button>
                                 <Text v-markdown="{ markdown: true, content: msg.reasoning_content, section: info.section?.id, parseHtml }" class="reasoning-content" v-if="msg.showReasoning" />
                             </div>
-                            <Text class="content" v-if="msg.content && msg.content.trim() && !msg.type" v-markdown="{ markdown: item.role === 'assistant', content: msg.content, section: info.section?.id, parseHtml }" />
+                            <template v-if="msg.content && (typeof msg.content !== 'string') && !msg.type" v-for="c in msg.content">
+                                <Text class="content" v-if="c.type === 'text' && c.text.trim()" v-markdown="{ markdown: item.role === 'assistant', content: c.text, section: info.section?.id, parseHtml }" />
+                                <ToolDataShower v-else-if="c.type === 'image_url'" :chat="info.id" :inline="true" :custom-info="{ type: 'IMAGE', value: c.image_url.url }" />
+                            </template>
+                            <Text class="content" v-else-if="msg.content && (msg.content as string).trim() && !msg.type" v-markdown="{ markdown: item.role === 'assistant', content: msg.content, section: info.section?.id, parseHtml }" />
                             <Button class="header" v-if="msg.tool_call" disabled>
                                 <ToolsIcon class="icon" :size="20" style="margin-right: 4px;"/>
                                 {{ msg.tool_call }}
                             </Button>
-                            <ToolDataShower v-if="msg.type" :chat="info.id" :inline="true" :custom-info="{ type: msg.type, value: msg.content }"/>
+                            <ToolDataShower v-if="msg.type" :chat="info.id" :inline="true" :custom-info="{ type: msg.type, value: getContentText(msg.content) }"/>
                         </template>
                         <div class="loading-icon" style="margin: 0 10px;" v-if="index === info.histories.length - 1 && info.showAnswering" :key="index">
                             <LoadingIcon />
                         </div>
                     </Text>
-                    <div v-if="index !== info.histories.length - 1 || !info.showAnswering" class="copy-button"> <ContentCopyIcon :size="20" class="icon" @click="copy(item.messages)"/> </div>
+                    <div v-if="index !== info.histories.length - 1 || !info.showAnswering" class="buttons"> 
+                        <ContentCopyIcon :size="20" class="icon" @click="copy(item.messages)"/> 
+                        <SyncIcon v-if="item.role === 'assistant' && index === info.histories.length - 1" :size="20" class="icon" @click="onSubmit(null, true)"/>
+                    </div>
+                </div>
+            </div>
+            <div class="img-container">
+                <div v-for="(img, index) in inputImages" :key="index" class="img" :style="{ backgroundImage: `url(${img})` }">
+                    <TrashCanIcon :size="30" @click="deleteImage(img)" class="remove-img"/>
                 </div>
             </div>
             <Input v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
@@ -434,6 +540,12 @@ function copy(messages: DisplayMessage[])
                 <SelectMenu :model-value="model" :options="models.map(m => ({ label: m.displayName, value: m.model }))" class="model-name" :placeholder="'选择模型'" @update:model-value="changeModel" :direction="'up'"/>
                 <LightbulbOnIcon v-if="models.find(m => m.model === model)?.toolable" class="intelligent-icon" @click="showIntelligentTips(true)"/>
                 <LightbulbOutlineIcon v-else class="intelligent-icon" @click="showIntelligentTips(false)"/>
+                <span class="upload-img" @click="uploadImage">
+                    <ImageOutlineIcon class="icon" v-if="!uploadingImage"/>
+                    <div class="loading-icon" v-else>
+                        <LoadingIcon />
+                    </div>
+                </span>
                 <span class="send" @click="onSubmit(null)">
                     <div v-if="info.showAnswering">
                         <StopCircleOutlineIcon class="icon" />
@@ -449,14 +561,7 @@ function copy(messages: DisplayMessage[])
 </template>
 
 <style scoped lang="scss">
-quiz-loading {
-    position: relative;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    height: 20%;
-    width: 30%;
-}
+
 
 .quiz-ai-dialog {
     height: calc(100% - 20px);
@@ -526,8 +631,9 @@ quiz-loading {
 
 .message-box {
     margin: 10px;
-    .copy-button {
+    .buttons {
         display: flex;
+        gap: 5px;
         .icon {
             opacity: 0.5;
             cursor: pointer;
@@ -536,7 +642,7 @@ quiz-loading {
             border-radius: 8px;
             transition: background-color 0.2s ease;
             &:hover {
-                background-color: var(--glass-button-hover-background);
+                background-color: var(--button-hover-background);
             }
             &:active {
                 opacity: 1;
@@ -585,10 +691,12 @@ quiz-loading {
 .message-box.user {
     margin-left: auto;
     max-width: 75%;
-    .copy-button {
-        .icon {
-            right: 0; 
+    .buttons {
+        .icon:first-child {
             margin-left: auto;
+        }
+        .icon:last-child {
+            right: 0;
         }
     }
 }
@@ -631,10 +739,9 @@ quiz-loading {
             margin: 10px 0 5px 0;
         }
     }
-    .copy-button {
+    .buttons {
         margin: 0;
-        .icon {
-            margin: 0;
+        .icon:first-child {
             margin-left: 15px;
         }
     }
@@ -646,6 +753,40 @@ quiz-loading {
     align-self: flex-start;
     .content {
         margin-left: 3px;
+    }
+}
+
+.img-container {
+    display: flex;
+    gap: 10px;
+    margin: 10px;
+    margin-bottom: -5px;
+    flex-direction: row;
+    overflow: auto;
+    scrollbar-width: none;
+    min-height: fit-content;
+    max-height: fit-content;
+    height: fit-content;
+    .img {
+        background-size: 100% 100%;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-clip: content-box;
+        position: relative;
+        max-height: 100px;
+        min-height: 100px;
+        height: 100px;
+        max-width: 100px;
+        min-width: 100px;
+        width: 100px;
+        border-radius: 0.5rem;
+        .remove-img {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            color: red;
+            cursor: pointer;
+        }
     }
 }
 
@@ -665,17 +806,38 @@ quiz-loading {
     .intelligent-icon {
         cursor: pointer;
         // color: rgba(86, 135, 247, 0.8);
-        color: var(--glass-button-highlight-border);
+        color: var(--button-highlight-border);
     }
-    span.send {
-        width: 64px;
-        min-width: 64px;
-        max-width: 64px;
+    span.upload-img {
+        width: 45px;
+        min-width: 45px;
+        max-width: 45px;
+        height: 37.33333px;
+        min-height: 37.33333px;
+        max-height: 37.33333px;
         cursor: pointer;
         bottom: 0;
         padding: 0.5rem 1rem;
         border-radius: 1rem;
         margin: 10px 10px 10px auto;
+        right: 0;
+        background-color: rgba(76, 107, 190, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    span.send {
+        width: 64px;
+        min-width: 64px;
+        max-width: 64px;
+        height: 37.33333px;
+        min-height: 37.33333px;
+        max-height: 37.33333px;
+        cursor: pointer;
+        bottom: 0;
+        padding: 0.5rem 1rem;
+        border-radius: 1rem;
+        margin: 10px 10px 10px 10px;
         right: 0;
         background-color: rgba(76, 107, 190, 0.4);
         display: flex;

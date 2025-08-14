@@ -18,7 +18,7 @@
 }
 
 .scrollbar::-webkit-scrollbar-thumb {
-    background: var(--glass-button-highlight-border);
+    background: var(--button-highlight-border);
     opacity: 0.5;
     border-radius: 10px;
 }
@@ -36,18 +36,18 @@ svg {
 }
 
 :root {
-    --dark: 0;
-    --light: 1;
-
     --color: #{$light-color};
 
-    --glass-background: #{$light-glass-background};
-    --glass-border: #{$light-glass-border};
-    --glass-up-shadow: #{$light-glass-up-shadow};
-    --glass-down-shadow: #{$light-glass-down-shadow};
-    --glass-button-background: #{$light-glass-button-background};
-    --glass-button-hover-background: #{$light-glass-button-hover-background};
-    --glass-button-highlight-border: #{$light-glass-button-highlight-border};
+    --active-color: #{$light-glass-active-color};
+    --background: #{$light-glass-background};
+    --border: #{$light-glass-border};
+    --up-shadow: #{$light-glass-up-shadow};
+    --down-shadow: #{$light-glass-down-shadow};
+    --button-border: #{$light-glass-button-border};
+    --button-background: #{$light-glass-button-background};
+    --button-hover-border: #{$light-glass-button-hover-border};
+    --button-hover-background: #{$light-glass-button-hover-background};
+    --button-highlight-border: #{$light-glass-button-highlight-border};
 
     -webkit-tap-highlight-color: transparent;
 
@@ -61,23 +61,49 @@ svg {
     }
 }
 
-[quiz-theme='dark'] {
-    --dark: 1;
-    --light: 0;
+[quiz-solid-color='true'] {
+    --active-color: #{$light-solid-active-color};
+    --background: #{$light-solid-background};
+    --border: #{$light-solid-border};
+    --up-shadow: #{$light-solid-up-shadow};
+    --down-shadow: #{$light-solid-down-shadow};
+    --button-border: #{$light-solid-button-border};
+    --button-background: #{$light-solid-button-background};
+    --button-hover-border: #{$light-solid-button-hover-border};
+    --button-hover-background: #{$light-solid-button-hover-background};
+    --button-highlight-border: #{$light-solid-button-highlight-border};
+}
 
+[quiz-theme='dark'] {
     --color: #{$dark-color};
-    
-    --glass-background: #{$dark-glass-background};
-    --glass-border: #{$dark-glass-border};
-    --glass-up-shadow: #{$dark-glass-up-shadow};
-    --glass-down-shadow: #{$dark-glass-down-shadow};
-    --glass-button-background: #{$dark-glass-button-background};
-    --glass-button-hover-background: #{$dark-glass-button-hover-background};
-    --glass-button-highlight-border: #{$dark-glass-button-highlight-border};
+
+    --active-color: #{$dark-glass-active-color};
+    --background: #{$dark-glass-background};
+    --border: #{$dark-glass-border};
+    --up-shadow: #{$dark-glass-up-shadow};
+    --down-shadow: #{$dark-glass-down-shadow};
+    --button-border: #{$dark-glass-button-border};
+    --button-background: #{$dark-glass-button-background};
+    --button-hover-border: #{$dark-glass-button-hover-border};
+    --button-hover-background: #{$dark-glass-button-hover-background};
+    --button-highlight-border: #{$dark-glass-button-highlight-border};
 
     body {
         background-image: url('/src/assets/dark-background.jpg');
     }
+}
+
+[quiz-theme='dark'][quiz-solid-color='true'] {
+    --active-color: #{$dark-solid-active-color};
+    --background: #{$dark-solid-background};
+    --border: #{$dark-solid-border};
+    --up-shadow: #{$dark-solid-up-shadow};
+    --down-shadow: #{$dark-solid-down-shadow};
+    --button-border: #{$dark-solid-button-border};
+    --button-background: #{$dark-solid-button-background};
+    --button-hover-border: #{$dark-solid-button-hover-border};
+    --button-hover-background: #{$dark-solid-button-hover-background};
+    --button-highlight-border: #{$dark-solid-button-highlight-border};
 }
 
 quiz-markdown-body {

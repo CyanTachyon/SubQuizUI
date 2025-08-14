@@ -1,9 +1,9 @@
 {
   "name": "subquiz",
   "private": true,
-  "version": "3.1.2.13",
-  "versionId": 30102013,
-  "minVersionId": 30102013,
+  "version": "3.1.4.10",
+  "versionId": 30104010,
+  "minVersionId": 30104010,
   "downloadUrl": "https://quiz.bdfzscc.com/SubQuiz.apk",
   "type": "module",
   "scripts": {
@@ -17,6 +17,7 @@
     "@capacitor-community/file-opener": "^7.0.1",
     "@capacitor/android": "^7.0.1",
     "@capacitor/app": "^7.0.0",
+    "@capacitor/camera": "^7.0.2",
     "@capacitor/clipboard": "^7.0.1",
     "@capacitor/core": "^7.0.1",
     "@capacitor/device": "^7.0.0",
@@ -27,6 +28,7 @@
     "@capgo/inappbrowser": "^7.12.1",
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
+    "@ionic/pwa-elements": "^3.3.0",
     "@wooorm/starry-night": "^3.8.0",
     "ansi_up": "^6.0.2",
     "desmos": "^1.5.4",

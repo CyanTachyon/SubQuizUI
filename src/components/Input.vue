@@ -153,14 +153,14 @@ defineExpose({
 .input {
     border: none;
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--button-background);
     color: var(--color);
     transition: background 0.3s ease;
 
     &:focus {
         outline: none;
-        background: rgba(255, 255, 255, 0.2);
-        box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        background: var(--button-hover-background);
+        box-shadow: 0 0 8px -5px var(--color);
     }
 
     &::placeholder {

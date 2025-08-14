@@ -72,7 +72,7 @@ quiz-switch {
     align-items: center;
     cursor: pointer;
     --size: 60px;
-    border: solid 2px var(--glass-button-hover-background);
+    border: solid 2px var(--button-border);
     overflow: hidden;
 }
 
@@ -85,10 +85,10 @@ quiz-switch-thumb {
     top: 0;
     left: 0;
     --size: 90px;
-    box-shadow: -37.5px 0 0 25px #2196f388,;
+    box-shadow: -37.5px 0 0 25px var(--active-color);
     
     transition: transform 0.3s ease-in-out;
-    background-color: var(--glass-button-hover-background);
+    background-color: var(--button-border);
 }
 
 .on {

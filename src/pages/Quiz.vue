@@ -69,12 +69,5 @@ watch(data, () => autoSave(), { deep: true })
 </template>
 
 <style scoped lang="scss">
-quiz-loading {
-    position: relative;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    height: 20%;
-    width: 30%;
-}
+
 </style>

@@ -160,22 +160,23 @@ onUnmounted(() =>
     align-items: center;
     justify-content: space-between;
     padding: 0.5rem 1rem;
-    border: solid 2px var(--glass-button-background);
+    border: solid 2px var(--button-border);
     border-radius: 10px;
-    background: var(--glass-button-background);
+    background: var(--button-background);
     color: var(--color);
     cursor: pointer;
     transition: background, box-shadow, transform 0.3s ease;
     font-size: 100%;
 
     &:hover:not(.disabled) {
-        background: var(--glass-button-hover-background);
+        background: var(--button-hover-background);
+        border: solid 2px var(--button-hover-border);
         transform: translateY(-2px);
     }
 
     &.open {
-        border-color: var(--glass-button-highlight-border);
-        background: var(--glass-button-hover-background);
+        border-color: var(--button-highlight-border);
+        background: var(--button-hover-background);
     }
 }
 
@@ -208,11 +209,10 @@ onUnmounted(() =>
     left: 0;
     right: 0;
     z-index: 1000;
-    background: var(--glass-background);
-    border: solid 2px var(--glass-border);
+    background: var(--background);
+    border: solid 2px var(--border);
     border-radius: 10px;
     margin-top: 4px;
-    // max-height: 200px;
     overflow-y: auto;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 
@@ -243,11 +243,11 @@ onUnmounted(() =>
     transition: background 0.2s ease;
 
     &:hover {
-        background: var(--glass-button-background);
+        background: var(--button-background);
     }
 
     &.selected {
-        background: var(--glass-button-highlight-border);
+        background: var(--button-highlight-border);
         color: white;
     }
 

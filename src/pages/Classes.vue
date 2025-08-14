@@ -204,14 +204,6 @@ function createExam()
 </template>
 
 <style lang="scss" scoped>
-.loading {
-    position: relative;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    height: 20%;
-    width: 30%;
-}
 
 /*** sidebar ***/
 

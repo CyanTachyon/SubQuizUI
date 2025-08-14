@@ -74,12 +74,9 @@ function handleMouseLeave()
 
 <template>
     <quiz-card :class="className" ref="card" @mousemove="handleMouseMove" @mouseleave="handleMouseLeave">
-        <div 
-            class="glass-effect" 
-            :class="{'use-blur': getThemes().useBlur, 'use-glass': getThemes().useGlass}"
-        />
+        <div class="glass-effect" :class="{'use-blur': getThemes().useBlur, 'use-glass': getThemes().useGlass}"/>
         <div class="glass-tint"></div>
-        <div class="glass-shine" v-if="getThemes().useGlass"></div>
+        <div class="border" :class="getThemes().useGlass ? 'glass-shine' : ''"></div>
         <div v-if="scroll" class="scroll-content">
             <slot />
         </div>
@@ -101,7 +98,7 @@ quiz-card {
     border-radius: 24px;
     box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.10), 0 1.5px 6px 0 rgba(0, 0, 0, 0.08);
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.6);
-    background: var(--glass-background);
+    background: var(--background);
 }
 
 .glass-effect {
@@ -139,20 +136,22 @@ quiz-card {
     bottom: -2px;
 }
 
-.glass-shine {
+.border {
+    border: 1px solid var(--border);
     position: absolute;
     inset: 0;
     z-index: 0;
-    border: 1px solid var(--glass-border);
     border-radius: 24px;
-    box-shadow:
-        inset 1px 1px 8px 0 var(--glass-up-shadow),
-        inset -1px -1px 8px 0 var(--glass-down-shadow);
     pointer-events: none;
     top: -2px;
     left: -2px;
     right: -2px;
     bottom: -2px;
+}
+.glass-shine {
+    box-shadow:
+        inset 1px 1px 8px 0 var(--up-shadow),
+        inset -1px -1px 8px 0 var(--down-shadow);
 }
 
 .scroll-content {

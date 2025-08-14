@@ -172,7 +172,7 @@ quiz-slider {
     overflow: hidden;
     margin: 10px;
 
-    border: solid 2px var(--glass-button-hover-background);
+    border: solid 2px var(--button-hover-background);
 }
 
 quiz-slider-container {
@@ -212,9 +212,9 @@ quiz-slider-container {
             transform: translate(-50%, -50%);
             cursor: grab;
 
-            border: solid 2px var(--glass-button-hover-background);
+            border: solid 2px var(--button-hover-background);
             backdrop-filter: blur(5px);
-            background: var(--glass-button-hover-background);
+            background: var(--button-hover-background);
         }
     }
 
@@ -232,7 +232,7 @@ quiz-slider-container {
             position: absolute;
             width: 5px;
             height: 5px;
-            background: var(--glass-border);
+            background: var(--border);
             top: 50%;
             border-radius: 50%;
             transform: translateX(-50%) translateY(-50%);

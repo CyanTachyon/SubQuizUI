@@ -10,16 +10,62 @@ import { connectUrl, sendRequest, sseRequest, Target } from "../utils/sendReques
 
 export type ToolDataInfoType = 'MARKDOWN' | 'URL' | 'TEXT' | 'HTML' | 'FILE' | 'PAGE' | 'IMAGE' | 'MATH';
 export type AiMessage = {
-    content?: string;
+    content?: Content;
     reasoning_content?: string;
     tool_call?: string;
     type?: null | ToolDataInfoType;
 }
+export type Content = (({
+    type: 'text';
+    text: string;
+} | {
+    type: 'image_url';
+    image_url: {
+        url: string;
+    }
+})[]) | string;
 export type AiHistory = {
     role: 'assistant' | 'user';
     messages: AiMessage[];
 };
 export type Model = string;
+
+function optimizeContent(content: Content): Content
+{
+    if (typeof content === 'string') return content;
+    const optimized: Content = [];
+    for (const c of content)
+    {
+        if (c.type === 'text')
+        {
+            if (optimized.length > 0 && optimized[optimized.length - 1].type === 'text')
+                (optimized[optimized.length - 1] as { type: 'text'; text: string }).text += c.text;
+            else optimized.push(c);
+        }
+        else
+        {
+            optimized.push(c);
+        }
+    }
+    return optimized;
+}
+
+export function mergeContent(content0: Content, content1: Content): Content
+{
+    if (typeof content0 === 'string' || typeof content1 === 'string') return '' + content0 + content1;
+    const merged: Content = [];
+    if (typeof content0 === 'string') merged.push({ type: 'text', text: content0 });
+    else merged.push(...content0);
+    if (typeof content1 === 'string') merged.push({ type: 'text', text: content1 });
+    else merged.push(...content1);
+    return optimizeContent(merged);
+}
+
+export function getContentText(content: Content)
+{
+    if (typeof content === 'string') return content;
+    return content.map(c => c.type === 'text' ? c.text : '').join('');
+}
 
 const getChatUrl = '/ai/chat/{chat}';
 
@@ -56,7 +102,7 @@ export async function getChatList(begin: number, count: number): Promise<Slice<C
     }));
 }
 
-export async function createChat(section: Section<AnswerType, AnswerType, string> | null, content: string, model: Model)
+export async function createChat(section: Section<AnswerType, AnswerType, string> | null, content: string, images: string[], model: Model)
 {
     return checkResponse<Chat>(sendRequest({
         target: Target.BACKEND,
@@ -65,24 +111,20 @@ export async function createChat(section: Section<AnswerType, AnswerType, string
         data: {
             section,
             content,
-            model
+            model,
+            images,
         }
     }));
 }
 
-export async function sendContent(chatId: number, content: string, model: Model, hash: string): Promise<string | null>
+export async function sendContent(data: {chatId: number, content: string, images: string[], regenerate: boolean, model: Model, hash: string}): Promise<string | null>
 {
     return checkResponse<string | null>(
         sendRequest({
             target: Target.BACKEND,
             url: chatUrl,
             method: 'PUT',
-            data: {
-                chatId,
-                content,
-                model,
-                hash,
-            }
+            data,
         }),
         (res, defaultOnFail) => {
             if (res.code === 409) return null;

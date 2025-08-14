@@ -175,6 +175,19 @@ const updateInfo: UpdateInfo[] = ([
             '- AI答疑助手支持教材搜索'
     },
     {
+        date: '2025-08-11',
+        version: '3.1.3',
+        description: '' +
+            '- AI答疑助手支持上传图片\n'
+    },
+    {
+        date: '2025-08-11',
+        version: '3.1.4',
+        description: '' +
+            '- AI答疑助手支持重新生成\n' +
+            '- 添加扁平化主题和纯色背景\n'
+    },
+    {
         version: 'TODO LIST',
         description: '以下是预计添加的新功能，但我开发速度有限，所以别急^v^\n' +
             "1. 简答/填空允许提交图片\n" +

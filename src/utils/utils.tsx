@@ -17,6 +17,8 @@ import { login } from "../networks/backend/oauth.ts";
 import { ScreenOrientation } from "@capacitor/screen-orientation";
 import { getScale } from "../main.ts";
 import { Clipboard } from "@capacitor/clipboard";
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { compressImageToMaxBytes } from "./image.ts";
 
 export function tryLogin()
 {
@@ -105,8 +107,6 @@ export function dialog(
         {
             const scale = getScale();
             const css = `
-                transform: scale(${scale});
-                transform-origin: center center;
                 width: ${100 / scale}%;
                 height: ${100 / scale}%;
                 min-width: ${100 / scale}%;
@@ -114,7 +114,14 @@ export function dialog(
                 max-width: ${100 / scale}%;
                 max-height: ${100 / scale}%;
                 overflow: hidden;
-            `;
+                transform: scale(${scale});
+                left: 0;
+                top: 0;
+                margin: 0;
+                position: fixed;
+                transform-origin: top left;
+            `.replace(/\s+/g, ' ').trim();
+            console.log(css);
             return <Dialog open={open.value} onClose={onClose} style={css}>{innerHtml}</Dialog>;
         }
     }).directive('markdown', vMarkdown)
@@ -257,4 +264,99 @@ export function copyToClipboard(text: string)
             useNotification().addError('复制失败，请手动复制');
         })
     }
+}
+
+export async function pickImage(maxBytes?: number): Promise<string | null>
+{
+    let dataUrl: string | null = null;
+    let fileName: string | null = null;
+    if (Capacitor.getPlatform() === 'web')
+    {
+        dataUrl = await new Promise<string | null>(async (resolve) =>
+        {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.addEventListener("cancel", () => resolve(null), { once: true });
+            input.addEventListener("change", (event) =>
+            {
+                resolve((async () =>
+                {
+                    const file = (event.target as HTMLInputElement).files?.[0];
+                    if (!file) return null;
+                    return await readFileAsDataURL(file);
+                })());
+            }, { once: true });
+            input.click();
+            input.remove();
+        });
+    }
+    else
+    {
+        const source = await new Promise<CameraSource | null>((resolve) =>
+        {
+            const close = dialog(
+                <div style="margin: 20px 50px;">
+                    <h2 style="display: flex; justify-content: center;">选择图片</h2>
+                    <Button onClick={() => {
+                        resolve(CameraSource.Camera);
+                        close();
+                    }}>
+                        拍摄新照片
+                    </Button>
+                    <Button onClick={() => {
+                        resolve(CameraSource.Photos);
+                        close();
+                    }}>
+                        从相册选择
+                    </Button>
+                </div>,
+                () => 
+                {
+                    resolve(null);
+                    close();
+                }
+            );
+        });
+        if (!source) return null;
+        const img = await Camera.getPhoto({
+            resultType: CameraResultType.DataUrl,
+            promptLabelHeader: '选择图片',
+            promptLabelCancel: '取消',
+            promptLabelPhoto: '从相册选择',
+            promptLabelPicture: '拍照',
+            source: source,
+        });
+        dataUrl = img.dataUrl;
+        fileName = img.path
+    }
+    if (!dataUrl) return null;
+    if (!maxBytes) return dataUrl;
+    if (dataUrl.startsWith('data:image/png')) fileName = 'image.png';
+    else if (dataUrl.startsWith('data:image/jpeg')) fileName = 'image.jpg';
+    else if (dataUrl.startsWith('data:image/webp')) fileName = 'image.webp';
+    else if (dataUrl.startsWith('data:image/gif')) fileName = 'image.gif';
+    else 
+    {
+        useNotification().addWarning("不支持的图片格式");
+        return null;
+    }
+
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], fileName, { type: blob.type });
+    if (file.size < maxBytes) return dataUrl;
+
+    const compressed = await compressImageToMaxBytes(file, { maxBytes });
+    return compressed ? (await readFileAsDataURL(compressed)) : null;
+}
+
+async function readFileAsDataURL(file: File): Promise<string | null>
+{
+    return new Promise((resolve) =>
+    {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(file);
+    });
 }

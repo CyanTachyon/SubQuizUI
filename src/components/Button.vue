@@ -78,11 +78,11 @@ function click()
 quiz-button {
     display: block;
     padding: 0.5rem 1rem;
-    border: solid 2px var(--glass-button-background);
+    border: solid 2px var(--button-border);
     border-radius: 10px;
     margin: 10px;
     font-size: 100%;
-    background: var(--glass-button-background);
+    background: var(--button-background);
     color: var(--color);
     cursor: not-allowed;
     justify-content: start;
@@ -95,8 +95,9 @@ quiz-button {
 quiz-button.enabled {
     cursor: pointer;
     &:hover {
-        background: var(--glass-button-hover-background);
+        background: var(--button-hover-background);
         transform: translateY(-2px);
+        border: solid 2px var(--button-hover-border);
     }
 
     &:active {
@@ -105,7 +106,7 @@ quiz-button.enabled {
 }
 
 .down {
-    border: solid 2px var(--glass-button-highlight-border);
+    border: solid 2px var(--button-highlight-border);
 }
 
 .blur-button {

@@ -101,14 +101,7 @@ function submit()
 </template>
 
 <style scoped lang="scss">
-.loading {
-    position: relative;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    height: 20%;
-    width: 30%;
-}
+
 
 .container {
     display: flex;

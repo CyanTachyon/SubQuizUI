@@ -1,6 +1,6 @@
 import katex, { type KatexOptions } from 'katex';
-const inlineRuleNonStandard = /^(?:(\${1,2})(?!\$)((?:\\.|[^\\\n])*?(?:\\.|[^\\\n\$]))\1)|^(?:\\\(((?:\\.|[^\\\n])*?(?:\\.|[^\\\n\$]))\\\))/;
-const blockRule = /^(?:(\${1,2})\n((?:\\[\s\S]|[^\\])+?)\n\1(?:\n|$))|^(?:\\\[((?:\\[\s\S]|[^\\])+?)\\\])/;
+const inlineRuleNonStandard = /^(?:\$(?!\$)((?:\\.|[^\\\n])*?(?:\\.|[^\\\n\$]))\$)|^(?:\\\(((?:\\.|[^\\\n])*?(?:\\.|[^\\\n\$]))\\\))/;
+const blockRule = /^(?:\$\$((?:\\[\s\S]|[^\\])+?)\$\$)|^(?:\\\[((?:\\[\s\S]|[^\\])+?)\\\])/;
 
 // Define the options interface for KaTeX rendering
 export interface MarkedKatexOptions extends KatexOptions
@@ -37,6 +37,7 @@ function inlineKatex(_, renderer)
             while (indexSrc)
             {
                 let index0 = indexSrc.indexOf('$');
+                if (indexSrc[index0 + 1] === '$') index0 = -1;
                 let index1 = indexSrc.indexOf('\\(');
                 const index = index0 === -1 ? index1 : index1 === -1 ? index0 : Math.min(index0, index1);
                 if (index === -1) return;
@@ -53,7 +54,7 @@ function inlineKatex(_, renderer)
                 return {
                     type: 'inlineKatex',
                     raw: match[0],
-                    text: match[2]?.trim() || match[3]?.trim() || ' ',
+                    text: match[1]?.trim() || match[2]?.trim() || ' ',
                     displayMode: false,
                 };
             }
@@ -73,7 +74,7 @@ function blockKatex(_, renderer)
 
             while (indexSrc)
             {
-                let index0 = indexSrc.indexOf('$');
+                let index0 = indexSrc.indexOf('$$');
                 let index1 = indexSrc.indexOf('\\[');
                 const index = index0 === -1 ? index1 : index1 === -1 ? index0 : Math.min(index0, index1);
                 if (index === -1) return;
@@ -90,7 +91,7 @@ function blockKatex(_, renderer)
                 return {
                     type: 'blockKatex',
                     raw: match[0],
-                    text: match[2]?.trim() || match[3]?.trim() || ' ',
+                    text: match[1]?.trim() || match[2]?.trim() || ' ',
                     displayMode: true,
                 };
             }

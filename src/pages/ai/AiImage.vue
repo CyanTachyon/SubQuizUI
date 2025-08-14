@@ -7,29 +7,9 @@ import LoadingIcon from 'vue-material-design-icons/Loading.vue';
 import { useNotification } from '../../stores/notification';
 import ArrowLeftIcon from 'vue-material-design-icons/ArrowLeft.vue';
 import ContentCopyIcon from 'vue-material-design-icons/ContentCopy.vue';
-import { copyToClipboard } from '../../utils/utils';
+import { copyToClipboard, pickImage } from '../../utils/utils';
 const img = ref('');
-
-function selectImage() 
-{
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = (event) =>
-    {
-        const file = (event.target as HTMLInputElement).files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = () => 
-        {
-            img.value = reader.result as string;
-        };
-        reader.readAsDataURL(file);
-    };
-    input.click();
-    input.remove();
-}
-
+const uploadingImage = ref(false);
 const res = ref('');
 const md = ref(false);
 const loading = ref(false);
@@ -53,13 +33,19 @@ function copy()
     copyToClipboard(res.value);
 }
 
+function selectImage()
+{
+    uploadingImage.value = true;
+    pickImage().then((img0)=>img.value=img0).finally(()=>uploadingImage.value=false);
+}
+
 </script>
 
 <template>
     <Card class="ai-image-card">
         <img :src="img" v-if="img && !res" />
-        <Button @click="selectImage" v-if="!res" :disabled="loading">
-            <span v-if="!loading">{{ img ? '更换图片' : '选择图片' }}</span>
+        <Button @click="selectImage" v-if="!res" :disabled="loading || uploadingImage">
+            <span v-if="!loading && !uploadingImage">{{ img ? '更换图片' : '选择图片' }}</span>
             <div class="loading-icon" v-else>
                 <LoadingIcon />
             </div>

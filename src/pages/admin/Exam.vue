@@ -381,14 +381,7 @@ function openSection(section: SectionId)
 </template>
 
 <style lang="scss" scoped>
-.loading {
-    position: relative;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    height: 20%;
-    width: 30%;
-}
+
 
 .split {
     height: 100%;
@@ -551,19 +544,19 @@ function openSection(section: SectionId)
     
     .score-section {
         margin-bottom: 15px;
-        border: 1px solid var(--glass-border);
+        border: 1px solid var(--border);
         border-radius: 8px;
         overflow: hidden;
         
         .section-header {
             padding: 15px;
             cursor: pointer;
-            background-color: var(--glass-button-background);
-            border-bottom: 1px solid var(--glass-border);
+            background-color: var(--button-background);
+            border-bottom: 1px solid var(--border);
             transition: background-color 0.2s;
             
             &:hover {
-                background-color: var(--glass-button-hover-background);
+                background-color: var(--button-hover-background);
             }
             
             .section-title {
@@ -590,7 +583,7 @@ function openSection(section: SectionId)
                 .score-bar {
                     flex-grow: 1;
                     height: 12px;
-                    background-color: var(--glass-button-background);
+                    background-color: var(--button-background);
                     border-radius: 6px;
                     overflow: hidden;
                     
@@ -605,11 +598,11 @@ function openSection(section: SectionId)
         }
         
         .questions-scores {
-            background-color: var(--glass-button-background);
+            background-color: var(--button-background);
             
             .question-score {
                 padding: 12px 20px;
-                border-bottom: 1px solid var(--glass-border);
+                border-bottom: 1px solid var(--border);
 
                 &:last-child {
                     border-bottom: none;
@@ -635,7 +628,7 @@ function openSection(section: SectionId)
                     .score-bar {
                         flex-grow: 1;
                         height: 8px;
-                        background-color: var(--glass-button-background);
+                        background-color: var(--button-background);
                         border-radius: 4px;
                         overflow: hidden;
                         

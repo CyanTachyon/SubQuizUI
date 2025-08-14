@@ -69,6 +69,7 @@ const handleBlurToggle = () =>
 {
     theme.setBlur(getThemes().useBlur ? 'off' : 'on');
     if (!getThemes().useBlur) theme.setGlass('off');
+    if (getThemes().useBlur) theme.setSolidColor('off');
     if (getThemes().useBlur && !isBackdropFilterSupported())
     {
         if (Capacitor.getPlatform() === 'web')
@@ -82,6 +83,7 @@ const handleGlassToggle = () =>
 {
     theme.setGlass(getThemes().useGlass ? 'off' : 'on');
     if (getThemes().useGlass) theme.setBlur('on');
+    if (getThemes().useGlass) theme.setSolidColor('off');
     if (getThemes().useGlass && !isUrlFilterSupported())
     {
         if (Capacitor.getPlatform() === 'web')
@@ -89,15 +91,17 @@ const handleGlassToggle = () =>
         else
             notification.addError('您的设备过旧，可能不支持玻璃效果');
     }
-    if (getThemes().useGlass && !getThemes().useBlur)
-        notification.addWarning('启用玻璃效果时建议同时启用模糊效果，以获得更好的视觉体验。');
 };
 
-// 更换背景
-const handleBackgroundChange = () =>
+const handleSolidColorToggle = () =>
 {
-    theme.changeBackground();
-};
+    theme.setSolidColor(getThemes().useSolidColor ? 'off' : 'on');
+    if (getThemes().useSolidColor) 
+    {
+        theme.setBlur('off');
+        theme.setGlass('off');
+    }
+}
 
 const scale = ref(1);
 (async () => {
@@ -131,7 +135,8 @@ const handleScaleChange = (newScale: number) =>
                     <h2 class="section-title">外观主题</h2>
                 </Text>
                 <div class="theme-options">
-                    <Button v-for="option in themeOptions" :key="option.value" class="theme-option" :down="getThemes().theme === option.value" @click="handleThemeChange(option.value)">
+                    <Button v-for="option in themeOptions" :key="option.value" class="theme-option"
+                        :down="getThemes().theme === option.value" @click="handleThemeChange(option.value)">
                         <component :is="option.icon" :size="50"></component>
                         <Text>
                             <span class="theme-label">{{ option.label }}</span>
@@ -165,6 +170,16 @@ const handleScaleChange = (newScale: number) =>
                     </div>
                     <Switch :on="getThemes().useGlass" :onClick="handleGlassToggle" />
                 </div>
+
+                <div class="effect-item">
+                    <div class="effect-info">
+                        <Text>
+                            <div class="effect-name">扁平风格</div>
+                            <div class="effect-description">启用扁平风格</div>
+                        </Text>
+                    </div>
+                    <Switch :on="getThemes().useSolidColor" :onClick="handleSolidColorToggle" />
+                </div>
             </Card>
 
             <Card style="padding: 10px 20px 20px 20px">
@@ -175,13 +190,19 @@ const handleScaleChange = (newScale: number) =>
                 <div class="background-section">
                     <Text>
                         <p class="background-description">
-                            {{ getThemes().background ? '当前使用自定义背景' : '当前使用默认背景' }}
+                            {{ getThemes().background ? getThemes().background === '#' ? '当前使用纯色背景' : '当前使用自定义背景' : '当前使用默认背景' }}
                         </p>
                     </Text>
 
                     <div class="background-actions">
-                        <Button :onClick="handleBackgroundChange">
-                            {{ getThemes().background ? '移除自定义背景' : '选择自定义背景' }}
+                        <Button @click="theme.setBackground('')">
+                            使用默认背景
+                        </Button>
+                        <Button @click="theme.setBackground('#')">
+                            使用纯色背景
+                        </Button>
+                        <Button @click="theme.chooseBackground()">
+                            选择自定义背景
                         </Button>
                     </div>
                 </div>
@@ -201,8 +222,10 @@ const handleScaleChange = (newScale: number) =>
 
                     <div class="background-actions">
                         <div style="width: calc(min(300px, 100%));">
-                            <Input style="width: calc(100% - 20px);" type="number" :modelValue="~~(scale * 100)" @update:modelValue="s => handleScaleChange(Number(s) / 100)" />
-                            <Slider style="width: calc(100% - 20px);" :minValue="0.5" :maxValue="2.5" :step="0.01" :modelValue="scale" @update:modelValue="handleScaleChange" />
+                            <Input style="width: calc(100% - 20px);" type="number" :modelValue="~~(scale * 100)"
+                                @update:modelValue="s => handleScaleChange(Number(s) / 100)" />
+                            <Slider style="width: calc(100% - 20px);" :minValue="0.5" :maxValue="2.5" :step="0.01"
+                                :modelValue="scale" @update:modelValue="handleScaleChange" />
                         </div>
                     </div>
                 </div>
@@ -327,6 +350,8 @@ const handleScaleChange = (newScale: number) =>
 
 .background-actions {
     display: flex;
+    flex-direction: column;
     justify-content: center;
+    align-items: center;
 }
 </style>

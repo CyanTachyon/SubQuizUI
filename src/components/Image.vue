@@ -122,7 +122,7 @@ quiz-img-wrapper {
 }
 
 .border {
-    border: solid 2px var(--glass-border);
+    border: solid 2px var(--border);
 }
 
 .border-disappeared {
