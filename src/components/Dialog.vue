@@ -44,7 +44,7 @@ dialog {
     background-color: transparent;
     border: none;
     border-radius: 0.5rem;
-    --transition: static;
+    --transition: 'static';
     -webkit-user-select: none;
     user-select: none;
     display: flex;

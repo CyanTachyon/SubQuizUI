@@ -2,7 +2,7 @@
 import {computed, onMounted, ref, watch} from 'vue';
 import {createAnimationsController} from '../utils/AnimationsController';
 import {sleep} from '../utils/sleep';
-import {$appearDuration, State, useTransitionStore} from '../stores/transition';
+import {$appearDuration, isStatic, State, useTransitionStore} from '../stores/transition';
 
 
 const value = defineModel<number>({required: true});
@@ -67,8 +67,9 @@ let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
 const slider = ref<HTMLElement | null>(null);
 const sliderTrack = ref<HTMLElement | null>(null);
-onMounted(() => {
-    if (slider.value && window.getComputedStyle(slider.value).getPropertyValue('--transition').trim() !== 'static')
+onMounted(() => 
+{
+    if (!isStatic(slider.value))
     {
         watch(() => transitionStore.state, onTransitionChange, {immediate: true});
     }

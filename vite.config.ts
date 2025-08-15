@@ -5,6 +5,7 @@ import { fileURLToPath, URL } from 'node:url';
 import { readFileSync } from 'node:fs';
 import vueJSX from '@vitejs/plugin-vue-jsx';
 import path from 'node:path';
+import babel from 'vite-plugin-babel';
 
 const packageJson = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'));
 
@@ -37,6 +38,39 @@ export default defineConfig(({ mode }) => ({
         }),
         inspect(),
         vueJSX(),
+        // Babel 插件配置
+        babel({
+            babelConfig: {
+                babelrc: true,
+                configFile: false,
+                presets: [
+                    [
+                        '@babel/preset-env', {
+                            targets: {
+                                chrome: '70',
+                                firefox: '65',
+                                safari: '12',
+                                edge: '79',
+                                ios: '12',
+                                android: '70'
+                            },
+                            useBuiltIns: false,
+                            modules: false
+                        }
+                    ],
+                    [
+                        '@babel/preset-typescript', {
+                            allExtensions: true,
+                            isTSX: true
+                        }
+                    ]
+                ],
+                plugins: [
+                    '@babel/plugin-syntax-dynamic-import'
+                ]
+            },
+            filter: /\.(jsx?|tsx?)$/
+        }),
     ],
     define: {
         'environment': getEnv(loadEnv(mode, process.cwd())),

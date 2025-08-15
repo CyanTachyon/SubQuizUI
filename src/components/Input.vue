@@ -2,7 +2,7 @@
 import {onMounted, ref, watch, getCurrentInstance} from 'vue';
 import {createAnimationsController} from '../utils/AnimationsController';
 import {sleep} from '../utils/sleep';
-import {$appearDuration, State, useTransitionStore} from '../stores/transition';
+import {$appearDuration, isStatic, State, useTransitionStore} from '../stores/transition';
 import { getThemes } from '../stores/theme';
 
 const model = defineModel<string | number>({required: false});
@@ -111,7 +111,7 @@ let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
 const input = ref<HTMLInputElement | null>(null);
 onMounted(() => {
-    if (input.value && window.getComputedStyle(input.value).getPropertyValue('--transition').trim() !== 'static')
+    if (!isStatic(input.value))
     {
         watch(() => transitionStore.state, onTransitionChange, {immediate: true});
     }

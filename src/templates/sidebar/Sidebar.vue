@@ -135,14 +135,14 @@ quiz-main-content {
     overflow: auto;
     scrollbar-width: none;
     position: relative;
-    --transition:default;
+    --transition: 'default';
 }
 
 quiz-sidebar-container {
     height: 100%;
     width: 100%;
     display: flex;
-    --transition:static;
+    --transition: 'static';
 }
 
 @keyframes open-sidebar {

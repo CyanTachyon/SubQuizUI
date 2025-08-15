@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
 import { createAnimationsController } from '../utils/AnimationsController';
-import { $appearDuration, State, useTransitionStore } from '../stores/transition';
+import { $appearDuration, isStatic, State, useTransitionStore } from '../stores/transition';
 import { sleep } from '../utils/sleep';
 import { getThemes } from '../stores/theme';
 
@@ -95,7 +95,7 @@ onMounted(() =>
 {
     document.addEventListener('click', handleClickOutside);
 
-    if (selectContainer.value && window.getComputedStyle(selectContainer.value).getPropertyValue('--transition').trim() !== 'static')
+    if (!isStatic(selectContainer.value))
     {
         watch(() => transitionStore.state, onTransitionChange, { immediate: true });
     }

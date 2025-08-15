@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {onMounted, ref, watch} from "vue";
 import {sleep} from "../utils/sleep.ts";
-import {$appearDuration, State, useTransitionStore} from "../stores/transition.ts";
+import {$appearDuration, isStatic, State, useTransitionStore} from "../stores/transition.ts";
 import {createAnimationsController} from "../utils/AnimationsController.ts";
 
 const className = ref('');
@@ -26,8 +26,9 @@ function onTransitionChange(value: State, oldValue: State | undefined)
 
 let transitionStore = useTransitionStore();
 const text = ref<HTMLElement | null>(null);
-onMounted(() => {
-    if (text.value && window.getComputedStyle(text.value).getPropertyValue('--transition') !== 'static')
+onMounted(() => 
+{
+    if (!isStatic(text.value))
     {
         watch(() => transitionStore.state, onTransitionChange, {immediate: true});
     }

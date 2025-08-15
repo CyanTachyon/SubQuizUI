@@ -2,7 +2,7 @@
 import { onMounted, ref, watch } from 'vue';
 import { createAnimationsController } from '../utils/AnimationsController';
 import { sleep } from '../utils/sleep';
-import { $appearDuration, State, useTransitionStore } from '../stores/transition';
+import { $appearDuration, isStatic, State, useTransitionStore } from '../stores/transition';
 
 const { onClick, on, disappear, disabled } = defineProps({
     onClick: {
@@ -48,7 +48,7 @@ const wrapper = ref<HTMLElement | null>(null);
 let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
 onMounted(() => {
-    if (wrapper.value && window.getComputedStyle(wrapper.value).getPropertyValue('--transition') !== 'static')
+    if (!isStatic(wrapper.value))
     {
         watch(() => transitionStore.state, onTransitionChange, {immediate: true});
     }

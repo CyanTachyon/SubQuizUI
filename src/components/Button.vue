@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {onMounted, ref, watch} from "vue";
 import {createAnimationsController} from "../utils/AnimationsController.ts";
-import {$appearDuration, State, useTransitionStore} from "../stores/transition.ts";
+import {$appearDuration, isStatic, State, useTransitionStore} from "../stores/transition.ts";
 import {sleep} from "../utils/sleep.ts";
 import { getThemes } from "../stores/theme";
 
@@ -49,7 +49,7 @@ let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
 const statusButton = ref<HTMLElement | null>(null);
 onMounted(() => {
-    if (statusButton.value && window.getComputedStyle(statusButton.value).getPropertyValue('--transition').trim() !== 'static')
+    if (!isStatic(statusButton.value))
     {
         watch(() => transitionStore.state, onTransitionChange, {immediate: true});
     }

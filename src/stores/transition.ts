@@ -44,3 +44,15 @@ export const useTransitionStore = () =>
 {
     return transitionStore;
 };
+
+export const isStatic = (ele: Element) =>
+{
+    if (!ele) return false;
+    
+    let style = window.getComputedStyle(ele).getPropertyValue('--transition').trim();
+    
+    while (style.startsWith("'") || style.startsWith('"')) style = style.slice(1);
+    while (style.endsWith("'") || style.endsWith('"')) style = style.slice(0, -1);
+    console.log(style);
+    return style === 'static';
+}

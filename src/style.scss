@@ -4,10 +4,7 @@
 * {
     font-family: 'SubQuiz font english', 'SubQuiz font chinese', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     box-sizing: border-box;
-    -moz-tab-size: 4;
-    -o-tab-size: 4;
     tab-size: 4;
-
     font-weight: 600;
 }
 
@@ -33,6 +30,78 @@
 svg {
     display: inline-block;
     vertical-align: middle;
+}
+
+@property --color {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #{$light-color};
+}
+
+@property --active-color {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #{$light-glass-active-color};
+}
+
+@property --background {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #{$light-glass-background};
+}
+
+@property --border {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #{$light-glass-border};
+}
+
+@property --up-shadow {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #{$light-glass-up-shadow};
+}
+
+@property --down-shadow {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #{$light-glass-down-shadow};
+}
+
+@property --button-border {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #{$light-glass-button-border};
+}
+
+@property --button-background {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #{$light-glass-button-background};
+}
+
+@property --button-hover-border {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #{$light-glass-button-hover-border};
+}
+
+@property --button-hover-background {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #{$light-glass-button-hover-background};
+}
+
+@property --button-highlight-border {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #{$light-glass-button-highlight-border};
+}
+
+@property --transition {
+    syntax: '<string>';
+    inherits: true;
+    initial-value: 'default';
 }
 
 :root {

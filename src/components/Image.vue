@@ -2,7 +2,7 @@
 import {createAnimationsController} from "../utils/AnimationsController.ts";
 import {onMounted, ref, watch} from "vue";
 import {sleep} from "../utils/sleep.ts";
-import {$appearDuration, State, useTransitionStore} from "../stores/transition.ts";
+import {$appearDuration, isStatic, State, useTransitionStore} from "../stores/transition.ts";
 
 const {src, onClick, alt, disappear} = defineProps({
     src: {
@@ -56,8 +56,9 @@ function onTransitionChange(value: State, oldValue: State | undefined)
 let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
 const image = ref<HTMLImageElement | null>(null);
-onMounted(() => {
-    if (image.value && window.getComputedStyle(image.value).getPropertyValue('--transition') !== 'static')
+onMounted(() => 
+{
+    if (!isStatic(image.value))
     {
         watch(() => transitionStore.state, onTransitionChange, {immediate: true});
     }

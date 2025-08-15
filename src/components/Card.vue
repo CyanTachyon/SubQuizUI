@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {createAnimationsController} from "../utils/AnimationsController.ts";
 import {onMounted, ref, watch} from "vue";
-import {$appearDuration, State, useTransitionStore} from "../stores/transition.ts";
+import {$appearDuration, isStatic, State, useTransitionStore} from "../stores/transition.ts";
 import {sleep} from "../utils/sleep.ts";
 import { getThemes } from "../stores/theme";
 
@@ -44,7 +44,7 @@ let transitionStore = useTransitionStore();
 watch(() => disappear, onDisappearChange);
 const card = ref<HTMLElement | null>(null);
 onMounted(() => {
-    if (card.value && window.getComputedStyle(card.value).getPropertyValue('--transition').trim() !== 'static')
+    if (!isStatic(card.value))
     {
         watch(() => transitionStore.state, onTransitionChange, {immediate: true});
     }

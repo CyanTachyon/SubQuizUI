@@ -88,7 +88,7 @@ quiz-main {
     left: 50%;
     transform: translate(-50%, -50%);
     width: 500px;
-    --transition:static;
+    --transition: 'static';
 }
 
 .btn {
