@@ -35,6 +35,13 @@ import { useTheme } from './stores/theme';
 import { storageGet } from './utils/storage';
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
 defineCustomElements(window);
+import { createRoot } from 'react-dom/client';
+import { setVeauryOptions } from 'veaury';
+setVeauryOptions({
+    react: {
+        createRoot
+    }
+})
 
 if (Capacitor.getPlatform() === 'web')
 {

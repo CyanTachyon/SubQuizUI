@@ -83,11 +83,13 @@ const actions = {
         if (themeInfo.value.theme === 'dark' || (themeInfo.value.theme === 'unset' && window.matchMedia('(prefers-color-scheme: dark)').matches))
         {
             document.documentElement.setAttribute('quiz-theme', 'dark');
+            document.documentElement.classList.add('dark');
             themeInfo.value.isDark = true;
         }
         else 
         {
             document.documentElement.removeAttribute('quiz-theme');
+            document.documentElement.classList.remove('dark');
             themeInfo.value.isDark = false;
         }
         if (themeInfo.value.useSolidColor) document.documentElement.setAttribute('quiz-solid-color', 'true');

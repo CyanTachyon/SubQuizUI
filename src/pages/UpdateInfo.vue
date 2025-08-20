@@ -188,6 +188,12 @@ const updateInfo: UpdateInfo[] = ([
             '- 添加扁平化主题和纯色背景\n'
     },
     {
+        date: '2025-08-11',
+        version: '3.2.0',
+        description: '' +
+            '- 重构题目格式\n'
+    },
+    {
         version: 'TODO LIST',
         description: '以下是预计添加的新功能，但我开发速度有限，所以别急^v^\n' +
             "1. 简答/填空允许提交图片\n" +

@@ -5,9 +5,8 @@ export interface Section<Answer extends (AnswerType | null), UserAnswer extends 
 {
     id: SectionId,
     type: number,
-    description: string,
+    description: any,
     weight: number,
     available: boolean,
-    markdown: boolean,
     questions: Question<Answer, UserAnswer, Analysis>[]
 }

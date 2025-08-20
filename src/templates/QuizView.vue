@@ -10,8 +10,10 @@ import CloseCircleOutlineIcon from "vue-material-design-icons/CloseCircleOutline
 import CloseIcon from "vue-material-design-icons/Close.vue";
 import CheckIcon from "vue-material-design-icons/Check.vue";
 import { useNotification } from "../stores/notification.ts";
-import { getOptionName } from "../utils/utils";
+import { getOptionName, richtextToString } from "../utils/utils";
 import { useRouter } from "vue-router";
+import ResizableWrapper from "@src/components/ResizableWrapper.vue";
+import Editor from "./Editor.vue";
 
 const router = useRouter();
 
@@ -131,15 +133,19 @@ function gotoAI(sectionIndex: number)
 
 <template>
     <Card v-for="(section, sectionIndex) in quiz.sections" class="section" :key="sectionIndex">
-        <Card v-if="section.description" class="section-description" v-markdown="{markdown: section.markdown, content: section.description, section: section.id}"/> 
-        <Spacer v-if="section.description" />
-        <br/>
+        <div style="width: 1px; height: 10px;"/>
+        <ResizableWrapper v-if="richtextToString(section.description)" class="section-description" height-resizable>
+            <Editor v-model="section.description" :editable="false" :section="section.id"/>
+        </ResizableWrapper>
+        <Spacer v-if="richtextToString(section.description)" style="margin-bottom: 10px;"/>
         <div v-for="(question, questionIndex) in section.questions" :id="`q-${sectionIndex}-${questionIndex}`" class="question">
             <div class="question-description">
                 <p class="title">
                     {{ questionIndex + 1 }}.
                 </p>
-                <Text class="question-description-content" v-markdown="{markdown: section.markdown, content: question.description, section: section.id}"/>
+                <div style="flex-grow: 1;">
+                    <Editor v-model="question.description" :editable="false" :section="section.id"/>
+                </div>
             </div>
             <div v-if="question.options" class="options-wrapper">
                 <div v-for="(option, optionIndex) in question.options" class="option-box">
@@ -151,11 +157,14 @@ function gotoAI(sectionIndex: number)
                             'choice-answer': question.userAnswer === optionIndex || (question.userAnswer?.length && question.userAnswer.includes(optionIndex)),
                             'default-answer': !(question.userAnswer === optionIndex || (question.userAnswer?.length && question.userAnswer.includes(optionIndex)))
                         }"
+                        :disabled="!editable"
                     >
                         <div class="option-title" style="height: 100%;">
                             {{ getOptionName(optionIndex) }}
                         </div>
-                        <Text class="option-content" v-markdown="{markdown: section.markdown, content: option, section: section.id}"/>
+                        <div>
+                            <Editor :model-value="option" :editable="false" :section="section.id"/>
+                        </div>
                     </Button>
                     <Text 
                         v-if="optionIndex === question.answer || (question.answer?.length && question.answer.includes(optionIndex))" 
@@ -179,6 +188,7 @@ function gotoAI(sectionIndex: number)
                     :down="question.userAnswer === false" 
                     :class="{ 'choice-answer': question.userAnswer === false }"
                     @click="onOptionClick(sectionIndex, questionIndex, 0)"
+                    :disabled="!editable"
                 >
                     <CloseIcon/>
                 </Button>
@@ -187,6 +197,7 @@ function gotoAI(sectionIndex: number)
                     :down="question.userAnswer === true" 
                     :class="{ 'choice-answer': question.userAnswer === true }"
                     @click="onOptionClick(sectionIndex, questionIndex, 1)"
+                    :disabled="!editable"
                 >
                     <CheckIcon/>
                 </Button>
@@ -209,14 +220,18 @@ function gotoAI(sectionIndex: number)
             </Text>
             <Text v-if="(question.type === 'fill' || question.type === 'essay') && question.answer" class="answer analysis">
                 {{ '答案/评标：' }}
-                <Text v-markdown="{markdown: section.markdown, content: question.answer, section: section.id}"/>
+                <div>
+                    <Editor :model-value="question.answer" :editable="false" :section="section.id"/>
+                </div>
             </Text>
             <Text 
                 v-if="question.analysis" 
                 class="analysis"
             >
                 {{ '解析：' }}
-                <Text v-markdown="{markdown: section.markdown, content: question.analysis, section: section.id}"/>
+                <div>
+                    <Editor :model-value="question.analysis" :editable="false" :section="section.id"/>
+                </div>
             </Text>
             <br v-if="questionIndex < section.questions.length - 1"/>
         </div>
@@ -231,23 +246,10 @@ function gotoAI(sectionIndex: number)
 }
 
 .section-description {
-    backdrop-filter: blur(99px);
-    position: -webkit-sticky;
-    position: sticky;
-    top: 0;
-    width: auto;
-    height: 10vh;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    resize: vertical;
-    overflow:auto;
-    scrollbar-width: none;
-    display: flex;
     z-index: 1;
-
-    quiz-text {
-        color: white;
-    }
+    height: 300px;
+    padding: 10px;
+    width: 100%;
 }
 
 .question-description {
@@ -314,10 +316,7 @@ $answer-color-duration: 0.4s;
             }
 
             .option-content {
-                display: flex;
                 flex-grow: 1;
-                text-align: left;
-                white-space: pre-wrap;
             }
         }
     }

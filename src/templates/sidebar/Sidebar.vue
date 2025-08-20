@@ -58,7 +58,7 @@ let user = useUser();
 
 function gotoSSO()
 {
-    if (user.userId()) tryOpenSSO('/');
+    if (user.userId()) tryOpenSSO('/info');
     else tryLogin();
 }
 

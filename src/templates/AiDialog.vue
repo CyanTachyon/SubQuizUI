@@ -239,8 +239,9 @@ function uploadImage()
     }
 
     uploadingImage.value = true;
-    pickImage(1000_000).then((img0) => 
+    pickImage(1_000_000).then((img0) => 
     {
+        if (!img0) return;
         if (inputImages.value.includes(img0)) 
         {
             useNotification().addWarning('请勿重复上传相同图片');

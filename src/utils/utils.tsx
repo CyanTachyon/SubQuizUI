@@ -2,16 +2,16 @@ import { createApp, ref, type DefineComponent } from "vue";
 import { Capacitor } from '@capacitor/core';
 import { connectUrl, Target } from "../networks/utils/sendRequest.ts";
 import { safeRedirect } from "./redirect.ts";
-import Dialog from "@/components/Dialog.vue";
-import Input from "@/components/Input.vue";
+import Dialog from "@src/components/Dialog.vue";
+import Input from "@src/components/Input.vue";
 import type { JSX } from "vue/jsx-runtime";
-import RealNameRequired from "@/templates/RealNameRequired.vue";
+import RealNameRequired from "@src/templates/RealNameRequired.vue";
 import { vMarkdown } from "./markdown.ts";
 import type { Section } from "../dataClasses/Section.ts";
 import type { AndroidVersion } from "../dataClasses/AndroidVersion.ts";
 import currentVersion from "../../public/android_latest.json";
 import { useNotification } from "../stores/notification.ts";
-import Button from "@/components/Button.vue";
+import Button from "@src/components/Button.vue";
 import { InAppBrowser, ToolBarType } from "@capgo/inappbrowser";
 import { login } from "../networks/backend/oauth.ts";
 import { ScreenOrientation } from "@capacitor/screen-orientation";
@@ -121,7 +121,6 @@ export function dialog(
                 position: fixed;
                 transform-origin: top left;
             `.replace(/\s+/g, ' ').trim();
-            console.log(css);
             return <Dialog open={open.value} onClose={onClose} style={css}>{innerHtml}</Dialog>;
         }
     }).directive('markdown', vMarkdown)
@@ -166,25 +165,39 @@ export function getOptionName(index: number)
     return result;
 }
 
+export function richtextToString(richtext: any)
+{
+    if (typeof richtext !== 'object') return '' + richtext;
+    if (Array.isArray(richtext))
+    {
+        return richtext.map(item => richtextToString(item)).join('');
+    }
+    if (richtext.text) return richtext.text;
+    if (richtext.content) return richtextToString(richtext.content);
+    return '';
+}
+
 export function getSectionBrief(section: Section<any, any, any>)
 {
     if (!section) return '暂无描述';
     const qBrief = section
         .questions
-        .map((q, i) => ({ i, description: q.description + (q?.options?.map((o, id) => getOptionName(id) + ' ' + o)?.join(' ') || '') }))
-        .map(q => {
-            if (q.description.trim()) return `第${q.i + 1}问：${q.description}`;
+        .map((q, i) => ({ i, description: richtextToString(q.description) + (q?.options?.map((o, id) => getOptionName(id) + ' ' + richtextToString(o))?.join(' ') || '') }))
+        .map(q => 
+            {
+            const des = richtextToString(q.description);
+            if (des.trim()) return `第${q.i + 1}问：${des}`;
             return '';
         })
         .join('')
         .replace('\n', ' ');
 
-    if (section.description.trimStart().trimEnd() === '')
+    if (richtextToString(section.description).trim() === '')
     {
-        if (qBrief.trimStart().trimEnd() === '') return '暂无描述';
+        if (richtextToString(qBrief).trim() === '') return '暂无描述';
         return qBrief;
     }
-    return section.description + ' ' + qBrief;
+    return richtextToString(section.description) + ' ' + qBrief;
 }
 
 export const versionInfo = ref(null as AndroidVersion | null);

@@ -120,7 +120,10 @@ const sectionImageUrl = "/section/{id}/image"
 
 export function addSectionImage(sectionId: number, type: 'GIF' | 'JPEG' | 'PNG' | 'SVG' | 'XIcon', md5: string)
 {
-    return checkResponse<string | null>(sendRequest({
+    return checkResponse<{
+        uploadUrl: string | null,
+        imageId: string
+    }>(sendRequest({
         target: Target.BACKEND,
         url: sectionImageUrl,
         method: 'POST',

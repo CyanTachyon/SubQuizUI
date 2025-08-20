@@ -66,7 +66,7 @@ function click()
 <template>
     <quiz-button
         @click="click"
-        :class="[className, getThemes().useBlur ? 'blur-button' : '', down ? 'down' : '', disabled ? '' : 'enabled']"
+        :class="[className, getThemes().useBlur ? 'blur-button' : '', disabled ? '' : 'enabled', down ? 'down' : '']"
         ref="statusButton" 
         :disabled="disabled">
         <slot/>
@@ -105,8 +105,9 @@ quiz-button.enabled {
     }
 }
 
-.down {
+quiz-button.enabled:is(.down, .down:hover) {
     border: solid 2px var(--button-highlight-border);
+    transition: background, box-shadow, transform 0.3s ease;
 }
 
 .blur-button {

@@ -1,11 +1,12 @@
 import { defineConfig, loadEnv } from 'vite';
-import vue from '@vitejs/plugin-vue';
-import inspect from "vite-plugin-inspect";
+// import vue from '@vitejs/plugin-vue';
+// import inspect from "vite-plugin-inspect";
 import { fileURLToPath, URL } from 'node:url';
 import { readFileSync } from 'node:fs';
-import vueJSX from '@vitejs/plugin-vue-jsx';
+// import vueJSX from '@vitejs/plugin-vue-jsx';
 import path from 'node:path';
 import babel from 'vite-plugin-babel';
+import veauryVitePlugins from 'veaury/vite'
 
 const packageJson = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'));
 
@@ -26,18 +27,23 @@ function getEnv(env_: any)
 
 export default defineConfig(({ mode }) => ({
     plugins: [
-        vue({
-            template: {
-                compilerOptions: {
-                    isCustomElement: (tag) =>
-                    {
-                        return tag.startsWith('quiz-');
+        veauryVitePlugins({
+            type: 'vue',
+            vueOptions: {
+                template: {
+                    compilerOptions: {
+                        isCustomElement: (tag) =>
+                        {
+                            return tag.startsWith('quiz-');
+                        }
                     }
                 }
-            }
+            },
+            vueJsxInclude: [/vue&type=script&lang\.[tj]sx$/i, /vue&type=script&setup=true&lang\.[tj]sx$/i, /.*utils\.tsx$/]
         }),
-        inspect(),
-        vueJSX(),
+        // vue(),
+        // inspect(),
+        // vueJSX(),
         // Babel 插件配置
         babel({
             babelConfig: {
@@ -79,15 +85,16 @@ export default defineConfig(({ mode }) => ({
         preprocessorOptions: {
             scss: {
                 additionalData: `
-                @use "@/scss/_variables.scss" as *;
-                @use "@/scss/_mixins.scss" as *;
+                @use "@src/scss/_variables.scss" as *;
+                @use "@src/scss/_mixins.scss" as *;
             `
             }
         }
     },
     resolve: {
         alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url))
+            '@': fileURLToPath(new URL('./src/react_app', import.meta.url)),
+            '@src': fileURLToPath(new URL('./src', import.meta.url))
         }
     },
     build: {

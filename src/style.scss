@@ -1,11 +1,12 @@
 @import url("https://fontsapi.zeoseven.com/442/main/result.css");
+@import url('./react_app/styles/_variables.scss');
+@import url('./react_app/styles/_keyframe-animations.scss');
 
 /*! purgecss ignore */
 * {
     font-family: 'SubQuiz font english', 'SubQuiz font chinese', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     box-sizing: border-box;
     tab-size: 4;
-    font-weight: 600;
 }
 
 .scrollbar::-webkit-scrollbar {
@@ -105,7 +106,13 @@ svg {
 }
 
 :root {
+    font-weight: 700;
+    strong {
+        font-weight: 1000;
+        font-size: 1.1em;
+    }
     --color: #{$light-color};
+    color: var(--color);
 
     --active-color: #{$light-glass-active-color};
     --background: #{$light-glass-background};

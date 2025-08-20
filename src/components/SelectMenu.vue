@@ -160,6 +160,8 @@ onUnmounted(() =>
     align-items: center;
     justify-content: space-between;
     padding: 0.5rem 1rem;
+    height: 100%;
+    width: 100%;
     border: solid 2px var(--button-border);
     border-radius: 10px;
     background: var(--button-background);

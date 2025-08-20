@@ -19,6 +19,6 @@
         "jsxFactory": "h",
         "jsxFragmentFactory": "Fragment",
         "jsxImportSource": "vue",
-        "skipLibCheck": true,
+    "skipLibCheck": true
     }
 }

@@ -28,12 +28,12 @@ async function getFileMD5(file: File): Promise<string>
     });
 }
 
-export async function uploadSectionImage(file: File, sectionId: number)
+export async function uploadSectionImage(file: File, sectionId: number, onProgress?: (event: { progress: number; }) => void)
 {
-    return uploadImage(file, sectionId);
+    return uploadImage(file, sectionId, onProgress);
 }
 
-export async function uploadImage(file: File, id: number)
+export async function uploadImage(file: File, id: number, onProgress?: (event: { progress: number; }) => void)
 {
     let contentType: 'GIF' | 'JPEG' | 'PNG' | 'SVG' | 'XIcon';
     switch (file.type)
@@ -59,9 +59,9 @@ export async function uploadImage(file: File, id: number)
     }
     const md5 = await getFileMD5(file);
     const url = await addSectionImage(id, contentType, md5);
-    if (!url) return;
+    if (!url.uploadUrl) return url.imageId;
     var xhr = new XMLHttpRequest();
-    xhr.open('PUT', url, true);
+    xhr.open('PUT', url.uploadUrl, true);
     xhr.setRequestHeader('Content-MD5', md5);
     let res = new Promise((resolve, reject) =>
     {
@@ -79,9 +79,11 @@ export async function uploadImage(file: File, id: number)
             {
                 const percentComplete = (event.loaded / event.total);
                 console.log(`Upload progress: ${percentComplete}`);
+                onProgress?.({ progress: percentComplete });
             }
         };
     });
     xhr.send(file);
     await res;
+    return url.imageId;
 }

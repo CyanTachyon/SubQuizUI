@@ -138,7 +138,6 @@ function getSectionInfo(sectionId: number): Section<AnswerType, null, string>
         weight: 0,
         questions: [],
         available: true,
-        markdown: false,
     }
 }
 
@@ -158,7 +157,6 @@ function getStudentExam(studentId: string): Quiz<AnswerType, AnswerType, string>
             weight: 0,
             questions: [],
             available: true,
-            markdown: false,
         }],
         finished: false,
         correct: null,
