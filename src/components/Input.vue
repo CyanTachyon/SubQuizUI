@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import {onMounted, ref, watch, getCurrentInstance} from 'vue';
+import {onMounted, ref, watch, getCurrentInstance, computed} from 'vue';
 import {createAnimationsController} from '../utils/AnimationsController';
 import {sleep} from '../utils/sleep';
 import {$appearDuration, isStatic, State, useTransitionStore} from '../stores/transition';
 import { getThemes } from '../stores/theme';
+import { richtextToString } from '../utils/utils';
 
-const model = defineModel<string | number>({required: false});
-const { placeholder, type, disappear, area, align, readonly, onFocus, onFocusOut } = defineProps({
+const { modelValue: modelValue_, placeholder, type, disappear, area, align, readonly, onFocus, onFocusOut } = defineProps({
+    'modelValue': {
+        type: [String, Number],
+        default: ''
+    },
+
     placeholder: {
         type: String,
         default: ''
@@ -40,6 +45,22 @@ const { placeholder, type, disappear, area, align, readonly, onFocus, onFocusOut
     }
 });
 
+const emit_ = defineEmits(['update:modelValue']);
+
+const value = computed({
+    get: () => 
+    {
+        const content = richtextToString(modelValue_);
+        if (type === 'number') return content ? Number(content) : '';
+        return content;
+    },
+    set: (value: string | number) => 
+    {
+        if (type === 'number') emit_('update:modelValue', Number(value));
+        else emit_('update:modelValue', value);
+    }
+});
+
 function getAlign()
 {
     if (!align) return area ? 'start' : 'center';
@@ -70,15 +91,8 @@ function handleFocusOut()
 function handleInput(event: Event) 
 {
     if (disappear) return;
-    const value = (event.target as HTMLInputElement).value;
-    if (type === 'number')
-    {
-        model.value = Number(value);
-    }
-    else
-    {
-        model.value = value;
-    }
+    const value_ = (event.target as HTMLInputElement).value;
+    value.value = value_;
 }
 
 
@@ -121,7 +135,7 @@ const element = area ? 'textarea' : 'input';
 
 defineExpose({
     element: input,
-    value: model,
+    value: value,
 })
 
 </script>
@@ -130,7 +144,7 @@ defineExpose({
     <component
             :is="element"
             class="input"
-            :value="model"
+            :value="richtextToString(modelValue)"
             :placeholder="placeholder"
             :type="type"
             :inputmode="type === 'number' ? 'numeric' : undefined"
@@ -151,6 +165,7 @@ defineExpose({
     backdrop-filter: blur(5px);
 }
 .input {
+    font-weight: bold;
     border: none;
     border-radius: 10px;
     background: var(--button-background);

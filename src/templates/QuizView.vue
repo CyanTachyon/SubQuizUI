@@ -10,10 +10,12 @@ import CloseCircleOutlineIcon from "vue-material-design-icons/CloseCircleOutline
 import CloseIcon from "vue-material-design-icons/Close.vue";
 import CheckIcon from "vue-material-design-icons/Check.vue";
 import { useNotification } from "../stores/notification.ts";
-import { getOptionName, richtextToString } from "../utils/utils";
+import { getOptionName } from "../utils/utils";
 import { useRouter } from "vue-router";
-import ResizableWrapper from "@src/components/ResizableWrapper.vue";
-import Editor from "./Editor.vue";
+import ResizableWrapper from "../components/ResizableWrapper.vue";
+import { ref } from "vue";
+import PinOutline from "vue-material-design-icons/PinOutline.vue";
+import PinOffOutline from "vue-material-design-icons/PinOffOutline.vue";
 
 const router = useRouter();
 
@@ -129,113 +131,121 @@ function gotoAI(sectionIndex: number)
     })
 }
 
+const pin = ref<number[]>([]);
+
+function togglePin(sectionIndex: number) 
+{
+    if (!editable) return;
+    const currentIndex = pin.value.indexOf(sectionIndex);
+    if (currentIndex === -1) pin.value.push(sectionIndex);
+    else pin.value.splice(currentIndex, 1);
+}
+
 </script>
 
 <template>
-    <Card v-for="(section, sectionIndex) in quiz.sections" class="section" :key="sectionIndex">
-        <div style="width: 1px; height: 10px;"/>
-        <ResizableWrapper v-if="richtextToString(section.description)" class="section-description" height-resizable>
-            <Editor v-model="section.description" :editable="false" :section="section.id"/>
-        </ResizableWrapper>
-        <Spacer v-if="richtextToString(section.description)" style="margin-bottom: 10px;"/>
-        <div v-for="(question, questionIndex) in section.questions" :id="`q-${sectionIndex}-${questionIndex}`" class="question">
-            <div class="question-description">
-                <p class="title">
-                    {{ questionIndex + 1 }}.
-                </p>
-                <div style="flex-grow: 1;">
-                    <Editor v-model="question.description" :editable="false" :section="section.id"/>
-                </div>
+    <Card v-for="(section, sectionIndex) in quiz.sections" class="section" :key="sectionIndex" :class="{'pinned': pin.includes(sectionIndex)}">
+        <div v-if="section.description" style="display: inline;" class="wrapper1">
+            <div class="pin-icon" @click="togglePin(sectionIndex)">
+                <PinOutline v-if="!pin.includes(sectionIndex)"/>
+                <PinOffOutline v-else/>
             </div>
-            <div v-if="question.options" class="options-wrapper">
-                <div v-for="(option, optionIndex) in question.options" class="option-box">
-                    <Button 
-                        class="option" 
-                        :down="question.userAnswer === optionIndex || (question.userAnswer?.length && question.userAnswer.includes(optionIndex))"
-                        @click="onOptionClick(sectionIndex, questionIndex, optionIndex)"
-                        :class="{ 
-                            'choice-answer': question.userAnswer === optionIndex || (question.userAnswer?.length && question.userAnswer.includes(optionIndex)),
-                            'default-answer': !(question.userAnswer === optionIndex || (question.userAnswer?.length && question.userAnswer.includes(optionIndex)))
-                        }"
-                        :disabled="!editable"
-                    >
-                        <div class="option-title" style="height: 100%;">
-                            {{ getOptionName(optionIndex) }}
-                        </div>
-                        <div>
-                            <Editor :model-value="option" :editable="false" :section="section.id"/>
-                        </div>
-                    </Button>
-                    <Text 
-                        v-if="optionIndex === question.answer || (question.answer?.length && question.answer.includes(optionIndex))" 
-                        class="right-answer"
-                        style="margin-top: 17px;"
-                    >
-                        <CheckboxMarkedCircleOutline/>
-                    </Text>
-                    <Text 
-                        v-else-if="question.answer !== null"
-                        class="wrong-answer"
-                        style="margin-top: 17px;"
-                    >
-                        <CloseCircleOutlineIcon/>
-                    </Text>
-                </div>
-            </div>
-            <div v-else-if="question.type === 'judge'" class="judge-option-box">
-                <Button 
-                    class="judge-option" 
-                    :down="question.userAnswer === false" 
-                    :class="{ 'choice-answer': question.userAnswer === false }"
-                    @click="onOptionClick(sectionIndex, questionIndex, 0)"
-                    :disabled="!editable"
-                >
-                    <CloseIcon/>
-                </Button>
-                <Button 
-                    class="judge-option" 
-                    :down="question.userAnswer === true" 
-                    :class="{ 'choice-answer': question.userAnswer === true }"
-                    @click="onOptionClick(sectionIndex, questionIndex, 1)"
-                    :disabled="!editable"
-                >
-                    <CheckIcon/>
-                </Button>
-            </div>
-            <div v-else-if="question.type === 'fill'" class="option-box">
-                <Input :area="false" placeholder="请输入答案" type="text" :value="question.userAnswer" @input="fillAnswer(sectionIndex, questionIndex, $event.target.value)" class="fill-option-input" :disabled="!editable"/>
-            </div>
-            <div v-else-if="question.type === 'essay'">
-                <Input :area="true" placeholder="请输入答案" type="text" :value="question.userAnswer" @input="fillAnswer(sectionIndex, questionIndex, $event.target.value)" class="essay-option-input" :disabled="!editable"/>
-            </div>
-            <Text v-if="rightAnswer(sectionIndex, questionIndex) !== undefined" class="analysis" :class="rightAnswer(sectionIndex, questionIndex) ? 'right-answer' : 'wrong-answer'">
-                {{ 
-                    '结果：' + (
-                        rightAnswer(sectionIndex, questionIndex) === true ? '正确' : 
-                        rightAnswer(sectionIndex, questionIndex) === false ? '错误' : 
-                        '判定失败'
-                    ) 
-                }}
-                {{ question.type === 'fill' || question.type === 'essay' ? '*AI' : '' }}
-            </Text>
-            <Text v-if="(question.type === 'fill' || question.type === 'essay') && question.answer" class="answer analysis">
-                {{ '答案/评标：' }}
-                <div>
-                    <Editor :model-value="question.answer" :editable="false" :section="section.id"/>
-                </div>
-            </Text>
-            <Text 
-                v-if="question.analysis" 
-                class="analysis"
-            >
-                {{ '解析：' }}
-                <div>
-                    <Editor :model-value="question.analysis" :editable="false" :section="section.id"/>
-                </div>
-            </Text>
-            <br v-if="questionIndex < section.questions.length - 1"/>
+            <ResizableWrapper class="section-description-wrapper" height-resizable :width-resizable="pin.includes(sectionIndex)"> 
+                <Card class="section-description" scroll v-section-content="{content: section.description, id: section.id}">
+                </Card> 
+            </ResizableWrapper>
+            <Spacer v-if="!pin.includes(sectionIndex)"/>
         </div>
-        <Button v-if="ai" class="ai" @click="gotoAI(sectionIndex)">AI</Button>
+        <div style="display: inline;">
+            <br/>
+            <div v-for="(question, questionIndex) in section.questions" :id="`q-${sectionIndex}-${questionIndex}`" class="question">
+                <div class="question-description">
+                    <p class="title">
+                        {{ questionIndex + 1 }}.
+                    </p>
+                    <Text class="question-description-content" v-section-content="{content: question.description, id: section.id}"/>
+                </div>
+                <div v-if="question.options" class="options-wrapper">
+                    <div v-for="(option, optionIndex) in question.options" class="option-box">
+                        <Button 
+                            class="option" 
+                            :down="question.userAnswer === optionIndex || (question.userAnswer?.length && question.userAnswer.includes(optionIndex))"
+                            @click="onOptionClick(sectionIndex, questionIndex, optionIndex)"
+                            :class="{ 
+                                'choice-answer': question.userAnswer === optionIndex || (question.userAnswer?.length && question.userAnswer.includes(optionIndex)),
+                                'default-answer': !(question.userAnswer === optionIndex || (question.userAnswer?.length && question.userAnswer.includes(optionIndex)))
+                            }"
+                        >
+                            <div class="option-title" style="height: 100%;">
+                                {{ getOptionName(optionIndex) }}
+                            </div>
+                            <Text class="option-content" v-section-content="{content: option, id: section.id}"/>
+                        </Button>
+                        <Text 
+                            v-if="optionIndex === question.answer || (question.answer?.length && question.answer.includes(optionIndex))" 
+                            class="right-answer"
+                            style="margin-top: 17px;"
+                        >
+                            <CheckboxMarkedCircleOutline/>
+                        </Text>
+                        <Text 
+                            v-else-if="question.answer !== null"
+                            class="wrong-answer"
+                            style="margin-top: 17px;"
+                        >
+                            <CloseCircleOutlineIcon/>
+                        </Text>
+                    </div>
+                </div>
+                <div v-else-if="question.type === 'judge'" class="judge-option-box">
+                    <Button 
+                        class="judge-option" 
+                        :down="question.userAnswer === false" 
+                        :class="{ 'choice-answer': question.userAnswer === false }"
+                        @click="onOptionClick(sectionIndex, questionIndex, 0)"
+                    >
+                        <CloseIcon/>
+                    </Button>
+                    <Button 
+                        class="judge-option" 
+                        :down="question.userAnswer === true" 
+                        :class="{ 'choice-answer': question.userAnswer === true }"
+                        @click="onOptionClick(sectionIndex, questionIndex, 1)"
+                    >
+                        <CheckIcon/>
+                    </Button>
+                </div>
+                <div v-else-if="question.type === 'fill'" class="option-box">
+                    <Input :area="false" placeholder="请输入答案" type="text" :value="question.userAnswer" @input="fillAnswer(sectionIndex, questionIndex, $event.target.value)" class="fill-option-input" :disabled="!editable"/>
+                </div>
+                <div v-else-if="question.type === 'essay'">
+                    <Input :area="true" placeholder="请输入答案" type="text" :value="question.userAnswer" @input="fillAnswer(sectionIndex, questionIndex, $event.target.value)" class="essay-option-input" :disabled="!editable"/>
+                </div>
+                <Text v-if="rightAnswer(sectionIndex, questionIndex) !== undefined" class="analysis" :class="rightAnswer(sectionIndex, questionIndex) ? 'right-answer' : 'wrong-answer'">
+                    {{ 
+                        '结果：' + (
+                            rightAnswer(sectionIndex, questionIndex) === true ? '正确' : 
+                            rightAnswer(sectionIndex, questionIndex) === false ? '错误' : 
+                            '判定失败'
+                        ) 
+                    }}
+                    {{ question.type === 'fill' || question.type === 'essay' ? '*AI' : '' }}
+                </Text>
+                <Text v-if="(question.type === 'fill' || question.type === 'essay') && question.answer" class="answer analysis">
+                    {{ '答案/评标：' }}
+                    <Text v-section-content="{content: question.answer, id: section.id}"/>
+                </Text>
+                <Text 
+                    v-if="question.analysis" 
+                    class="analysis"
+                >
+                    {{ '解析：' }}
+                    <Text v-section-content="{content: question.analysis, id: section.id}"/>
+                </Text>
+                <br v-if="questionIndex < section.questions.length - 1"/>
+            </div>
+            <Button v-if="ai" class="ai" @click="gotoAI(sectionIndex)">AI</Button>
+        </div>
     </Card>
     <Button v-if="editable" class="submit" @click="trySubmit">Submit</Button>
 </template>
@@ -244,12 +254,69 @@ function gotoAI(sectionIndex: number)
 .section {
     margin-top: 20px;
 }
+.section.pinned {
+    display: flex;
+    flex-grow: row;
+}
+
+.pin-icon {
+    position: relative;
+    z-index: 2;
+    width: fit-content;
+    height: fit-content;
+    margin-top: 20px;
+    margin-left: 13px;
+    margin-bottom: -33px;
+    transform: rotate(-45deg);
+    transform-origin: center;
+    cursor: pointer;
+}
+
+.pinned .pin-icon {
+    margin-left: auto;
+    right: 0;
+    transform: rotate(45deg) rotateY(180deg)
+}
+
+.pin-icon:deep(*) {
+    z-index: 2;
+}
+
+.pinned .section-description-wrapper {
+    height: 100%;
+    min-width: 200px
+}
+
+.section-description-wrapper {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.pinned .wrapper1 {
+    width: fit-content;
+    height: fit-content;
+    max-width: calc(100% - 200px);
+    max-height: 100%;
+}
 
 .section-description {
-    z-index: 1;
-    height: 300px;
-    padding: 10px;
+    padding-top: 20px;
+    padding-bottom: 20px;
     width: 100%;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow:auto;
+    scrollbar-width: none;
+    display: flex;
+    z-index: 1;
+    resize: none;
+    flex-grow: 1;
+
+    quiz-text {
+        color: white;
+    }
 }
 
 .question-description {
@@ -316,7 +383,10 @@ $answer-color-duration: 0.4s;
             }
 
             .option-content {
+                display: flex;
                 flex-grow: 1;
+                text-align: left;
+                white-space: pre-wrap;
             }
         }
     }

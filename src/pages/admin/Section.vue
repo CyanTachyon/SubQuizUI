@@ -8,7 +8,7 @@ import type { Section } from "../../dataClasses/Section.ts";
 import { ref } from "vue";
 import { useRoute } from "vue-router";
 import type { SectionId, SectionTypeId } from "../../dataClasses/Ids.ts";
-import { deleteSection, getSection, getSectionType, modifySection, newSection, } from "../../networks/backend/section.ts";
+import { deleteSection, getSection, getSectionImages, getSectionType, modifySection, newSection, removeSectionImage, } from "../../networks/backend/section.ts";
 import PlusIcon from "vue-material-design-icons/Plus.vue";
 import ContentSaveIcon from "vue-material-design-icons/ContentSave.vue";
 import type { AnswerType, QuestionType } from "../../dataClasses/Question.ts";
@@ -20,18 +20,21 @@ import CheckIcon from "vue-material-design-icons/Check.vue";
 import HelpCircleOutlineIcon from "vue-material-design-icons/HelpCircleOutline.vue";
 import Switch from "../../components/Switch.vue";
 import QuizView from "../../templates/QuizView.vue";
-import { dialog, getOptionName, pushUrl } from "../../utils/utils.tsx";
+import { dialog, getOptionName, pickImageToFile, pushUrl, richtextToString } from "../../utils/utils.tsx";
 import Slider from "../../components/Slider.vue";
 import type { SectionType } from "../../dataClasses/SectionType.ts";
 import { getKnowledgePoint } from "../../networks/backend/knowledgePoint.ts";
 import type { KnowledgePoint } from "../../dataClasses/KnowledgePoint.ts";
-import Editor from "@src/templates/Editor.vue";
-import ResizableWrapper from "@src/components/ResizableWrapper.vue";
-import SelectMenu from "@src/components/SelectMenu.vue";
+import ResizableWrapper from "../../components/ResizableWrapper.vue";
+import SelectMenu from "../../components/SelectMenu.vue";
+import { useNotification } from "../../stores/notification.ts";
+import { connectUrl, Target } from "../../networks/utils/sendRequest.ts";
+import { uploadSectionImage } from "../../utils/sectionImage.ts";
+import Text from "../../components/Text.vue";
 
 const route = useRoute();
 const router = useRouter();
-const section = ref(null as Section<AnswerType, null, string> | null);
+const section = ref(null as Section<AnswerType, null, any> | null);
 const notFound = ref(false);
 const sectionTypeInfo = ref(null as null | SectionType);
 const kpInfo = ref(null as null | KnowledgePoint);
@@ -48,7 +51,7 @@ document.title = '编辑题目 - SubQuiz';
             notFound.value = true;
             return;
         }
-        let section_: Section<AnswerType, null, string> = {
+        let section_: Section<AnswerType, null, any> = {
             id: 0,
             type: type,
             description: '',
@@ -67,26 +70,66 @@ document.title = '编辑题目 - SubQuiz';
 
     if (section.value)
     {
+        if (typeof section.value.description !== 'object' || section.value.description.type === 'doc')
+            section.value.description = {
+                type: 'text',
+                content: richtextToString(section.value.description),
+            };
+        section.value.questions.forEach((q, i) => 
+        {
+            if (typeof q.description !== 'object' || q.description.type === 'doc')
+                section.value.questions[i].description = {
+                    type: 'text',
+                    content: richtextToString(q.description),
+                };
+            if (typeof q.analysis !== 'object' || q.analysis.type === 'doc')
+                section.value.questions[i].analysis = {
+                    type: 'text',
+                    content: richtextToString(q.analysis),
+                };
+            if ((q.type === 'fill' || q.type === 'essay') && (typeof q.answer !== 'object' || q.answer.type === 'doc'))
+                section.value.questions[i].answer = {
+                    type: 'text',
+                    content: richtextToString(q.answer),
+                };
+            q.options?.forEach((o, j) => 
+            {
+                if (typeof o !== 'object' || o.type === 'doc')
+                    section.value.questions[i].options[j] = {
+                        type: 'text',
+                        content: richtextToString(o),
+                    };
+            });
+        });
+        updateImages();
         sectionTypeInfo.value = await getSectionType(section.value.type);
-        kpInfo.value = await getKnowledgePoint(sectionTypeInfo.value.knowledgePoint)
+        kpInfo.value = await getKnowledgePoint(sectionTypeInfo.value.knowledgePoint);
     }
-})().catch(() => {
+})().catch(() =>
+{
     notFound.value = true;
+});
+
+
+const emptyContent = () => ({
+    type: 'text',
+    content: '',
 });
 
 function addQuestion()
 {
+
     section.value.questions.push({
-        description: '',
-        options: ['', '', '', ''],
+        description: emptyContent(),
+        options: [emptyContent(), emptyContent(), emptyContent(), emptyContent()],
         answer: 0,
         userAnswer: null,
-        analysis: '',
+        analysis: emptyContent(),
         type: 'single',
     });
 }
 
-function setAnswer(questionIndex: number, answer: number | string | boolean)
+function setAnswer(questionIndex: number, answer: number | any | boolean)
 {
     if (section.value.questions[questionIndex].type === 'single')
     {
@@ -118,7 +161,7 @@ function setAnswer(questionIndex: number, answer: number | string | boolean)
     }
     else if (section.value.questions[questionIndex].type === 'fill' || section.value.questions[questionIndex].type === 'essay')
     {
-        section.value.questions[questionIndex].answer = String(answer);
+        section.value.questions[questionIndex].answer.content = answer;
     }
 }
 
@@ -146,7 +189,7 @@ function changeQuestionType(questionIndex: number, newType: QuestionType)
     if (oldType === 'multiple' && newType === 'single') 
         newQuestion.answer = oldQuestion.answer[0] || 0;
     if ((oldType === 'essay' && newType === 'fill') || (oldType === 'fill' && newType === 'essay')) 
-        newQuestion.answer = oldQuestion.answer || '';
+        newQuestion.answer = oldQuestion.answer || emptyContent();
 
     // 兜底措施，如果没有提供答案，则使用默认值
 
@@ -157,12 +200,12 @@ function changeQuestionType(questionIndex: number, newType: QuestionType)
     if (newType === 'judge')
         newQuestion.answer = newQuestion.answer || false;
     if (newType === 'fill' || newType === 'essay') 
-        newQuestion.answer = newQuestion.answer || '';
+        newQuestion.answer = newQuestion.answer || emptyContent();
 
     // 兜底措施，如果没有提供选项，则使用默认值
 
     if (newType === 'single' || newType === 'multiple')
-        newQuestion.options = newQuestion.options || ['', '', '', ''];
+        newQuestion.options = newQuestion.options || [emptyContent(), emptyContent(), emptyContent(), emptyContent()];
     else 
         newQuestion.options = null;
 
@@ -189,6 +232,21 @@ const questionTypes = [
     {
         value: 'essay',
         label: '简答'
+    }
+]
+
+const contentTypes = [
+    {
+        value: 'text',
+        label: '纯文本',
+    },
+    {
+        value: 'html',
+        label: 'HTML',
+    },
+    {
+        value: 'markdown',
+        label: 'Markdown',
     }
 ]
 
@@ -259,135 +317,234 @@ function getQuestionKey(questionIndex: number)
 }
 
 const preview = ref(false);
+const images = ref([] as string[]);
+
+async function updateImages()
+{
+    loadingImages.value = true;
+    try
+    {
+        images.value = await getSectionImages(section.value.id);
+    }
+    finally
+    {
+        loadingImages.value = false;
+    }
+}
+
+const loadingImages = ref(false);
+async function addImage()
+{
+    const img = await pickImageToFile();
+    if (!img) return;
+    uploadSectionImage(img, section.value.id).then(() =>
+    {
+        updateImages();
+    }).catch((e) =>
+    {
+        useNotification().addError(e);
+    });
+}
+
+function getImageUrl(key: string)
+{
+    return connectUrl(Target.CDN, `/section_images/${section.value.id}/${key}`);
+}
+
+const inputEleRef = ref<InstanceType<typeof Input>>(null);
+
+function onFocus(inputEle: InstanceType<typeof Input>)
+{
+    inputEleRef.value = inputEle;
+}
+
+function onFocusOut(inputEle: InstanceType<typeof Input>)
+{
+    if (inputEleRef.value === inputEle) 
+    {
+        inputEleRef.value = null;
+    }
+}
+
+function onImageClick(name: string)
+{
+    const imgMarkdown = `![](${name} "51%x")`;
+    const textarea = inputEleRef.value as InstanceType<typeof Input>;
+    if (!textarea) return;
+    const startPos = textarea.element.selectionStart;
+    const endPos = textarea.element.selectionEnd;
+    const originalText = textarea.value + "";
+    const beforeText = originalText.substring(0, startPos);
+    const afterText = originalText.substring(endPos);
+    textarea.value = beforeText + imgMarkdown + afterText;
+    const newPos = startPos + imgMarkdown.length;
+    textarea.element.selectionStart = newPos;
+    textarea.element.selectionEnd = newPos;
+    textarea.element.focus();
+}
+
+function deleteImage(name: string)
+{
+    (async () =>
+    {
+        await removeSectionImage(section.value.id, name);
+        updateImages();
+    })().catch(() =>
+    {
+        useNotification().addError('删除图片失败');
+    });
+}
 
 </script>
 
 <template>
     <NotFound v-if="notFound" />
     <Loading v-else-if="section === null || !sectionTypeInfo" class="main-loading" />
-    <Card v-else-if="!preview" class="section-container" :scroll="true" style="flex-grow: 1;">
-        <p class="main-title">{{ section.id === 0 ? '新建' : '编辑' }}题目</p>
-        <p class="title">{{ `类型：${sectionTypeInfo.name}` }}</p>
-        <Button @click="preview = true">
-            题目预览
-        </Button>
-        <Spacer />
-        <p class="small-title">大题描述</p>
-        <div style="display: flex;">
-            <ResizableWrapper style="max-width: 100%; max-height: fit-content;" height-resizable>
-                <Editor v-model="section.description" :editable="true" :section="section.id"></Editor>
-            </ResizableWrapper>
-        </div>
-        <br />
-        <div v-for="(question, questionIndex) in section.questions" :key="getQuestionKey(questionIndex)" class="question">
-            <Spacer style="margin-bottom: 10px; margin-top: 10px;" />
-            <div class="question-description">
-                <p class="q-title">
-                    {{ questionIndex + 1 }}.
-                </p>
-                <div class="button-box">
-                    <SelectMenu :options="questionTypes" :model-value="question.type" @update:model-value="(value) => changeQuestionType(questionIndex, value)">
-                    </SelectMenu>
-                    <Button @click="deleteQuestion" class="add-button">
-                        <TrashCanIcon /> 删除该小题
-                    </Button>
-                </div>
+    <div v-else-if="!preview" class="section-container" :scroll="true" style="flex-grow: 1;">
+        <Card class="section-card" :scroll="true">
+            <p class="main-title">{{ section.id === 0 ? '新建' : '编辑' }}题目</p>
+            <p class="title">{{ `类型：${sectionTypeInfo.name}` }}</p>
+            <Button @click="preview = true">
+                题目预览
+            </Button>
+            <Spacer />
+            <div style="display: flex; margin-left: 10px; margin-top: 10px; align-items: center;">
+                <p class="small-title">大题描述</p>
+                <SelectMenu v-model="section.description.type" :options="contentTypes" class="content-type"/>
             </div>
-            <ResizableWrapper style="max-width: 100%; max-height: fit-content;" height-resizable width-resizable>
-                <Editor v-model="question.description" :editable="true" :section="section.id"></Editor>
-            </ResizableWrapper>
-
-            <!-- 单选和多选 -->
-
-            <div v-if="question.type === 'single' || question.type === 'multiple'"
-                v-for="(_, optionIndex) in question.options" :key="`${question.options.length}:${optionIndex}`"
-                class="option-box">
-                <div class="button-box">
-                    <Button class="option-title" @click="setAnswer(questionIndex, optionIndex)"
-                        :down="Array.isArray(question.answer) ? question.answer.includes(optionIndex) : question.answer === optionIndex"
-                        :class="{ 'right-answer': Array.isArray(question.answer) ? question.answer.includes(optionIndex) : question.answer === optionIndex }">
-                        {{ getOptionName(optionIndex) }}
-                    </Button>
-                    <Button class="add-button" @click="deleteOption(questionIndex, optionIndex)">
-                        <TrashCanIcon /> 删除该选项
-                    </Button>
-                </div>
-                <ResizableWrapper
-                    style="min-width: min-content; min-height: min-content; margin-left: 50px; max-width: 100%; max-height: fit-content; width: fit-content;"
-                    height-resizable width-resizable>
-                    <Editor v-model="question.options[optionIndex]" :editable="true" :section="section.id"></Editor>
+            <div style="display: flex;">
+                <ResizableWrapper style="max-width: 100%;" height-resizable width-resizable>
+                    <Input :area="true" placeholder="Section Description" type="text" v-model="section.description.content" class="section-description-input" @focus="onFocus" @focus-out="onFocusOut"/>
                 </ResizableWrapper>
             </div>
-
-            <div v-if="question.type === 'single' || question.type === 'multiple'" class="option-box">
-                <div class="button-box">
-                    <Button @click="addOption(questionIndex)" class="add-button">
-                        <PlusIcon /> 添加选项
-                    </Button>
+            <br />
+            <div v-for="(question, questionIndex) in section.questions" :key="getQuestionKey(questionIndex)" class="question">
+                <Spacer style="margin-bottom: 10px; margin-top: 10px;" />
+                <div class="question-description">
+                    <p class="q-title">
+                        {{ questionIndex + 1 }}.
+                    </p>
+                    <div class="button-box">
+                        <SelectMenu :options="questionTypes" :model-value="question.type" @update:model-value="(value) => changeQuestionType(questionIndex, value)">
+                        </SelectMenu>
+                        <SelectMenu :options="contentTypes" v-model="question.description.type" class="content-type"/>
+                        <Button @click="deleteQuestion" class="add-button">
+                            <TrashCanIcon style="color: red;" /> 删除该小题
+                        </Button>
+                    </div>
                 </div>
-            </div>
+                <ResizableWrapper style="max-width: 100%;" height-resizable width-resizable>
+                    <Input :area="true" placeholder="Question Description" type="text" v-model="question.description.content" class="question-description-input" @focus="onFocus" @focus-out="onFocusOut"/>
+                </ResizableWrapper>
 
-            <!-- 判断 -->
-            <div v-else-if="question.type === 'judge'" class="judge-option-box">
-                <Button class="judge-option" :down="question.answer === false"
-                    :class="{ 'right-answer': question.answer === false }" @click="setAnswer(questionIndex, false)">
-                    <CloseIcon />
-                </Button>
-                <Button class="judge-option" :down="question.answer === true"
-                    :class="{ 'right-answer': question.answer === true }" @click="setAnswer(questionIndex, true)">
-                    <CheckIcon />
-                </Button>
-            </div>
+                <!-- 单选和多选 -->
 
-            <!-- 填空/简答 -->
-            <template v-else-if="question.type === 'fill' || question.type === 'essay'">
-                <div class="title">
-                    答案/评标
-                    <span title="简答题和填空题将由AI判卷，因此请尽可能详细描述评分标准，以提高判卷的准确性。">
-                        <HelpCircleOutlineIcon />
-                    </span>
-                </div>
-                <div class="analysis-box">
-                    <ResizableWrapper style="max-width: 100%; max-height: fit-content;" height-resizable
-                        width-resizable>
-                        <Editor v-model="question.answer" :editable="true" :section="section.id"></Editor>
+                <div v-if="question.type === 'single' || question.type === 'multiple'"
+                    v-for="(_, optionIndex) in question.options" :key="`${question.options.length}:${optionIndex}`"
+                    class="option-box">
+                    <div class="button-box">
+                        <Button class="option-title" @click="setAnswer(questionIndex, optionIndex)"
+                            :down="Array.isArray(question.answer) ? question.answer.includes(optionIndex) : question.answer === optionIndex"
+                            :class="{ 'right-answer': Array.isArray(question.answer) ? question.answer.includes(optionIndex) : question.answer === optionIndex }">
+                            {{ getOptionName(optionIndex) }}
+                        </Button>
+                        <SelectMenu :options="contentTypes" v-model="question.options[optionIndex].type" class="content-type"/>
+                        <Button class="add-button" @click="deleteOption(questionIndex, optionIndex)">
+                            <TrashCanIcon style="color: red;"  /> 删除该选项
+                        </Button>
+                    </div>
+                    <ResizableWrapper style="min-width: min-content; min-height: min-content; margin-left: 50px; max-width: 100%;" height-resizable width-resizable>
+                        <Input area placeholder="Option Description" type="text" v-model="question.options[optionIndex].content" class="option-input" @focus="onFocus" @focus-out="onFocusOut"/>
                     </ResizableWrapper>
                 </div>
-            </template>
 
-            <p class="title">解析</p>
-            <ResizableWrapper style="max-width: 100%; max-height: fit-content;" height-resizable width-resizable>
-                <Editor v-model="question.analysis" :editable="true" :section="section.id"></Editor>
-            </ResizableWrapper>
-        </div>
-        <div class="button-box">
-            <Button @click="addQuestion" class="add-button">
-                <PlusIcon /> 添加小题
-            </Button>
-        </div>
-        <Spacer style="margin-bottom: 10px; margin-top: 10px;" />
-        <quiz-small-title style="display: flex;">
-            <Switch :on="section.available" @click="section.available = !section.available" />
-            {{ section.available ? ' 公开题目' : ' 私有题目' }}
-        </quiz-small-title>
-        <quiz-small-title style="display: flex;">
-            {{ section.available ? ' *题目公开可被学生在刷题中刷到' : ' *题目私有不可被学生在刷题中刷到，但仍可添加到考试中' }}
-        </quiz-small-title>
-        <p class="title">权重（权重越大越容易被学生刷到）</p>
-        <div style="width: 280px;">
-            <Input :area="false" placeholder="Section Weight" type="number" v-model="section.weight"
-                style="width: 300px;" />
-            <Slider :min-value="0" :max-value="100" :step="1" v-model="section.weight" style="width: 300px;" />
-        </div>
-        <div class="button-box">
-            <Button @click="saveSection" class="add-button">
-                <ContentSaveIcon /> 保存题目
-            </Button>
-            <Button @click="deleteSection_" class="add-button">
-                <TrashCanIcon /> 删除题目
-            </Button>
-        </div>
-    </Card>
+                <div v-if="question.type === 'single' || question.type === 'multiple'" class="option-box">
+                    <div class="button-box">
+                        <Button @click="addOption(questionIndex)" class="add-button">
+                            <PlusIcon /> 添加选项
+                        </Button>
+                    </div>
+                </div>
+
+                <!-- 判断 -->
+                <div v-else-if="question.type === 'judge'" class="judge-option-box">
+                    <Button class="judge-option" :down="question.answer === false" :class="{ 'right-answer': question.answer === false }" @click="setAnswer(questionIndex, false)">
+                        <CloseIcon />
+                    </Button>
+                    <Button class="judge-option" :down="question.answer === true" :class="{ 'right-answer': question.answer === true }" @click="setAnswer(questionIndex, true)">
+                        <CheckIcon />
+                    </Button>
+                </div>
+
+                <!-- 填空/简答 -->
+                <template v-else-if="question.type === 'fill' || question.type === 'essay'">
+                    <div class="title">
+                        答案/评标
+                        <span title="简答题和填空题将由AI判卷，因此请尽可能详细描述评分标准，以提高判卷的准确性。">
+                            <HelpCircleOutlineIcon />
+                        </span>
+                    </div>
+                    <div class="analysis-box">
+                        <ResizableWrapper style="max-width: 100%;" height-resizable width-resizable>
+                            <Input :area="true" placeholder="Answer" type="text" class="analysis-input" :value="question.answer.content" @input="setAnswer(questionIndex, $event.target.value)" @focus="onFocus" @focus-out="onFocusOut"/>
+                        </ResizableWrapper>
+                    </div>
+                </template>
+
+                <p class="title">解析</p>
+                <ResizableWrapper style="max-width: 100%;" height-resizable width-resizable>
+                    <Input area placeholder="Analysis" type="text" v-model="question.analysis.content" class="analysis-input" @focus="onFocus" @focus-out="onFocusOut"/>
+                </ResizableWrapper>
+            </div>
+            <div class="button-box">
+                <Button @click="addQuestion" class="add-button">
+                    <PlusIcon /> 添加小题
+                </Button>
+            </div>
+            <Spacer style="margin-bottom: 10px; margin-top: 10px;" />
+            <quiz-small-title style="display: flex;">
+                <Switch :on="section.available" @click="section.available = !section.available" />
+                {{ section.available ? ' 公开题目' : ' 私有题目' }}
+            </quiz-small-title>
+            <quiz-small-title style="display: flex;">
+                {{ section.available ? ' *题目公开可被学生在刷题中刷到' : ' *题目私有不可被学生在刷题中刷到，但仍可添加到考试中' }}
+            </quiz-small-title>
+            <p class="title">权重（权重越大越容易被学生刷到）</p>
+            <div style="width: 280px;">
+                <Input :area="false" placeholder="Section Weight" type="number" v-model="section.weight" style="width: 300px;" />
+                <Slider :min-value="0" :max-value="100" :step="1" v-model="section.weight" style="width: 300px;" />
+            </div>
+            <div class="button-box">
+                <Button @click="saveSection" class="add-button">
+                    <ContentSaveIcon /> 保存题目
+                </Button>
+                <Button @click="deleteSection_" class="add-button">
+                    <TrashCanIcon /> 删除题目
+                </Button>
+            </div>
+        </Card>
+        <Card class="img-card">
+            <div style="font-weight: bold; display: flex; flex-direction: row; align-items: center; margin-right: auto;">
+                <p style="margin-left: 10px; cursor: pointer; " @click="addImage">图库</p> 
+                <Text @click="addImage" style="cursor: pointer; "><PlusIcon /></Text>
+            </div>
+            <Spacer style="width: 200px; margin-bottom: 10px;"/>
+            <Loading v-if="loadingImages"/>
+            <template v-else>
+                <div v-if="images.length" style="margin-left: 10px;">
+                    点击插入图片
+                </div>
+                <div v-else style="margin: 10px 10px 20px 10px;">
+                    暂无图片
+                </div>
+                <div class="img-sources">
+                    <Text v-for="img in images" class="img" :key="img" :style="'--img-url: url(' + getImageUrl(img) + ');'" @click="onImageClick(img)">
+                        <TrashCanIcon :size="30" @click="deleteImage(img)" class="remove-img"/>
+                    </Text>
+                </div>
+            </template>
+        </Card>
+    </div>
     <template v-else>
         <Button @click="preview = false">返回编辑</Button>
         <QuizView :quiz="{ sections: [section], correct: null }" :editable="false" />
@@ -412,10 +569,28 @@ const preview = ref(false);
 
 .section-container {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     height: calc(100% - 20px);
     margin-top: 13px;
     margin-bottom: 7px;
+    max-width: 100%;
+    min-width: 100%;
+    width: 100%;
+    overflow: hidden;
+
+    .section-card {
+        flex-grow: 1;
+        max-height: 100%;
+        margin-top: 0;
+        margin-bottom: 0;
+        margin-right: 0;
+        max-width: calc(100% - 280px);
+    }
+
+    .img-card {
+        margin-top: 0;
+        margin-bottom: 0;
+    }
 }
 
 quiz-small-title {
@@ -444,11 +619,18 @@ quiz-small-title {
     margin-bottom: 5px;
 }
 
+.resizeable-wrapper {
+    display: flex;
+    max-width: calc(100% - 20px);
+    width: 50%;
+}
+
 .section-description-input,
 .question-description-input,
+.option-input,
 .analysis-input {
-    width: 60%;
-    height: 100px;
+    flex-grow: 1;
+    resize: none;
 }
 
 .title {
@@ -476,7 +658,7 @@ quiz-small-title {
     display: flex;
     flex-direction: column;
     .option-title {
-        height: 48px;
+        height: 41px;
         margin: 10px;
         font-weight: bold;
         width: 50px;
@@ -514,12 +696,56 @@ quiz-small-title {
 }
 
 .button-box {
+    height: 61px;
     display: flex;
     flex-direction: row;
+
+
+    .add-button {
+        padding: 10px;
+    }
+
+    quiz-button.add-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .content-type {
+        width: 135px;
+    }
 }
 
-.add-button {
-    height: 48px;
-    padding: 10px;
+.img-sources {
+    // width: 100%;
+    display: flex;
+    flex-direction: row;
+    scrollbar-width: none;
+    overflow-x: auto;
+    gap: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+.img {
+    --img-url: ;
+    background-image: var(--img-url);
+    min-width: 200px;
+    max-width: 200px;
+    min-height: 200px;
+    max-height: 200px;
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-clip: content-box;
+    border-radius: 10px;
+    position: relative;
+
+    .remove-img {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        color: red;
+        cursor: pointer;
+    }
 }
 </style>

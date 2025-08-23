@@ -43,8 +43,8 @@ const showMembers = ref(false);
 
 const exam = ref(null as null | Exam);
 const clazz = ref(null as null | Class);
-const sections = ref([] as Section<AnswerType, null, string>[]);
-const studentExams = ref({} as Record<string, Quiz<AnswerType, AnswerType, string>>);
+const sections = ref([] as Section<AnswerType, null, any>[]);
+const studentExams = ref({} as Record<string, Quiz<AnswerType, AnswerType, any>>);
 const rawExamScores = ref([] as ExamScore[]);
 const examScores = computed(() => {
     let x = {} as Record<number, {q: { correct: number, all: number }[], correct: number, all: number}>;
@@ -127,7 +127,7 @@ function removeExam()
     );
 }
 
-function getSectionInfo(sectionId: number): Section<AnswerType, null, string>
+function getSectionInfo(sectionId: number): Section<AnswerType, null, any>
 {
     if (sections.value[sectionId]) return sections.value[sectionId] as Section<AnswerType, null, string>;
     getSection(sectionId).then((section) => sections.value[sectionId] = section);
@@ -141,7 +141,7 @@ function getSectionInfo(sectionId: number): Section<AnswerType, null, string>
     }
 }
 
-function getStudentExam(studentId: string): Quiz<AnswerType, AnswerType, string>
+function getStudentExam(studentId: string): Quiz<AnswerType, AnswerType, any>
 {
     if (studentExams.value[studentId]) return studentExams.value[studentId] as Quiz<AnswerType, AnswerType, string>;
     _getStudentExam(examId, studentId).then((section) => studentExams.value[studentId] = section);

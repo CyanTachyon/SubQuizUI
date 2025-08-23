@@ -62,7 +62,7 @@ export function getSectionTypeList(knowledge: KnowledgePointId)
 }
 
 const newSectionUrl = "/section"
-export function newSection(section: Omit<Section<AnswerType, null, string>, 'id'>)
+export function newSection(section: Omit<Section<AnswerType, null, any>, 'id'>)
 {
     return checkResponse<SectionTypeId>(sendRequest({
         target: Target.BACKEND,
@@ -75,7 +75,7 @@ export function newSection(section: Omit<Section<AnswerType, null, string>, 'id'
 const getSectionUrl = "/section/{id}"
 export function getSection(id: number)
 {
-    return checkResponse<Section<AnswerType, null, string>>(sendRequest({
+    return checkResponse<Section<AnswerType, null, any>>(sendRequest({
         target: Target.BACKEND,
         url: getSectionUrl,
         method: 'GET',

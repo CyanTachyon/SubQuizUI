@@ -2,16 +2,16 @@ import { createApp, ref, type DefineComponent } from "vue";
 import { Capacitor } from '@capacitor/core';
 import { connectUrl, Target } from "../networks/utils/sendRequest.ts";
 import { safeRedirect } from "./redirect.ts";
-import Dialog from "@src/components/Dialog.vue";
-import Input from "@src/components/Input.vue";
+import Dialog from "../components/Dialog.vue";
+import Input from "../components/Input.vue";
 import type { JSX } from "vue/jsx-runtime";
-import RealNameRequired from "@src/templates/RealNameRequired.vue";
-import { vMarkdown } from "./markdown.ts";
+import RealNameRequired from "../templates/RealNameRequired.vue";
+import { vMarkdown, vSectionContent } from "./markdown.ts";
 import type { Section } from "../dataClasses/Section.ts";
 import type { AndroidVersion } from "../dataClasses/AndroidVersion.ts";
 import currentVersion from "../../public/android_latest.json";
 import { useNotification } from "../stores/notification.ts";
-import Button from "@src/components/Button.vue";
+import Button from "../components/Button.vue";
 import { InAppBrowser, ToolBarType } from "@capgo/inappbrowser";
 import { login } from "../networks/backend/oauth.ts";
 import { ScreenOrientation } from "@capacitor/screen-orientation";
@@ -123,7 +123,7 @@ export function dialog(
             `.replace(/\s+/g, ' ').trim();
             return <Dialog open={open.value} onClose={onClose} style={css}>{innerHtml}</Dialog>;
         }
-    }).directive('markdown', vMarkdown)
+    }).directive('markdown', vMarkdown).directive('section-content', vSectionContent);
     app.mount(container);
     return () =>
     {
@@ -168,10 +168,7 @@ export function getOptionName(index: number)
 export function richtextToString(richtext: any)
 {
     if (typeof richtext !== 'object') return '' + richtext;
-    if (Array.isArray(richtext))
-    {
-        return richtext.map(item => richtextToString(item)).join('');
-    }
+    if (Array.isArray(richtext)) return richtext.map(richtextToString).join('');
     if (richtext.text) return richtext.text;
     if (richtext.content) return richtextToString(richtext.content);
     return '';
@@ -372,4 +369,19 @@ async function readFileAsDataURL(file: File): Promise<string | null>
         reader.onerror = () => resolve(null);
         reader.readAsDataURL(file);
     });
+}
+
+export async function base64ToFile(base64: string): Promise<File | null>
+{
+    const response = await fetch(base64);
+    const blob = await response.blob();
+    const fileName = `image.${blob.type.split('/')[1]}`;
+    return new File([blob], fileName, { type: blob.type });
+}
+
+export async function pickImageToFile(maxBytes?: number): Promise<File | null>
+{
+    const base64 = await pickImage(maxBytes);
+    if (!base64) return null;
+    return await base64ToFile(base64);
 }

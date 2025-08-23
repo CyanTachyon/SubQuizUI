@@ -7,6 +7,8 @@ import type { SectionId } from "../dataClasses/Ids";
 import { all, createStarryNight } from '@wooorm/starry-night';
 import { toHtml } from 'hast-util-to-html'
 import "./markdown-code.scss";
+import { useNotification } from "../stores/notification";
+import { richtextToString } from "./utils";
 
 let starryNight: Awaited<ReturnType<typeof createStarryNight>>;
 
@@ -92,7 +94,7 @@ function markdownToHtml(markdown: string, imgBaseUrl?: string): string
 export interface MarkdownContent
 {
     markdown?: boolean;
-    section?: number;
+    section?: SectionId;
     content: string;
     parseHtml?: (ele: HTMLElement) => void;
 }
@@ -122,4 +124,57 @@ function updateMarkdown(el: HTMLElement, binding: MarkdownContent)
         el.appendChild(tmpDiv.firstElementChild as HTMLElement);
     }
     else el.innerText = content;
+}
+
+export type SectionContent = {
+    id: SectionId;
+    content: any;
+};
+export const vSectionContent: Directive<any, SectionContent> = {
+    mounted(el, binding) 
+    {
+        updateSectionContent(el, binding.value);
+    },
+    updated(el, binding) 
+    {
+        updateSectionContent(el, binding.value);
+    }
+};
+function updateSectionContent(el: HTMLElement, binding: SectionContent)
+{
+    const errorContent = () => 
+    {
+        useNotification().addError("出现错误，请联系管理员：Invalid section content " + binding.id);
+        console.error("Invalid section content", binding.id, binding.content);
+        el.innerText = "出现错误，请联系管理员：Invalid section content " + binding.id;
+    };
+
+    if (!binding.content)
+    {
+        el.innerText = '';
+        return;
+    }
+    if (typeof binding.content === 'string')
+    {
+        el.innerText = binding.content;
+        return;
+    }
+    if (typeof binding.content !== 'object' || typeof binding.content.type !== 'string')
+    {
+        errorContent();
+        return;
+    }
+
+    if (binding.content.type === 'text')
+        el.innerText = binding.content.content;
+    else if (binding.content.type === 'html')
+        el.innerHTML = binding.content.content;
+    else if (binding.content.type === 'markdown')
+        updateMarkdown(el, { content: binding.content.content, section: binding.id, markdown: true });
+    else if (binding.content.type === 'doc') 
+        el.innerHTML = richtextToString(binding.content);
+    else
+    {
+        errorContent();
+    }
 }

@@ -1,0 +1,113 @@
+{
+    "id": 1,
+    "type": 1,
+    "description": {}, // 编辑器内容
+    "weight": 50,
+    "available": true,
+    "questions": [
+        {
+            "description": {}, // 编辑器内容
+            "options": [
+                {}, // 编辑器内容
+                {}, // 编辑器内容
+                {}, // 编辑器内容
+                {}  // 编辑器内容
+            ],
+            "answer": 0,
+            "userAnswer": 1,
+            "analysis": {}, // 编辑器内容
+            "type": "single"
+        },
+        {
+            "description": {}, // 编辑器内容
+            "options": [
+                {}, // 编辑器内容
+                {}, // 编辑器内容
+                {}, // 编辑器内容
+                {} // 编辑器内容
+            ],
+            "answer": [
+                0,
+                1
+            ],
+            "userAnswer": [
+                1,
+                2
+            ],
+            "analysis": {}, // 编辑器内容
+            "type": "multiple"
+        },
+        {
+            "description": {}, // 编辑器内容
+            "answer": true,
+            "userAnswer": false,
+            "analysis": {}, // 编辑器内容
+            "type": "judge"
+        },
+        {
+            "description": {}, // 编辑器内容
+            "answer": {}, // 编辑器内容
+            "userAnswer": "the user answer",
+            "analysis": {}, // 编辑器内容
+            "type": "fill"
+        },
+        {
+            "description": {}, // 编辑器内容
+            "answer": {}, // 编辑器内容
+            "userAnswer": "the user answer",
+            "analysis": {}, // 编辑器内容
+            "type": "essay"
+        }
+    ]
+}
+
+// 编辑器内容格式说明
+
+// 直接为字符，将作为纯文本显示，该形式只为了兼容，不推荐，例如:
+{
+    "id": 1,
+    "type": 1,
+    "description": "这里将直接作为纯文本, 解析和其他地方同理",
+    "weight": 50,
+    "available": true,
+    "questions": []
+}
+
+// 更标准的纯文本形式
+{
+    "id": 1,
+    "type": 1,
+    "description": {
+        "type": "text",
+        "content": "这里将直接作为纯文本, 解析/小题描述和其他地方同理"
+    },
+    "weight": 50,
+    "available": true,
+    "questions": []
+}
+
+// markdown
+{
+    "id": 1,
+    "type": 1,
+    "description": {
+        "type": "markdown",
+        "content": "这里将直接作为Markdown文本, 解析/小题描述和其他地方同理"
+    },
+    "weight": 50,
+    "available": true,
+    "questions": []
+}
+
+// html
+{
+    "id": 1,
+    "type": 1,
+    "description": {
+        "type": "html",
+        "content": "<p>这里将直接作为HTML文本, 解析/小题描述和其他地方同理</p>"
+    },
+    "weight": 50,
+    "available": true,
+    "questions": []
+}

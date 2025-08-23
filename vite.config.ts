@@ -1,12 +1,11 @@
 import { defineConfig, loadEnv } from 'vite';
-// import vue from '@vitejs/plugin-vue';
-// import inspect from "vite-plugin-inspect";
+import vue from '@vitejs/plugin-vue';
+import inspect from "vite-plugin-inspect";
 import { fileURLToPath, URL } from 'node:url';
 import { readFileSync } from 'node:fs';
-// import vueJSX from '@vitejs/plugin-vue-jsx';
+import vueJSX from '@vitejs/plugin-vue-jsx';
 import path from 'node:path';
 import babel from 'vite-plugin-babel';
-import veauryVitePlugins from 'veaury/vite'
 
 const packageJson = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'));
 
@@ -27,23 +26,18 @@ function getEnv(env_: any)
 
 export default defineConfig(({ mode }) => ({
     plugins: [
-        veauryVitePlugins({
-            type: 'vue',
-            vueOptions: {
-                template: {
-                    compilerOptions: {
-                        isCustomElement: (tag) =>
-                        {
-                            return tag.startsWith('quiz-');
-                        }
+        vue({
+            template: {
+                compilerOptions: {
+                    isCustomElement: (tag) =>
+                    {
+                        return tag.startsWith('quiz-');
                     }
                 }
-            },
-            vueJsxInclude: [/vue&type=script&lang\.[tj]sx$/i, /vue&type=script&setup=true&lang\.[tj]sx$/i, /.*utils\.tsx$/]
+            }
         }),
-        // vue(),
-        // inspect(),
-        // vueJSX(),
+        inspect(),
+        vueJSX(),
         // Babel 插件配置
         babel({
             babelConfig: {

@@ -20,7 +20,7 @@ import { App as CapacitorApp } from '@capacitor/app';
 import LoginApp from './pages/_app/LoginDone.vue';
 import { Capacitor } from '@capacitor/core';
 import './katex.css';
-import { vMarkdown } from './utils/markdown';
+import { vMarkdown, vSectionContent } from './utils/markdown';
 import EditGroup from './pages/admin/EditGroup.vue';
 import Group from './pages/admin/Group.vue';
 import AiChats from './pages/ai/AiChats.vue';
@@ -35,13 +35,6 @@ import { useTheme } from './stores/theme';
 import { storageGet } from './utils/storage';
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
 defineCustomElements(window);
-import { createRoot } from 'react-dom/client';
-import { setVeauryOptions } from 'veaury';
-setVeauryOptions({
-    react: {
-        createRoot
-    }
-})
 
 if (Capacitor.getPlatform() === 'web')
 {
@@ -137,4 +130,5 @@ appEle.style = `
 createApp(App)
     .use(router)
     .directive('markdown', vMarkdown)
+    .directive('section-content', vSectionContent)
     .mount('quiz-app');

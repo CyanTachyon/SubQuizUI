@@ -213,7 +213,7 @@ interface Node
     sectionTypes: SectionType[] | null;
     sectionType: SectionTypeId | null;
     page: number;
-    sections: Slice<Section<AnswerType, null, string>> | null;
+    sections: Slice<Section<AnswerType, null, any>> | null;
 }
 
 const sectionCount = 30;
@@ -324,7 +324,7 @@ function addNewSectionType()
     );
 }
 
-function gotoSection(section: Section<AnswerType, any, string>)
+function gotoSection(section: Section<AnswerType, any, any>)
 {
     if (onClickSection) onClickSection(section.id);
     else router.push('/admin/section/' + section.id);
