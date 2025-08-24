@@ -7,7 +7,7 @@ import SidebarItem from "../../templates/sidebar/SidebarItem.vue";
 import type { AnswerType } from "../../dataClasses/Question";
 import type { Section } from "../../dataClasses/Section";
 import type { ChatId } from "../../dataClasses/Ids";
-import AiDialog from "../../templates/AiDialog.vue";
+import AiDialog from "../../templates/chat/AiDialog.vue";
 import PlusIcon from "vue-material-design-icons/Plus.vue";
 import Spacer from "../../components/Spacer.vue";
 import Button from "../../components/Button.vue";

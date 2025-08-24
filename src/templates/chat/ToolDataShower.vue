@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import { computed, ref, onUnmounted, onMounted, watch } from 'vue';
-import { getFileInfo, getFileUrl, getToolData, type ToolDataInfo } from '../networks/backend/ai';
-import { safeRedirect } from '../utils/redirect';
-import Button from '../components/Button.vue';
-import { copyToClipboard } from '../utils/utils';
+import { getFileInfo, getFileUrl, getToolData, parseChatUrl, type ToolDataInfo } from '../../networks/backend/ai';
+import { safeRedirect } from '../../utils/redirect';
+import Button from '../../components/Button.vue';
+import { copyToClipboard } from '../../utils/utils';
 import html2canvas from 'html2canvas';
-import { useNotification } from '../stores/notification';
+import { useNotification } from '../../stores/notification';
 import Desmos from 'desmos';
-import type { ChatId } from '../dataClasses/Ids';
+import type { ChatId } from '../../dataClasses/Ids';
 
 const { chat, type, path, close: close_, dataset, customInfo } = defineProps<{
     chat: ChatId,
@@ -27,11 +27,7 @@ const close = () =>
     if (close_) close_();
 };
 
-function parseUrl(url: string): string
-{
-    if (url.startsWith('uuid:')) return getFileUrl(chat, url.substring(5));
-    else return url;
-}
+
 
 function getData(type: string, path: string): ToolDataInfo
 {
@@ -65,7 +61,7 @@ const images = computed(() =>
 {
     if (info.value.type === 'IMAGE') 
     {
-        return info.value.value.split('\n').map((url) => parseUrl(url.trim())).filter((url) => url);
+        return info.value.value.split('\n').map((url) => parseChatUrl(chat, url.trim())).filter((url) => url);
     }
     return [];
 });
@@ -225,6 +221,7 @@ const downloadImage = () =>
         useNotification().addError('截图失败');
     });
 }
+
 </script>
 <template>
     <div :class="{'container': !inline, 'container-inline': !!inline}">
@@ -233,12 +230,12 @@ const downloadImage = () =>
             打开外部网站:
             <br />
             <br />
-            <span>{{parseUrl(info.value)}}</span>
+            <span>{{parseChatUrl(chat, info.value)}}</span>
             <br />
             <br />
             <div style="display: flex;">
-                <Button @click="close(); copyToClipboard(parseUrl(info.value));" style="margin-left: auto;">复制</Button>
-                <Button @click="close(); safeRedirect(parseUrl(info.value), true);">打开</Button>
+                <Button @click="close(); copyToClipboard(parseChatUrl(chat, info.value));" style="margin-left: auto;">复制</Button>
+                <Button @click="close(); safeRedirect(parseChatUrl(chat, info.value), true);">打开</Button>
                 <Button @click="close()">取消</Button>
             </div>
         </div>
@@ -246,7 +243,7 @@ const downloadImage = () =>
             <div class="iframe-wrapper" ref="iframeWrapper" :style="{ height: iframeSize.height }">
                 <iframe 
                     :srcdoc="info.type === 'HTML' ? info.value : undefined"
-                    :src="info.type === 'PAGE' ? parseUrl(info.value) : undefined" 
+                    :src="info.type === 'PAGE' ? parseChatUrl(chat, info.value) : undefined" 
                     style="border: none;" 
                     ref="iframe"
                 ></iframe>

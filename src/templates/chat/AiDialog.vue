@@ -1,37 +1,38 @@
 <script lang="tsx" setup>
 import { ref, nextTick, computed } from 'vue';
-import type { AnswerType } from '../dataClasses/Question';
-import type { Section } from '../dataClasses/Section';
-import { cancelChat, chatSSE, createChat, deleteChat, getChat, getContentText, mergeContent, sendContent, type AiHistory, type AiMessage, type Model, type ModelInfo, type ToolDataInfo, } from '../networks/backend/ai';
-import Input from '../components/Input.vue';
-import { useNotification } from '../stores/notification';
+import type { AnswerType } from '../../dataClasses/Question';
+import type { Section } from '../../dataClasses/Section';
+import { cancelChat, chatSSE, createChat, deleteChat, getChat, getContentText, mergeContent, parseChatUrl, sendContent, type AiHistory, type AiMessage, type Model, type ModelInfo, type ToolDataInfo, } from '../../networks/backend/ai';
+import Input from '../../components/Input.vue';
+import { useNotification } from '../../stores/notification';
 import LoadingIcon from 'vue-material-design-icons/Loading.vue';
-import { copyToClipboard, dialog, pickImage } from '../utils/utils';
+import { copyToClipboard, dialog, pickImage } from '../../utils/utils';
 import ChevronRightIcon from 'vue-material-design-icons/ChevronRight.vue';
 import ChevronDownIcon from 'vue-material-design-icons/ChevronDown.vue';
-import type { Chat } from '../dataClasses/Chat';
-import type { ChatId } from '../dataClasses/Ids';
-import Loading from '../components/Loading.vue';
-import QuizView from './QuizView.vue';
-import Text from '../components/Text.vue';
-import Card from '../components/Card.vue';
-import { getAiModels } from '../networks/backend/ai';
-import SelectMenu from '../components/SelectMenu.vue';
-import { storageGet, storageSet } from '../utils/storage';
+import type { Chat } from '../../dataClasses/Chat';
+import type { ChatId } from '../../dataClasses/Ids';
+import Loading from '../../components/Loading.vue';
+import QuizView from '../QuizView.vue';
+import Text from '../../components/Text.vue';
+import Card from '../../components/Card.vue';
+import { getAiModels } from '../../networks/backend/ai';
+import SelectMenu from '../../components/SelectMenu.vue';
+import { storageGet, storageSet } from '../../utils/storage';
 import { Capacitor } from '@capacitor/core';
 import { TrashIcon } from '@heroicons/vue/16/solid';
 import ImageOutlineIcon from 'vue-material-design-icons/ImageOutline.vue';
 import ContentCopyIcon from 'vue-material-design-icons/ContentCopy.vue';
 import FileQuestionIcon from 'vue-material-design-icons/FileQuestion.vue';
 import ToolsIcon from 'vue-material-design-icons/Tools.vue';
-import Button from '../components/Button.vue';
+import Button from '../../components/Button.vue';
 import LightbulbOnIcon from 'vue-material-design-icons/LightbulbOn.vue';
 import LightbulbOutlineIcon from 'vue-material-design-icons/LightbulbOutline.vue';
-import { getThemes } from '../stores/theme';
+import { getThemes } from '../../stores/theme';
 import ToolDataShower from './ToolDataShower.vue';
 import StopCircleOutlineIcon from "vue-material-design-icons/StopCircleOutline.vue";
 import SyncIcon from "vue-material-design-icons/Sync.vue";
 import TrashCanIcon from "vue-material-design-icons/TrashCan.vue";
+import PencilIcon from "vue-material-design-icons/Pencil.vue";
 
 export type DisplayMessage = AiMessage & {
     showReasoning: boolean;
@@ -223,6 +224,9 @@ init().then(() => { loading.value = false; nextTick(scrollToBottom); });
 
 const input = ref('');
 const inputImages = ref<string[]>([]);
+const editingLastMessage = ref(false);
+const editContent = ref('');
+const editImages = ref<string[]>([]);
 const uploadingImage = ref(false);
 const inputImagesWithoutPrefix = computed(() => 
 {
@@ -292,7 +296,7 @@ function isMobileDevice()
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
-function onSubmit(event: KeyboardEvent, regenerate = false)
+function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = false)
 {
     if (event && (event.shiftKey || isMobileDevice())) return;
     event?.preventDefault();
@@ -304,8 +308,17 @@ function onSubmit(event: KeyboardEvent, regenerate = false)
         return;
     }
 
-    if ((input.value.trim() === '' && !regenerate) || info.value.showAnswering) return;
-    else if (info.value.inAnswering)
+    // 编辑模式下的验证
+    if (editMode)
+    {
+        if (editContent.value.trim() === '' || info.value.inAnswering || !editingLastMessage.value) return;
+    }
+    else
+    {
+        if ((input.value.trim() === '' && !regenerate) || info.value.showAnswering) return;
+    }
+    
+    if (info.value.inAnswering)
     {
         useNotification().addError('请求正在处理中，请稍等片刻。');
         return;
@@ -315,6 +328,13 @@ function onSubmit(event: KeyboardEvent, regenerate = false)
         useNotification().addError('正在上传图片，请稍等片刻。');
         return;
     }
+    
+    // 编辑模式下关闭编辑界面
+    if (editMode)
+    {
+        editingLastMessage.value = false;
+    }
+    
     info.value.inAnswering = true;
 
     (async () => {
@@ -359,20 +379,79 @@ function onSubmit(event: KeyboardEvent, regenerate = false)
             while(info.value.histories.length > lstUserMessageIndex + 1)
                 info.value.histories.pop();
         }
+        else if (editMode)
+        {
+            // 编辑模式逻辑
+            let lastUserMessageIndex = -1;
+            for (let i = info.value.histories.length - 1; i >= 0; i--) 
+            {
+                if (info.value.histories[i].role === 'user') 
+                {
+                    lastUserMessageIndex = i;
+                    break;
+                }
+            }
+            
+            if (lastUserMessageIndex === -1) return;
+            
+            // 移除最后用户消息之后的所有消息
+            while(info.value.histories.length > lastUserMessageIndex + 1)
+                info.value.histories.pop();
+            
+            content = editContent.value;
+            
+            // 处理图片 - 分离新图片(base64)和已有图片
+            const newImages: string[] = [];
+            const existingImages: string[] = [];
+            
+            for (const img of editImages.value)
+            {
+                if (img.startsWith('data:image/'))
+                {
+                    // 新图片 - 提取base64
+                    newImages.push(img.replace(/^data:image\/[a-z]+;base64,/, ''));
+                }
+                else
+                {
+                    // 已有图片
+                    existingImages.push(img);
+                }
+            }
+            
+            images = [...existingImages, ...newImages];
+            const contentArray = [
+                ...editImages.value.map(img => ({
+                    type: 'image_url' as const,
+                    image_url: { url: img }
+                })),
+                { type: 'text' as const, text: content }
+            ];
+            info.value.histories[lastUserMessageIndex].messages[0].content = contentArray;
+            // 清空编辑状态
+            editContent.value = '';
+            editImages.value = [];
+            regenerate = true; // 编辑模式总是使用regenerate逻辑
+        }
         else
         {
             content = input.value;
             images = inputImagesWithoutPrefix.value;
-            input.value = '';
-            inputImages.value = [];
             info.value.histories.push({
                 role: 'user',
                 messages: [
                     {
-                        content: content,
+                        content: [
+                            ...inputImages.value.map(img => ({
+                                type: 'image_url' as const,
+                                image_url: { url: img }
+                            })),
+                            { type: 'text' as const, text: content },
+                        ],
                     }
                 ]
             });
+            input.value = '';
+            inputImages.value = [];
         }
 
         const newHash = await sendContent({
@@ -420,12 +499,7 @@ function onSubmit(event: KeyboardEvent, regenerate = false)
     }
     })().finally(() => 
     { 
-        info.value.inAnswering = false; 
-        if (
-            info.value.histories.length > 0 && 
-            info.value.histories[info.value.histories.length - 1].role === 'assistant' &&
-            info.value.histories[info.value.histories.length - 1].messages.length === 0
-        ) init();
+        info.value.inAnswering = false;
     });
 }
 
@@ -477,6 +551,91 @@ function copy(messages: DisplayMessage[])
     copyToClipboard(content.replace(dataTagReg, ''));
 }
 
+function isLastUserMessage(index: number): boolean
+{
+    // 找到最后一条用户消息的索引
+    for (let i = info.value.histories.length - 1; i >= 0; i--) 
+    {
+        if (info.value.histories[i].role === 'user') 
+        {
+            return i === index;
+        }
+    }
+    return false;
+}
+
+function startEditLastMessage()
+{
+    if (info.value.inAnswering || editingLastMessage.value) return;
+    
+    // Find the last user message
+    let lastUserMessageIndex = -1;
+    for (let i = info.value.histories.length - 1; i >= 0; i--) 
+    {
+        if (info.value.histories[i].role === 'user') 
+        {
+            lastUserMessageIndex = i;
+            break;
+        }
+    }
+    
+    if (lastUserMessageIndex === -1) return;
+    
+    const lastUserMessage = info.value.histories[lastUserMessageIndex].messages[0];
+    const content0 = lastUserMessage.content;
+    
+    if (typeof content0 === 'string')
+    {
+        editContent.value = content0;
+        editImages.value = [];
+    }
+    else 
+    {
+        editContent.value = getContentText(content0);
+        editImages.value = content0.filter(c => c.type === 'image_url').map(c => c.image_url.url);
+    }
+    
+    editingLastMessage.value = true;
+}
+
+function cancelEditLastMessage()
+{
+    editingLastMessage.value = false;
+    editContent.value = '';
+    editImages.value = [];
+}
+
+function deleteEditImage(img: string)
+{
+    const index = editImages.value.indexOf(img);
+    if (index > -1) 
+    {
+        editImages.value.splice(index, 1);
+    }
+}
+
+function uploadEditImage()
+{
+    if (uploadingImage.value) return;
+    
+    uploadingImage.value = true;
+    pickImage().then((img) => 
+    {
+        if (img) 
+        {
+            editImages.value.push(img);
+        }
+    }).finally(() => 
+    {
+        uploadingImage.value = false;
+    });
+}
+
+function confirmEditLastMessage(event?: KeyboardEvent)
+{
+    onSubmit(event || null, false, true);
+}
+
 </script>
 
 <template>
@@ -526,28 +685,36 @@ function copy(messages: DisplayMessage[])
                         </div>
                     </Text>
                     <div v-if="index !== info.histories.length - 1 || !info.showAnswering" class="buttons"> 
+                        <PencilIcon v-if="item.role === 'user' && isLastUserMessage(index) && !info.inAnswering && !editingLastMessage" :size="20" class="icon" @click="startEditLastMessage"/>
                         <ContentCopyIcon :size="20" class="icon" @click="copy(item.messages)"/> 
                         <SyncIcon v-if="item.role === 'assistant' && index === info.histories.length - 1" :size="20" class="icon" @click="onSubmit(null, true)"/>
                     </div>
                 </div>
             </div>
+
             <div class="img-container">
-                <div v-for="(img, index) in inputImages" :key="index" class="img" :style="{ backgroundImage: `url(${img})` }">
-                    <TrashCanIcon :size="30" @click="deleteImage(img)" class="remove-img"/>
+                <div v-for="(img, index) in (editingLastMessage ? editImages : inputImages)" :key="index" class="img" :style="{ backgroundImage: `url(${parseChatUrl(info.id, img)})` }">
+                    <TrashCanIcon :size="30" @click="editingLastMessage? deleteEditImage(img) : deleteImage(img)" class="remove-img"/>
                 </div>
             </div>
-            <Input v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
+            
+            <Input v-if="editingLastMessage" v-model="editContent" placeholder="编辑消息内容" :area="true" @keydown.enter="confirmEditLastMessage()" @keydown.esc="cancelEditLastMessage()" class="edit-input"/>
+            <Input v-else v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
+            
             <Text class="bottom-bar">
                 <SelectMenu :model-value="model" :options="models.map(m => ({ label: m.displayName, value: m.model }))" class="model-name" :placeholder="'选择模型'" @update:model-value="changeModel" :direction="'up'"/>
                 <LightbulbOnIcon v-if="models.find(m => m.model === model)?.toolable" class="intelligent-icon" @click="showIntelligentTips(true)"/>
                 <LightbulbOutlineIcon v-else class="intelligent-icon" @click="showIntelligentTips(false)"/>
-                <span class="upload-img" @click="uploadImage">
+                <span class="upload-img" @click="editingLastMessage ? uploadEditImage() : uploadImage()">
                     <ImageOutlineIcon class="icon" v-if="!uploadingImage"/>
                     <div class="loading-icon" v-else>
                         <LoadingIcon />
                     </div>
                 </span>
-                <span class="send" @click="onSubmit(null)">
+                <span class="send" v-if="editingLastMessage" @click="cancelEditLastMessage()">
+                    <span>取消</span>
+                </span>
+                <span class="send" @click="editingLastMessage ? confirmEditLastMessage() : onSubmit(null)">
                     <div v-if="info.showAnswering">
                         <StopCircleOutlineIcon class="icon" />
                     </div>
@@ -878,5 +1045,9 @@ function copy(messages: DisplayMessage[])
     user-select: none;
     margin-left: 5px;
     margin-right: 5px;
+}
+
+.edit-input {
+    border: 2px solid var(--button-highlight-border);
 }
 </style>

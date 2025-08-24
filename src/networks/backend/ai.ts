@@ -239,6 +239,12 @@ export function getFileUrl(chat: ChatId, file: string, download: boolean = false
     return connectUrl(Target.BACKEND, '/ai/chat/{chat}/file/{file}/data', { chat, file, token: useUser().getToken(), download });
 }
 
+export function parseChatUrl(chat: ChatId, url: string): string
+{
+    if (url.startsWith('uuid:')) return getFileUrl(chat, url.substring(5));
+    else return url;
+}
+
 const translateSSEUrl = '/ai/translate';
 export async function translateSSE(
     text: string,
