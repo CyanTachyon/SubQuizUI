@@ -103,6 +103,40 @@ const handleSolidColorToggle = () =>
     }
 }
 
+// 背景增强设置相关函数
+const handleBackgroundBlurChange = (blur: number) => {
+    theme.setBackgroundBlur(blur);
+};
+
+const handleOverlayToggle = () => {
+    const currentOverlay = getThemes().backgroundOverlay;
+    theme.setBackgroundOverlay({
+        ...currentOverlay,
+        enabled: !currentOverlay.enabled
+    });
+};
+
+const handleOverlayColorChange = (color: string) => {
+    const currentOverlay = getThemes().backgroundOverlay;
+    theme.setBackgroundOverlay({
+        ...currentOverlay,
+        color: color
+    });
+};
+
+const handleOverlayOpacityChange = (opacity: number) => {
+    const currentOverlay = getThemes().backgroundOverlay;
+    theme.setBackgroundOverlay({
+        ...currentOverlay,
+        opacity: opacity / 100
+    });
+};
+
+// 检查是否为非纯色背景
+const isCustomBackground = () => {
+    return !getThemes().useSolidColor;
+};
+
 const scale = ref(1);
 (async () => {
     scale.value = Number(await storageGet('scale')) || (Capacitor.getPlatform() === 'web' ? 1 : 0.8);
@@ -204,6 +238,96 @@ const handleScaleChange = (newScale: number) =>
                         <Button @click="theme.chooseBackground()">
                             选择自定义背景
                         </Button>
+                    </div>
+                </div>
+            </Card>
+
+            <!-- 背景增强设置 -->
+            <Card style="padding: 10px 20px 20px 20px" v-if="isCustomBackground()">
+                <Text>
+                    <h2 class="section-title">背景增强</h2>
+                </Text>
+
+                <!-- 背景模糊 -->
+                <div class="effect-item">
+                    <div class="effect-info">
+                        <Text>
+                            <div class="effect-name">背景模糊</div>
+                            <div class="effect-description">为背景图片添加模糊效果</div>
+                        </Text>
+                    </div>
+                    <div class="blur-controls">
+                        <Input 
+                            type="number" 
+                            :modelValue="getThemes().backgroundBlur" 
+                            @update:modelValue="handleBackgroundBlurChange"
+                            style="width: 80px; margin-right: 10px;"
+                        />
+                        <Slider 
+                            :minValue="0" 
+                            :maxValue="25" 
+                            :step="0.5"
+                            :modelValue="getThemes().backgroundBlur" 
+                            @update:modelValue="handleBackgroundBlurChange"
+                            style="width: 150px;"
+                        />
+                    </div>
+                </div>
+
+                <!-- 颜色叠加 -->
+                <div class="effect-item">
+                    <div class="effect-info">
+                        <Text>
+                            <div class="effect-name">颜色叠加</div>
+                            <div class="effect-description">在背景上添加颜色叠加层</div>
+                        </Text>
+                    </div>
+                    <Switch :on="getThemes().backgroundOverlay.enabled" :onClick="handleOverlayToggle" />
+                </div>
+
+                <!-- 叠加颜色设置 -->
+                <div class="effect-item" v-if="getThemes().backgroundOverlay.enabled">
+                    <div class="effect-info">
+                        <Text>
+                            <div class="effect-name">叠加颜色</div>
+                            <div class="effect-description">选择叠加层的颜色</div>
+                        </Text>
+                    </div>
+                    <div class="color-picker-container">
+                        <input 
+                            type="color" 
+                            :value="getThemes().backgroundOverlay.color"
+                            @input="(e) => handleOverlayColorChange((e.target as HTMLInputElement).value)"
+                            class="color-input"
+                        />
+                    </div>
+                </div>
+
+                <!-- 叠加透明度设置 -->
+                <div class="effect-item" v-if="getThemes().backgroundOverlay.enabled">
+                    <div class="effect-info">
+                        <Text>
+                            <div class="effect-name">叠加透明度</div>
+                            <div class="effect-description">调整叠加层的透明度</div>
+                        </Text>
+                    </div>
+                    <div class="opacity-controls">
+                        <Input 
+                            type="number" 
+                            :modelValue="Math.round(getThemes().backgroundOverlay.opacity * 100)" 
+                            @update:modelValue="handleOverlayOpacityChange"
+                            :min="0"
+                            :max="100"
+                            style="width: 80px; margin-right: 10px;"
+                        />
+                        <Slider 
+                            :minValue="0" 
+                            :maxValue="100" 
+                            :step="1"
+                            :modelValue="getThemes().backgroundOverlay.opacity * 100" 
+                            @update:modelValue="handleOverlayOpacityChange"
+                            style="width: 150px;"
+                        />
                     </div>
                 </div>
             </Card>
@@ -353,5 +477,31 @@ const handleScaleChange = (newScale: number) =>
     flex-direction: column;
     justify-content: center;
     align-items: center;
+}
+
+.blur-controls,
+.opacity-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.color-picker-container {
+    display: flex;
+    align-items: center;
+}
+
+.color-input {
+    width: 50px;
+    height: 35px;
+    border: 2px solid var(--glass-card-border);
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.color-input:hover {
+    border-color: var(--primary-color);
 }
 </style>

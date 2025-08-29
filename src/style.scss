@@ -126,7 +126,7 @@ svg {
     -webkit-tap-highlight-color: transparent;
 
     body {
-        background-image: url('/src/assets/light-background.jpg');
+        background-image: url('/src/assets/light-background.png');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
@@ -163,7 +163,7 @@ svg {
     --button-highlight-border: #{$dark-glass-button-highlight-border};
 
     body {
-        background-image: url('/src/assets/dark-background.jpg');
+        background-image: url('/src/assets/dark-background.png');
     }
 }
 
@@ -197,4 +197,35 @@ quiz-markdown-body> :last-child {
 
 quiz-markdown-body> :first-child {
     margin-top: 0;
+}
+
+/* 背景模糊支持 */
+body.has-background-blur::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: inherit;
+    background-size: inherit;
+    background-position: inherit;
+    background-repeat: inherit;
+    background-attachment: inherit;
+    filter: blur(var(--background-blur));
+    pointer-events: none;
+    z-index: -2;
+}
+
+/* 背景颜色叠加支持 */
+body.has-background-overlay::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--background-overlay);
+    pointer-events: none;
+    z-index: -1;
 }

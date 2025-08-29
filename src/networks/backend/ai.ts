@@ -8,7 +8,7 @@ import { useUser } from "../../stores/user";
 import { checkResponse } from "../utils/checkResponse";
 import { connectUrl, sendRequest, sseRequest, Target } from "../utils/sendRequest";
 
-export type ToolDataInfoType = 'MARKDOWN' | 'URL' | 'TEXT' | 'HTML' | 'FILE' | 'PAGE' | 'IMAGE' | 'MATH';
+export type ToolDataInfoType = 'MARKDOWN' | 'URL' | 'TEXT' | 'HTML' | 'FILE' | 'PAGE' | 'IMAGE' | 'MATH' | 'QUIZ';
 export type AiMessage = {
     content?: Content;
     reasoning_content?: string;
@@ -104,7 +104,7 @@ export async function getChatList(begin: number, count: number): Promise<Slice<C
 
 export async function createChat(section: Section<AnswerType, AnswerType, string> | null, content: string, images: string[], model: Model)
 {
-    return checkResponse<Chat>(sendRequest({
+    return checkResponse<ChatId>(sendRequest({
         target: Target.BACKEND,
         url: chatUrl,
         method: 'POST',
@@ -117,9 +117,9 @@ export async function createChat(section: Section<AnswerType, AnswerType, string
     }));
 }
 
-export async function sendContent(data: {chatId: number, content: string, images: string[], regenerate: boolean, model: Model, hash: string}): Promise<string | null>
+export async function sendContent(data: {chatId: number, content: string, images: string[], regenerate: boolean, model: Model, hash: string}): Promise<{hash: string, content: Content} | null>
 {
-    return checkResponse<string | null>(
+    return checkResponse<{hash: string, content: Content} | null>(
         sendRequest({
             target: Target.BACKEND,
             url: chatUrl,

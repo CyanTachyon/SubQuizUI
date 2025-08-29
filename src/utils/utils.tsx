@@ -167,6 +167,7 @@ export function getOptionName(index: number)
 
 export function richtextToString(richtext: any)
 {
+    if (!richtext) return '';
     if (typeof richtext !== 'object') return '' + richtext;
     if (Array.isArray(richtext)) return richtext.map(richtextToString).join('');
     if (richtext.text) return richtext.text;

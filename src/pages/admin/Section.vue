@@ -547,7 +547,7 @@ function deleteImage(name: string)
     </div>
     <template v-else>
         <Button @click="preview = false">返回编辑</Button>
-        <QuizView :quiz="{ sections: [section], correct: null }" :editable="false" />
+        <QuizView :model-value="{ sections: [section], correct: null }" :editable="false" />
     </template>
 </template>
 

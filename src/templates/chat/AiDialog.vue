@@ -157,6 +157,7 @@ const onMessage = (message: AiMessage & { finished: boolean, banned: boolean }) 
             }
         ]
         info.value.showAnswering = false;
+        info.value.banned = true;
     }
     else if (message.finished) 
     {
@@ -198,6 +199,7 @@ const init = async () =>
             histories: [],
             showAnswering: false,
             inAnswering: false,
+            banned: false,
         };
     }
 
@@ -300,6 +302,11 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
 {
     if (event && (event.shiftKey || isMobileDevice())) return;
     event?.preventDefault();
+    if (info.value.banned) 
+    {
+        useNotification().addError('对不起，该聊天无法继续');
+        return;
+    }
 
     // 取消回答
     if (info.value.showAnswering && event === null)
@@ -341,11 +348,7 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
     
     if (!info.value.id)
     {
-        const { id, user, hash } = await createChat(info.value.section, input.value, inputImagesWithoutPrefix.value, model.value)
-        info.value.id = id;
-        info.value.hash = hash;
-        info.value.histories = [];
-        info.value.user = user;
+        const id = await createChat(info.value.section, input.value, inputImagesWithoutPrefix.value, model.value)
         props.onNewChat(id);
         return;
     }
@@ -454,7 +457,7 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
             inputImages.value = [];
         }
 
-        const newHash = await sendContent({
+        const newInfo = await sendContent({
             chatId: info.value.id, 
             content: content,
             images: images,
@@ -462,9 +465,15 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
             hash: info.value.hash,
             regenerate: regenerate,
         })
-        if (newHash) 
+        if (newInfo) 
         {
-            info.value.hash = newHash;
+            info.value.hash = newInfo.hash;
+            info.value.histories[info.value.histories.length - 1].messages = [
+                {
+                    content: newInfo.content,
+                    showReasoning: false,
+                }
+            ]
         } 
         else 
         {
@@ -507,7 +516,7 @@ function openSection()
 {
     if (!info.value.section) return;
     const close = dialog(<div style="overflow: auto; scrollbar-width: none; height: 85vh; width: 85vw;">
-    <QuizView editable={false} quiz={({sections: [info.value.section], correct: null})}></QuizView>
+    <QuizView editable={false} modelValue={({sections: [info.value.section], correct: null})}></QuizView>
     </div>, () => {close();});
 }
 
@@ -698,7 +707,7 @@ function confirmEditLastMessage(event?: KeyboardEvent)
                 </div>
             </div>
             
-            <Input v-if="editingLastMessage" v-model="editContent" placeholder="编辑消息内容" :area="true" @keydown.enter="confirmEditLastMessage()" @keydown.esc="cancelEditLastMessage()" class="edit-input"/>
+            <Input v-if="editingLastMessage" v-model="editContent" placeholder="编辑消息内容" :area="true" @keydown.enter="confirmEditLastMessage" @keydown.esc="cancelEditLastMessage()" class="edit-input"/>
             <Input v-else v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
             
             <Text class="bottom-bar">

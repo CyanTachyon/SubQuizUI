@@ -11,4 +11,5 @@ export interface Chat
     section: Section<AnswerType, AnswerType, string> | null;
     histories: AiHistory[];
     hash: string;
+    banned: boolean;
 }

@@ -221,20 +221,20 @@ function openSection(section: SectionId)
         <Button @click="preview = false;" style="margin: 13px;">
             返回编辑
         </Button>
-        <QuizView :quiz="{ correct: null, sections: exam.sections.map(section => getSectionInfo(section)) }"
+        <QuizView :model-value="{ correct: null, sections: exam.sections.map(section => getSectionInfo(section)) }"
             :editable="false" />
     </div>
     <div v-else-if="showSection" class="section-view">
         <Button @click="showSection = 0;" style="margin: 13px;">
             返回考试
         </Button>
-        <QuizView :quiz="{ correct: null, sections: [getSectionInfo(showSection)] }" :editable="false" />
+        <QuizView :model-value="{ correct: null, sections: [getSectionInfo(showSection)] }" :editable="false" />
     </div>
     <div v-else-if="showStudentExam">
         <Button @click="showStudentExam = '';" style="margin: 13px;">
             返回考试
         </Button>
-        <QuizView :quiz="getStudentExam(showStudentExam)" :editable="false" />
+        <QuizView :model-value="getStudentExam(showStudentExam)" :editable="false" />
     </div>
     <Split v-else-if="edit" class="split" min-right-width="433px" min-left-width="623px">
         <template #left>

@@ -45,7 +45,6 @@ dialog {
     border: none;
     border-radius: 0.5rem;
     --transition: 'static';
-    -webkit-user-select: none;
     user-select: none;
     display: flex;
     max-width: 100%;
@@ -74,7 +73,5 @@ dialog::backdrop {
     max-width: 85%;
     max-height: 85%;
     display: flex;
-    width: fit-content;
-    height: fit-content;
 }
 </style>

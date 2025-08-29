@@ -10,7 +10,7 @@ import CloseCircleOutlineIcon from "vue-material-design-icons/CloseCircleOutline
 import CloseIcon from "vue-material-design-icons/Close.vue";
 import CheckIcon from "vue-material-design-icons/Check.vue";
 import { useNotification } from "../stores/notification.ts";
-import { getOptionName } from "../utils/utils";
+import { getOptionName, richtextToString } from "../utils/utils";
 import { useRouter } from "vue-router";
 import ResizableWrapper from "../components/ResizableWrapper.vue";
 import { ref } from "vue";
@@ -19,18 +19,18 @@ import PinOffOutline from "vue-material-design-icons/PinOffOutline.vue";
 
 const router = useRouter();
 
-const { quiz, editable, ai, submit } = defineProps<{ 
-    quiz: Pick<Quiz<any, any, any>, 'sections' | 'correct'>, 
+const { editable, ai, submit } = defineProps<{  
     editable: boolean, 
     ai?: boolean, 
     submit?: () => void; 
 }>();
 
+const quiz = defineModel<Pick<Quiz<any, any, any>, 'sections' | 'correct'>>();
 
 function onOptionClick(sectionIndex: number, questionIndex: number, optionIndex: number)
 {
     if (!editable) return;
-    let q = quiz.sections[sectionIndex].questions[questionIndex];
+    let q = quiz.value.sections[sectionIndex].questions[questionIndex];
     if (q.type === 'single')
     {
         q.userAnswer = optionIndex;
@@ -63,24 +63,24 @@ function fillAnswer(sectionIndex: number, questionIndex: number, answer: string)
     if (!editable) return;
     if (answer.trim() === '')
     {
-        quiz.sections[sectionIndex].questions[questionIndex].userAnswer = null;
+        quiz.value.sections[sectionIndex].questions[questionIndex].userAnswer = null;
     }
     else
     {
-        quiz.sections[sectionIndex].questions[questionIndex].userAnswer = answer;
+        quiz.value.sections[sectionIndex].questions[questionIndex].userAnswer = answer;
     }
 }
 
 function rightAnswer(sectionIndex: number, questionIndex: number)
 {
-    return quiz.correct?.[sectionIndex]?.[questionIndex];
+    return quiz.value.correct?.[sectionIndex]?.[questionIndex];
 }
 
 function trySubmit()
 {
     if (!submit) return;
     // 检查是否所有题目都已作答
-    for (const [index, section] of quiz.sections.entries())
+    for (const [index, section] of quiz.value.sections.entries())
     {
         for (const [questionIndex, question] of section.questions.entries())
         {
@@ -113,7 +113,7 @@ function trySubmit()
 function gotoAI(sectionIndex: number)
 {
     if (!ai) return;
-    const section = quiz.sections[sectionIndex];
+    const section = quiz.value.sections[sectionIndex];
     if (section.questions.length === 0)
     {
         useNotification().add({
@@ -135,7 +135,6 @@ const pin = ref<number[]>([]);
 
 function togglePin(sectionIndex: number) 
 {
-    if (!editable) return;
     const currentIndex = pin.value.indexOf(sectionIndex);
     if (currentIndex === -1) pin.value.push(sectionIndex);
     else pin.value.splice(currentIndex, 1);
@@ -145,7 +144,7 @@ function togglePin(sectionIndex: number)
 
 <template>
     <Card v-for="(section, sectionIndex) in quiz.sections" class="section" :key="sectionIndex" :class="{'pinned': pin.includes(sectionIndex)}">
-        <div v-if="section.description" style="display: inline;" class="wrapper1">
+        <div v-if="richtextToString(section.description)" style="display: inline;" class="wrapper1">
             <div class="pin-icon" @click="togglePin(sectionIndex)">
                 <PinOutline v-if="!pin.includes(sectionIndex)"/>
                 <PinOffOutline v-else/>
@@ -247,7 +246,7 @@ function togglePin(sectionIndex: number)
             <Button v-if="ai" class="ai" @click="gotoAI(sectionIndex)">AI</Button>
         </div>
     </Card>
-    <Button v-if="editable" class="submit" @click="trySubmit">Submit</Button>
+    <Button v-if="editable && submit" class="submit" @click="trySubmit">Submit</Button>
 </template>
 
 <style scoped lang="scss">

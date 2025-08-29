@@ -8,6 +8,8 @@ import html2canvas from 'html2canvas';
 import { useNotification } from '../../stores/notification';
 import Desmos from 'desmos';
 import type { ChatId } from '../../dataClasses/Ids';
+import QuizView from '../QuizView.vue';
+import type { Quiz } from '../../dataClasses/Quiz';
 
 const { chat, type, path, close: close_, dataset, customInfo } = defineProps<{
     chat: ChatId,
@@ -222,6 +224,70 @@ const downloadImage = () =>
     });
 }
 
+const quizShowAnswer = ref(false);
+const quiz = ref<Pick<Quiz<any, any, any>, 'sections' | 'correct'>>();
+
+watch(() => info.value, () =>
+{
+    if (info.value.type !== 'QUIZ') return;
+    quiz.value = {
+        sections: JSON.parse(info.value.value),
+        correct: null,
+    };
+    updateQuiz();
+}, { immediate: true });
+
+function switchQuizShowAnswer()
+{
+    quizShowAnswer.value = !quizShowAnswer.value;
+    updateQuiz();
+}
+
+function updateQuiz()
+{
+    if (quizShowAnswer.value)
+    {
+        const rawSections = JSON.parse(info.value.value);
+        quiz.value = {
+            sections: quiz.value!.sections.map((section, sIndex) => 
+            {
+                return {
+                    ...section,
+                    questions: section.questions.map((question, qIndex) => 
+                    {
+                        return {
+                            ...question,
+                            answer: rawSections[sIndex].questions[qIndex].answer,
+                            analysis: rawSections[sIndex].questions[qIndex].analysis,
+                        };
+                    }),
+                };
+            }),
+            correct: null,
+        };
+    }
+    else 
+    {
+        quiz.value = {
+            sections: quiz.value!.sections.map((section) => 
+            {
+                return {
+                    ...section,
+                    questions: section.questions.map((question) => 
+                    {
+                        return {
+                            ...question,
+                            answer: null,
+                            analysis: null,
+                        };
+                    }),
+                };
+            }),
+            correct: null,
+        };
+    }
+}
+
 </script>
 <template>
     <div :class="{'container': !inline, 'container-inline': !!inline}">
@@ -269,6 +335,12 @@ const downloadImage = () =>
                 <div ref="desmos" style="width: 100%; height: 100%;"></div>
                 <div class="resize-handle" @mousedown="startResize" @touchstart="startResize" :class="{ 'dragging': isResizing }"></div>
             </div>
+        </div>
+        <div v-else-if="info.type === 'QUIZ'" style="width: 100%;">
+            <QuizView v-model="quiz" :editable="true" :ai="false"/>
+            <Button @click="switchQuizShowAnswer" :down="quizShowAnswer" style="margin-left: auto; margin-right: auto;">
+                {{ quizShowAnswer ? '隐藏答案' : '显示答案' }}
+            </Button>
         </div>
         <div v-else-if="info.value">
             {{ info.value }}
