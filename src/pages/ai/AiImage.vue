@@ -8,6 +8,9 @@ import { useNotification } from '../../stores/notification';
 import ArrowLeftIcon from 'vue-material-design-icons/ArrowLeft.vue';
 import ContentCopyIcon from 'vue-material-design-icons/ContentCopy.vue';
 import { copyToClipboard, pickImage } from '../../utils/utils';
+
+document.title = 'AI识图 - SubQuiz';
+
 const img = ref('');
 const uploadingImage = ref(false);
 const res = ref('');

@@ -45,6 +45,8 @@ import { useNotification } from "../../stores/notification.ts";
 import ShieldCrownOutlineIcon from "vue-material-design-icons/ShieldCrownOutline.vue";
 import Split from "../../templates/Split.vue";
 
+document.title = '备课组 - SubQuiz';
+
 const { onClickSection, group: rawGroup } = defineProps<{ onClickSection?: (SectionId) => void, group?: PreparationGroupId }>();
 
 const user = useUser();
@@ -55,8 +57,6 @@ const group = rawGroup || Number(route.params.id) as PreparationGroupId;
 const groupInfo = ref(void 0 as undefined | null | PreparationGroup);
 const knowledgePoints = ref(void 0 as KnowledgePointTree[] | undefined);
 const hasPermission = ref(undefined as undefined | boolean);
-
-document.title = '备课组 - SubQuiz';
 
 const findKp = (id: KnowledgePointId, kps: KnowledgePointTree[] = knowledgePoints.value ?? []): KnowledgePointTree | null => {
     if (!id) return null;

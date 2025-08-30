@@ -14,12 +14,12 @@ import {useUser} from "../../stores/user.ts";
 import Text from "../../components/Text.vue";
 import Spacer from "../../components/Spacer.vue";
 
+document.title = '学科列表 - SubQuiz';
+
 const route = useRoute();
 const router = useRouter();
 const page = ref(Number(route.query.page) || 1);
 const count = 30;
-
-document.title = '学科列表 - SubQuiz';
 
 function getStart()
 {

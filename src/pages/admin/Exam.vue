@@ -30,6 +30,8 @@ import type { Quiz } from '../../dataClasses/Quiz';
 import { avatarUrl } from '../../networks/sso/avatar';
 import Image from '../../components/Image.vue';
 
+document.title = '编辑考试 - SubQuiz';
+
 const route = useRoute();
 
 const examId = Number(route.params.id);

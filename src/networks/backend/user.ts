@@ -1,6 +1,7 @@
 import type {BasicUserInfo, UserInfo} from "../../dataClasses/User.ts";
 import {sendRequest, Target} from "../utils/sendRequest.ts";
 import {checkResponse} from "../utils/checkResponse.ts";
+import type { UserId } from "../../dataClasses/Ids.ts";
 
 const userInfoUrl = '/user/info/{uid}'
 
@@ -35,5 +36,17 @@ export async function getAuthorInfo(): Promise<Author>
         url: authorInfoUrl,
         method: "GET",
         withToken: false,
+    }))
+}
+
+const createCustomUserUrl = '/user/createCustomUser';
+export async function createCustomUser(name: string, password: string): Promise<UserId>
+{
+    return checkResponse(sendRequest({
+        target: Target.BACKEND,
+        url: createCustomUserUrl,
+        method: 'POST',
+        withToken: false,
+        data: {name, password},
     }))
 }

@@ -1,36 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Button from "../components/Button.vue";
-import { useRouter, useRoute } from "vue-router";
+import { useRouter } from "vue-router";
 import { useNotification } from "../stores/notification.ts";
-import type { SubjectId } from '../dataClasses/Ids.ts';
-import Loading from '../components/Loading.vue';
 import Card from '../components/Card.vue';
 import Input from '../components/Input.vue';
-import { getSubject } from '../networks/backend/subject.ts';
 import Slider from '../components/Slider.vue';
-import NotFound from './NotFound.vue';
-
-const router = useRouter();
-const route = useRoute();
-const subject = Number(route.query.subject) as SubjectId;
-const notifications = useNotification();
-const subjectName = ref('');
-const notFound = ref(false);
-const count = ref(10);
+import LoginVariant from 'vue-material-design-icons/LoginVariant.vue';
+import { useUser } from '../stores/user.ts';
 
 document.title = 'SubQuiz';
 
-if (subject) getSubject(subject).then(value =>
-{
-    subjectName.value = value.name;
-}, 
-() =>
-{
-    subjectName.value = '';
-    notFound.value = true;
-});
-else subjectName.value = '不限制';
+const router = useRouter();
+const notifications = useNotification();
+const count = ref(10);
 
 function startQuiz()
 {
@@ -49,7 +32,7 @@ function startQuiz()
         notifications.addError('题目数量必须为整数');
         return;
     }
-    router.push(`/quiz?count=${count.value}` + (subject ? `&subject=${subject}` : ''));
+    router.push(`/quiz?count=${count.value}`);
 }
 
 function gotoSubject()
@@ -60,19 +43,22 @@ function gotoSubject()
 </script>
 
 <template>
-    <NotFound v-if="notFound"/>
-    <Loading v-else-if="subject && subjectName === ''"/>
-    <quiz-main-container v-else>
-        <Card :max-tilt="5">
+    <quiz-main-container>
+        <Button v-if="!useUser().getToken()" class="custom-login" @click="router.push('/custom-login')">
+            <LoginVariant />
+            <span>自定义登陆</span>
+        </Button>
+        <Card :max-tilt="5" class="main">
             <p class="main-title">开始新的测试</p>
             <p class="title">学科</p>
-            <Input :area="false" placeholder="Subject Name" type="text" v-model="subjectName" readonly
-                @click="gotoSubject" />
+            <Input :area="false" placeholder="Subject Name" type="text" :model-value="'未指定'" readonly @click="gotoSubject" />
             <p class="title">题目数量</p>
             <Input :area="false" placeholder="Section Count" type="number" v-model="count" />
             <Slider :min-value="0" :max-value="50" :step="1" v-model="count"/>
             <quiz-main-button-container>
-                <Button @click="startQuiz">开始测试</Button>
+                <Button @click="startQuiz">
+                    开始测试
+                </Button>
             </quiz-main-button-container>
         </Card>
     </quiz-main-container>
@@ -87,6 +73,7 @@ quiz-main-container {
     width: 100%;
     justify-content: center;
     align-items: center;
+    flex-direction: column;
 }
 
 .title {
@@ -109,5 +96,13 @@ quiz-main-button-container {
     display: flex;
     justify-content: center;
     margin-top: 20px;
+}
+
+.main {
+    margin: auto;
+}
+
+.custom-login {
+    margin-left: auto;
 }
 </style>

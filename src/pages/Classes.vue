@@ -18,6 +18,8 @@ import { isAdmin } from "../dataClasses/Permission";
 import { useUser } from "../stores/user";
 import { dialog, inputDialog } from "../utils/utils";
 
+document.title = '班级 - SubQuiz';
+
 const router = useRouter();
 let open = ref(true);
 let sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');

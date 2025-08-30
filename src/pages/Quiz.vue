@@ -12,6 +12,8 @@ import { useNotification } from "../stores/notification.ts";
 import type { AnswerType } from "../dataClasses/Question.ts";
 import type { KnowledgePointId } from "../dataClasses/Ids.ts";
 
+document.title = '测试 - SubQuiz';
+
 const notificationStore = useNotification();
 const data = ref<null | Quiz<null, AnswerType | null, null>>(null);
 const route = useRoute();
@@ -26,8 +28,6 @@ const kps: (null | (KnowledgePointId[])) = (() => {
     return kps1;
 })();
 const exam = Number(route.query.exam);
-
-document.title = '测试 - SubQuiz';
 
 const setData = (quiz: Quiz<null, AnswerType | null, null>) =>
 {

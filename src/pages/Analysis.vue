@@ -9,12 +9,12 @@ import NotFound from "./NotFound.vue";
 import type { AnswerType } from "../dataClasses/Question.ts";
 import { useNotification } from "../stores/notification.ts";
 
+document.title = '答题分析 - SubQuiz';
+
 const route = useRoute();
 const id = Number(route.params.id);
 const data = ref<null | Quiz<AnswerType, AnswerType, string>>(null);
 const notFound = ref(false);
-
-document.title = '答题分析 - SubQuiz';
 
 const notificationStore = useNotification();
 let quit = false;

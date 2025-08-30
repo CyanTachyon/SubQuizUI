@@ -3,6 +3,8 @@ import Card from '../components/Card.vue';
 import Spacer from "../components/Spacer.vue";
 import Text from '../components/Text.vue';
 
+document.title = '更新日志 - SubQuiz';
+
 interface UpdateInfo
 {
     date?: string;

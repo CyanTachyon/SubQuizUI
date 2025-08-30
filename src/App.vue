@@ -41,6 +41,7 @@ import Sidebar from "./templates/sidebar/Sidebar.vue";
 import DownloadNewVersion from "./pages/_app/DownloadNewVersion.vue";
 import { CheckUpdateReason, checkUpdate, versionInfo } from "./utils/utils";
 import { Capacitor } from "@capacitor/core";
+import { onMounted } from "vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -71,6 +72,12 @@ router.afterEach((_, __, failure) =>
     });
 });
 checkUpdate(CheckUpdateReason.NONE);
+
+onMounted(() =>
+{
+    const splashScreen = document.querySelector('quiz-splash-screen') as any;
+    splashScreen.remove();
+});
 </script>
 <style lang="scss">
 body {

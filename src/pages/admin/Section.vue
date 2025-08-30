@@ -32,14 +32,14 @@ import { connectUrl, Target } from "../../networks/utils/sendRequest.ts";
 import { uploadSectionImage } from "../../utils/sectionImage.ts";
 import Text from "../../components/Text.vue";
 
+document.title = '编辑题目 - SubQuiz';
+
 const route = useRoute();
 const router = useRouter();
 const section = ref(null as Section<AnswerType, null, any> | null);
 const notFound = ref(false);
 const sectionTypeInfo = ref(null as null | SectionType);
 const kpInfo = ref(null as null | KnowledgePoint);
-
-document.title = '编辑题目 - SubQuiz';
 
 (async () => 
 {

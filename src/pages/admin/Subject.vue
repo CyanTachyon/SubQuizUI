@@ -15,14 +15,14 @@ import Spacer from "../../components/Spacer.vue";
 import type { PreparationGroup } from "../../dataClasses/PreparationGroup.ts";
 import { getPreparationGroupList } from "../../networks/backend/preparationGroup.ts";
 
+document.title = '学科信息 - SubQuiz';
+
 const user = useUser();
 const route = useRoute();
 const router = useRouter();
 const subject = Number(route.params.id) as SubjectId;
 const subjectInfo = ref(void 0 as undefined | null | Subject);
 const groups = ref(void 0 as PreparationGroup[] | undefined);
-
-document.title = '学科列表 - SubQuiz';
 
 (async () => {
 

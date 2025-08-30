@@ -13,12 +13,12 @@ import Text from "../components/Text.vue";
 import Spacer from "../components/Spacer.vue";
 import type { AnswerType } from "../dataClasses/Question.ts";
 
+document.title = '答题记录 - SubQuiz';
+
 const route = useRoute();
 const router = useRouter();
 const page = ref(Number(route.query.page) || 1);
 const count = 30;
-
-document.title = '答题记录 - SubQuiz';
 
 function getStart()
 {

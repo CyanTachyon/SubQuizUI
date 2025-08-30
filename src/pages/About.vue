@@ -7,7 +7,10 @@ import { safeRedirect } from "../utils/redirect.ts";
 import { type Author, getAuthorInfo } from "../networks/backend/user.ts";
 import { ref } from "vue";
 import ChevronRightIcon from "vue-material-design-icons/ChevronRight.vue";
-let router = useRouter();
+
+document.title = '关于 - SubQuiz';
+
+const router = useRouter();
 
 const author = ref({
     name: 'unknown',

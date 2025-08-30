@@ -13,6 +13,8 @@ import SelectMenu from '../../components/SelectMenu.vue';
 import SwapHorizontalIcon from 'vue-material-design-icons/SwapHorizontal.vue';
 import { copyToClipboard } from '../../utils/utils';
 
+document.title = 'AI翻译 - SubQuiz';
+
 const input = ref('');
 const output = ref('');
 const isOutput = ref(false);

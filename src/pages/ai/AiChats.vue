@@ -15,6 +15,8 @@ import Text from "../../components/Text.vue";
 import { useRoute } from "vue-router";
 import { replaceUrl } from "../../utils/utils";
 
+document.title = 'AI答疑 - SubQuiz';
+
 const open = ref(true);
 const route = useRoute();
 const sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');

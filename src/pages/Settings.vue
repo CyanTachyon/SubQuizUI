@@ -17,6 +17,8 @@ import currentVersion from '../../public/android_latest.json';
 import { checkUpdate, CheckUpdateReason } from '../utils/utils';
 import { storageGet, storageSet } from '../utils/storage';
 
+document.title = '设置 - SubQuiz';
+
 function isBackdropFilterSupported()
 {
     if (typeof CSS !== 'undefined' && CSS.supports)

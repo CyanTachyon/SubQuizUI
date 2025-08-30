@@ -3,12 +3,13 @@ import { useRoute, useRouter } from "vue-router";
 import { login } from "../networks/backend/oauth.ts";
 import Loading from "../components/Loading.vue";
 import { useUser } from "../stores/user.ts";
+
+document.title = '登录 - SubQuiz';
+
 let route = useRoute();
 let router = useRouter();
 let code = route.query.code as (string | undefined);
 let from = route.query.from as (string | undefined);
-
-document.title = '登录 - SubQuiz';
 
 function gotoFrom()
 {

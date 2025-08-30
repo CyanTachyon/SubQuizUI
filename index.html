@@ -5,9 +5,38 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/src/assets/icon_round.svg" />
   <title>SubQuiz</title>
+
+  <style>
+    quiz-splash-screen {
+        background-color: white;
+        width: 100vw;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    quiz-splash-screen > .logo {
+        width: 100px;
+        height: 100px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        quiz-splash-screen {
+            background-color: black;
+        }
+    }
+    
+  </style>
 </head>
 
 <body>
+  <quiz-splash-screen>
+    <img class="logo" src="/src/assets/icon_round.svg" />
+  </quiz-splash-screen>
   <quiz-app class="notranslate"/>
   <script type="module" src="/src/main.ts"></script>
   <noscript>

@@ -3,6 +3,8 @@ import { useRouter } from "vue-router";
 import Card from "../../components/Card.vue";
 import { ChatBubbleLeftRightIcon, LanguageIcon, PhotoIcon } from "@heroicons/vue/16/solid";
 
+document.title = 'AI工具箱 - SubQuiz';
+
 const router = useRouter();
 </script>
 
