@@ -115,7 +115,7 @@ const onMessage = (message: AiMessage & { finished: boolean, banned: boolean }) 
         if (last.messages.length) last.messages[last.messages.length - 1].showReasoning = false;
         last.messages.push({
             ...message,
-            showReasoning: false,
+            showReasoning: true,
         });
         if (shouldAutoScroll.value) 
         {
@@ -273,7 +273,8 @@ const models = ref<ModelInfo[]>([
     }
 ]);
 
-(async () => {
+(async () =>
+{
     models.value = await getAiModels();
     const savedModel = await storageGet('quiz-ai-model') as Model;
     if (models.value.some(m => m.model === savedModel))
@@ -670,24 +671,35 @@ function confirmEditLastMessage(event?: KeyboardEvent)
                 <div class="message-box" :class="item.role" v-for="(item, index) in info.histories" :key="index" >
                     <Text class="message" :class="[item.role, index === info.histories.length - 1 && info.showAnswering ? 'answering' : 'done']">
                         <template v-for="msg in item.messages">
-                            <div class="reasoning" v-if="msg.reasoning_content && msg.reasoning_content.trim()">
-                                <Button class="header" style="cursor: pointer;" @click="msg.showReasoning = !msg.showReasoning">
-                                    <ChevronDownIcon v-if="msg.showReasoning" class="icon" />
-                                    <ChevronRightIcon v-else class="icon" />
-                                    思考过程
+                            
+                            <template v-if="msg.tool_call">
+                                <Button class="header" :disabled="!msg.content" @click="msg.showReasoning = !msg.showReasoning">
+                                    <ToolsIcon class="icon" :size="20" style="margin-right: 4px;"/>
+                                    {{ msg.tool_call }}
                                 </Button>
-                                <Text v-markdown="{ markdown: true, content: msg.reasoning_content, section: info.section?.id, parseHtml }" class="reasoning-content" v-if="msg.showReasoning" />
-                            </div>
-                            <template v-if="msg.content && (typeof msg.content !== 'string') && !msg.type" v-for="c in msg.content">
-                                <Text class="content" v-if="c.type === 'text' && c.text.trim()" v-markdown="{ markdown: item.role === 'assistant', content: c.text, section: info.section?.id, parseHtml }" />
-                                <ToolDataShower v-else-if="c.type === 'image_url'" :chat="info.id" :inline="true" :custom-info="{ type: 'IMAGE', value: c.image_url.url }" />
+                                <Text v-if="msg.content && msg.showReasoning" class="tool-call-parm" v-markdown="{ markdown: true, content: msg.content, section: info.section?.id }"/>
                             </template>
-                            <Text class="content" v-else-if="msg.content && (msg.content as string).trim() && !msg.type" v-markdown="{ markdown: item.role === 'assistant', content: msg.content, section: info.section?.id, parseHtml }" />
-                            <Button class="header" v-if="msg.tool_call" disabled>
-                                <ToolsIcon class="icon" :size="20" style="margin-right: 4px;"/>
-                                {{ msg.tool_call }}
-                            </Button>
-                            <ToolDataShower v-if="msg.type" :chat="info.id" :inline="true" :custom-info="{ type: msg.type, value: getContentText(msg.content) }"/>
+
+                            <template v-else-if="msg.type">
+                                <ToolDataShower :chat="info.id" :inline="true" :custom-info="{ type: msg.type, value: getContentText(msg.content) }"/>
+                            </template>
+
+                            <template v-else>
+                                <div class="reasoning" v-if="msg.reasoning_content && msg.reasoning_content.trim()">
+                                    <Button class="header" style="cursor: pointer;" @click="msg.showReasoning = !msg.showReasoning">
+                                        <ChevronDownIcon v-if="msg.showReasoning" class="icon" />
+                                        <ChevronRightIcon v-else class="icon" />
+                                        思考过程
+                                    </Button>
+                                    <Text v-markdown="{ markdown: true, content: msg.reasoning_content, section: info.section?.id, parseHtml }" class="reasoning-content" v-if="msg.showReasoning" />
+                                </div>
+                                <template v-if="msg.content && (typeof msg.content !== 'string')" v-for="c in msg.content">
+                                    <Text class="content" v-if="c.type === 'text' && c.text.trim()" v-markdown="{ markdown: item.role === 'assistant', content: c.text, section: info.section?.id, parseHtml }" />
+                                    <ToolDataShower v-else-if="c.type === 'image_url'" :chat="info.id" :inline="true" :custom-info="{ type: 'IMAGE', value: c.image_url.url }" />
+                                </template>
+                                <Text class="content" v-else-if="msg.content && (msg.content as string).trim()" v-markdown="{ markdown: item.role === 'assistant', content: msg.content, section: info.section?.id, parseHtml }" />
+                            </template>
+                            
                         </template>
                         <div class="loading-icon" style="margin: 0 10px;" v-if="index === info.histories.length - 1 && info.showAnswering" :key="index">
                             <LoadingIcon />
@@ -858,9 +870,29 @@ function confirmEditLastMessage(event?: KeyboardEvent)
                 user-select: text;
             }
         }
+
         .content {
             -webkit-user-select: text;
             user-select: text;
+        }
+
+        .tool-call-parm {
+            position: relative;
+            &::before {
+                content: '';
+                border-left: gray 3px solid;
+                position: absolute;
+                left: -10px;
+                top: 0;
+                bottom: 0;
+            }
+            margin-left: 13px;
+            width: fit-content;
+            -webkit-user-select: text;
+            user-select: text;
+            border-radius: 0.75rem;
+            padding: 0.5rem;
+            background-color: rgba(0,0,0,0.15);
         }
     }
 }

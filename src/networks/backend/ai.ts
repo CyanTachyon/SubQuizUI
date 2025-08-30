@@ -258,7 +258,7 @@ export async function translateSSE(
         target: Target.BACKEND,
         url: translateSSEUrl,
         method: 'POST',
-        data: { lang0, lang1, twoWay, text },
+        data: { lang0, lang1, twoWay, data: text },
     }, (chunk) =>
     {
         const { event, data } = chunk;
@@ -271,6 +271,22 @@ export async function translateSSE(
             useNotification().addError(`Error parsing AI message`);
         }
     });
+}
+
+const translateImageUrl = '/ai/translateImage';
+export async function translateImage(
+    image: string,
+    lang0: string,
+    lang1: string,
+    twoWay: boolean,
+)
+{
+    return (await checkResponse<{data: string}>(sendRequest({
+        target: Target.BACKEND,
+        url: translateImageUrl,
+        method: 'POST',
+        data: { lang0, lang1, twoWay, data: image },
+    }))).data;
 }
 
 const imageToTextUrl = '/ai/imageToText';
