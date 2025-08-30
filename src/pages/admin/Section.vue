@@ -480,6 +480,7 @@ function deleteImage(name: string)
                 <template v-else-if="question.type === 'fill' || question.type === 'essay'">
                     <div class="title">
                         答案/评标
+                        <SelectMenu :options="contentTypes" v-model="question.answer.type"  class="content-type"/>
                         <span title="简答题和填空题将由AI判卷，因此请尽可能详细描述评分标准，以提高判卷的准确性。">
                             <HelpCircleOutlineIcon />
                         </span>
@@ -491,7 +492,10 @@ function deleteImage(name: string)
                     </div>
                 </template>
 
-                <p class="title">解析</p>
+                <div class="title" style="margin-left: 20px; margin-bottom: -10px;">
+                    解析
+                    <SelectMenu :options="contentTypes" v-model="question.analysis.type"  class="content-type"/>
+                </div>
                 <ResizableWrapper style="max-width: 100%;" height-resizable width-resizable>
                     <Input area placeholder="Analysis" type="text" v-model="question.analysis.content" class="analysis-input" @focus="onFocus" @focus-out="onFocusOut"/>
                 </ResizableWrapper>
@@ -710,10 +714,10 @@ quiz-small-title {
         align-items: center;
         justify-content: center;
     }
+}
 
-    .content-type {
-        width: 135px;
-    }
+.content-type {
+    width: 135px;
 }
 
 .img-sources {
