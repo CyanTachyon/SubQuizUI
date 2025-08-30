@@ -13,33 +13,6 @@ public class MainActivity extends BridgeActivity
     protected void onCreate(Bundle savedInstanceState) 
     {
         super.onCreate(savedInstanceState);
-//        QbSdk.setDownloadWithoutWifi(true);
-//        QbSdk.initX5Environment(this, new QbSdk.PreInitCallback() {
-//            @Override
-//            public void onCoreInitFinished() {}
-//
-//            @Override
-//            public void onViewInitFinished(boolean success) {
-//                if(success) {
-//                    // 初始化成功后设置代理桥接
-//                    X5CapacitorBridge.setup(getBridge());
-//                }
-//            }
-//        });
-
-        // 获取当前屏幕宽度和高度
-        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        int screenWidth = displayMetrics.widthPixels;
-        int screenHeight = displayMetrics.heightPixels;
-
-        if (screenWidth > 400) 
-        {
-            setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        }
-        else 
-        {
-            setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-        }
 
         // 设置全屏并隐藏导航条
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, 

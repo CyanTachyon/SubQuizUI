@@ -101,7 +101,7 @@ const updateInfo: UpdateInfo[] = ([
             '- 增加了AI聊天界面\n' +
             '- 提供更多AI聊天相关功能\n' 
     },
-     {
+    {
         date: '2025-06-17',
         version: '2.2.1',
         description: '' +
@@ -194,6 +194,13 @@ const updateInfo: UpdateInfo[] = ([
         version: '3.2.0',
         description: '' +
             '- 重构题目格式\n'
+    },
+    {
+        date: '2025-08-30',
+        version: '3.2.3',
+        description: '' +
+            '- 更好的竖屏适配\n' +
+            '- 修复已知问题\n'
     },
     {
         version: 'TODO LIST',

@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import Card from "../../components/Card.vue";
-import { ref, watch } from "vue";
+import { defineComponent, onUnmounted, ref, watch } from "vue";
 import type { Chat } from "../../dataClasses/Chat";
 import { getChatList } from "../../networks/backend/ai";
 import SidebarItem from "../../templates/sidebar/SidebarItem.vue";
@@ -14,12 +14,13 @@ import Button from "../../components/Button.vue";
 import Text from "../../components/Text.vue";
 import { useRoute } from "vue-router";
 import { replaceUrl } from "../../utils/utils";
+import { addSidebar, removeSidebar } from "../../stores/sidebar";
+import MessageTextIcon from "vue-material-design-icons/MessageText.vue";
+import { phone } from "../../main";
 
 document.title = 'AI答疑 - SubQuiz';
 
-const open = ref(true);
 const route = useRoute();
-const sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');
 
 const chats = ref<Chat[]>([]);
 const info = ref(0 as ChatId | Section<AnswerType, AnswerType, string>);
@@ -76,33 +77,56 @@ watch(info, (newInfo) =>
     replaceUrl('/ai/chat', { id: `${newInfo}` });
 });
 
-</script>
-
-<template>
-    <quiz-ai-chats>
-        <Card :class="sidebarClassName" class="sidebar">
+const sidebar = defineComponent({
+    setup() {
+        return () => (
+        <Card class="ai-chat-sidebar">
             <div class="menu-title-box box">
                 <div class="menu-title">Quiz AI</div>
             </div>
 
-            <SidebarItem title="新建对话" :icon="PlusIcon" @click="info = 0" />
+            <SidebarItem title="新建对话" icon={PlusIcon} onClick={() => info.value = 0} />
             <Spacer style="margin-top: 10px; margin-bottom: 10px;" />
-            <Text class="sidebar-empty" v-if="!chats.length">
+            {chats.value.length == 0 && <Text class="sidebar-empty">
                 还没有对话记录
-            </Text>
-            <div class="chats" @scroll="handleScroll" v-else>
-                <Button class="item" v-for="chat in chats" :key="chat.id" @click="info = chat.id">
-                    {{ chat.title }}
-                </Button>
-                <Text v-if="isLoading" class="loading-indicator">
+            </Text>}
+            {chats.value.length > 0 && <div class="chats" onScroll={ handleScroll }>
+                {chats.value.map(chat => (
+                    <Button class="item" key={chat.id} onClick={() => info.value = chat.id}>
+                        { chat.title }
+                    </Button> 
+                ))}
+                {isLoading.value && <Text class="loading-indicator">
                     加载中...
-                </Text>
-                <Text v-if="!hasMore && chats.length > 0" class="no-more-indicator">
+                </Text>}
+                {!hasMore.value && chats.value.length > 0 && <Text class="no-more-indicator">
                     没有更多对话了
-                </Text>
-            </div>
+                </Text>}
+            </div>}
         </Card>
+        )
+    }
+})
 
+watch(phone, (newPhone, oldPhone) => 
+{
+    if (newPhone === oldPhone) return;
+    if (newPhone)
+        addSidebar('ai', MessageTextIcon, sidebar);
+    else
+        removeSidebar('ai');
+}, { immediate: true });
+
+onUnmounted(() => 
+{
+    removeSidebar('ai');
+})
+
+</script>
+
+<template>
+    <quiz-ai-chats>
+        <sidebar v-if="!phone"/>
         <div class="main-content">
             <AiDialog :key="typeof info === 'object' ? info.id : info" :info="info" @newChat="onNewChat"
                 @chatNamed="onChatNamed" />
@@ -110,15 +134,12 @@ watch(info, (newInfo) =>
     </quiz-ai-chats>
 </template>
 
-<style lang="scss" scoped>
-/*** sidebar ***/
-
-.sidebar {
+<style lang="scss">
+.ai-chat-sidebar {
     display: flex;
     flex-direction: column;
     height: calc(100% - 20px);
     margin-bottom: 7px;
-    --sidebar-close-width: 80px;
     --sidebar-open-width: 200px;
 
     .sidebar-empty {
@@ -167,7 +188,57 @@ watch(info, (newInfo) =>
         white-space: nowrap;
         cursor: pointer;
     }
+
+    .box {
+        overflow: hidden;
+        display: flex;
+        height: fit-content;
+    }
+
+    div.menu-title-box {
+        margin-left: -6px;
+        margin-right: -6px;
+        margin-top: -6px;
+        padding: 6px;
+        flex-direction: row-reverse;
+
+        ///
+        min-height: 80px;
+        max-height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .menu-btn {
+            position: relative;
+            height: 48px;
+            width: 50px;
+            margin-left: 5px;
+            margin-right: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding-left: 1.4rem;
+        }
+
+        div.menu-title {
+            min-width: 125px;
+            max-width: 125px;
+            margin-top: auto;
+            margin-bottom: auto;
+            font-size: 25px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
 }
+</style>
+
+<style lang="scss" scoped>
+/*** sidebar ***/
 
 div.main-content {
     width: 100%;
@@ -181,110 +252,5 @@ quiz-ai-chats {
     height: 100%;
     width: 100%;
     display: flex;
-}
-
-@keyframes open-sidebar {
-    from {
-        width: var(--sidebar-close-width);
-        min-width: var(--sidebar-close-width);
-        max-width: var(--sidebar-close-width);
-    }
-
-    to {
-        width: var(--sidebar-open-width);
-        min-width: var(--sidebar-open-width);
-        max-width: var(--sidebar-open-width);
-    }
-}
-
-.sidebar-opened {
-    width: var(--sidebar-open-width);
-    min-width: var(--sidebar-open-width);
-    max-width: var(--sidebar-open-width);
-}
-
-.sidebar-closed {
-    width: var(--sidebar-close-width);
-    min-width: var(--sidebar-close-width);
-    max-width: var(--sidebar-close-width);
-}
-
-.sidebar-open {
-    animation: open-sidebar 0.8s ease-in-out forwards;
-}
-
-.sidebar-close {
-    animation: open-sidebar 0.8s ease-in-out reverse forwards;
-}
-
-div.sidebar-center {
-    flex-grow: 1;
-}
-
-/*** components ***/
-
-.box {
-    overflow: hidden;
-    display: flex;
-    height: fit-content;
-}
-
-div.menu-title-box {
-    margin-left: -6px;
-    margin-right: -6px;
-    margin-top: -6px;
-    padding: 6px;
-    flex-direction: row-reverse;
-
-    ///
-    min-height: 80px;
-    max-height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    .menu-btn {
-        position: relative;
-        height: 48px;
-        width: 50px;
-        margin-left: 5px;
-        margin-right: 5px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        padding-left: 1.4rem;
-    }
-
-    div.menu-title {
-        min-width: 125px;
-        max-width: 125px;
-        margin-top: auto;
-        margin-bottom: auto;
-        font-size: 25px;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-}
-
-/*** chat area ***/
-
-.chat-area {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.empty-state {
-    opacity: 0.5;
-    text-align: center;
-
-    p {
-        font-size: 18px;
-        margin: 0;
-    }
 }
 </style>

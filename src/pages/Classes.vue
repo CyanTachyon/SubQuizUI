@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import Card from "../components/Card.vue";
-import { ref } from "vue";
+import { defineComponent, onUnmounted, ref, watch } from "vue";
 import Spacer from "../components/Spacer.vue";
 import Button from "../components/Button.vue";
 import Text from "../components/Text.vue";
@@ -17,12 +17,13 @@ import { getUserPermissionInGroup } from "../networks/backend/admin";
 import { isAdmin } from "../dataClasses/Permission";
 import { useUser } from "../stores/user";
 import { dialog, inputDialog } from "../utils/utils";
+import { phone } from "../main";
+import { addSidebar, removeSidebar } from "../stores/sidebar";
+import AccountMultipleIcon from "vue-material-design-icons/AccountMultiple.vue";
 
 document.title = '班级 - SubQuiz';
 
 const router = useRouter();
-let open = ref(true);
-let sidebarClassName = ref(open.value ? 'sidebar-opened' : 'sidebar-closed');
 
 const isLoading = ref(false);
 const hasMore = ref(true);
@@ -132,33 +133,56 @@ function createExam()
     );
 }
 
+const sidebar = defineComponent({
+    setup() 
+    {
+        return () => (
+            <Card class="class-sidebar">
+                <div class="menu-title-box box">
+                    <div class="menu-title">我的班级</div>
+                </div>
+
+                <Spacer style="margin-bottom: 10px;" />
+                {classes.value.length && <div class="classes" onScroll={handleScroll}>
+                    {classes.value.map((clazz) => (
+                        <Button class="item" onClick={() => changeClass(clazz)}>
+                            {clazz.name}
+                        </Button>
+                    ))}
+                    {isLoading.value && <Text class="loading-indicator">
+                        加载中...
+                    </Text>}
+                    {!hasMore.value && classes.value.length > 0 && <Text class="no-more-indicator">
+                        没有更多班级了
+                    </Text>}
+                </div>}
+                {classes.value.length === 0 && <Text class="sidebar-empty">
+                    还没有班级
+                </Text>}
+            </Card>
+        )
+    }
+})
+
+watch(phone, (newPhone, oldPhone) => 
+{
+    if (newPhone === oldPhone) return;
+    if (newPhone)
+        addSidebar('class', AccountMultipleIcon, sidebar);
+    else
+        removeSidebar('class');
+}, { immediate: true });
+
+onUnmounted(() => 
+{
+    removeSidebar('class');
+})
+
 </script>
 
 <template>
     <quiz-classes>
-        <Card :class="sidebarClassName" class="sidebar">
-            <div class="menu-title-box box">
-                <div class="menu-title">我的班级</div>
-            </div>
-
-            <Spacer style="margin-bottom: 10px;" />
-            <div v-if="classes.length" class="classes" @scroll="handleScroll">
-                <Button class="item" v-for="clazz in classes" :key="clazz.id" @click="changeClass(clazz)">
-                    {{ clazz.name }}
-                </Button>
-                <Text v-if="isLoading" class="loading-indicator">
-                    加载中...
-                </Text>
-                <Text v-if="!hasMore && classes.length > 0" class="no-more-indicator">
-                    没有更多班级了
-                </Text>
-            </div>
-            <Text class="sidebar-empty" v-else>
-                还没有班级
-            </Text>
-
-        </Card>
-
+        <sidebar v-if="!phone"/>
         <Card class="main-content">
             <template v-if="info && pgName && exams !== null && admin !== null">
                 <Text class="main-title">{{ info.name }}</Text>
@@ -205,11 +229,8 @@ function createExam()
     </quiz-classes>
 </template>
 
-<style lang="scss" scoped>
-
-/*** sidebar ***/
-
-.sidebar {
+<style lang="scss">
+.class-sidebar {
     display: flex;
     flex-direction: column;
     height: calc(100% - 20px);
@@ -263,7 +284,56 @@ function createExam()
         white-space: nowrap;
         cursor: pointer;
     }
+
+    .box {
+        overflow: hidden;
+        display: flex;
+        height: fit-content;
+    }
+
+    div.menu-title-box {
+        margin-left: -6px;
+        margin-right: -6px;
+        margin-top: -6px;
+        padding: 6px;
+        flex-direction: row-reverse;
+
+        ///
+        min-height: 80px;
+        max-height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .menu-btn {
+            position: relative;
+            height: 48px;
+            width: 50px;
+            margin-left: 5px;
+            margin-right: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding-left: 1.4rem;
+        }
+
+        div.menu-title {
+            min-width: 125px;
+            max-width: 125px;
+            margin-top: auto;
+            margin-bottom: auto;
+            font-size: 25px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
 }
+</style>
+
+<style lang="scss" scoped>
 
 .main-content {
     width: 100%;
@@ -401,78 +471,6 @@ quiz-classes {
     height: 100%;
     width: 100%;
     display: flex;
-}
-
-.sidebar-opened {
-    width: var(--sidebar-open-width);
-    min-width: var(--sidebar-open-width);
-    max-width: var(--sidebar-open-width);
-}
-
-.sidebar-closed {
-    width: var(--sidebar-close-width);
-    min-width: var(--sidebar-close-width);
-    max-width: var(--sidebar-close-width);
-}
-
-.sidebar-open {
-    animation: open-sidebar 0.8s ease-in-out forwards;
-}
-
-.sidebar-close {
-    animation: open-sidebar 0.8s ease-in-out reverse forwards;
-}
-
-div.sidebar-center {
-    flex-grow: 1;
-}
-
-/*** components ***/
-
-.box {
-    overflow: hidden;
-    display: flex;
-    height: fit-content;
-}
-
-div.menu-title-box {
-    margin-left: -6px;
-    margin-right: -6px;
-    margin-top: -6px;
-    padding: 6px;
-    flex-direction: row-reverse;
-
-    ///
-    min-height: 80px;
-    max-height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    .menu-btn {
-        position: relative;
-        height: 48px;
-        width: 50px;
-        margin-left: 5px;
-        margin-right: 5px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        padding-left: 1.4rem;
-    }
-
-    div.menu-title {
-        min-width: 125px;
-        max-width: 125px;
-        margin-top: auto;
-        margin-bottom: auto;
-        font-size: 25px;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
 }
 
 /*** class area ***/

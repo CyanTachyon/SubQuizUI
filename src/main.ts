@@ -1,4 +1,4 @@
-import { createApp } from 'vue';
+import { createApp, ref } from 'vue';
 import './style.scss';
 import App from './App.vue';
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
@@ -35,6 +35,7 @@ import { useUser } from './stores/user';
 import { useTheme } from './stores/theme';
 import { storageGet } from './utils/storage';
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
+import debounce from './utils/debounce';
 defineCustomElements(window);
 
 if (Capacitor.getPlatform() === 'web')
@@ -53,7 +54,7 @@ const routes: Readonly<RouteRecordRaw[]> = [
     { path: '/analysis/:id', name: 'Analysis', component: Analysis, meta: { sidebar: true } },
     { path: '/history', name: 'History', component: History, meta: { sidebar: true } },
     { path: '/login', name: 'Login', component: Login },
-    { path: '/custom-login', name: 'CustomLogin', component: CustomLogin },
+    { path: '/custom-login', name: 'CustomLogin', component: CustomLogin, meta: { sidebar: true } },
     { path: '/quiz', name: 'Quiz', component: Quiz, meta: { sidebar: true } },
     { path: '/terminal', name: 'Terminal', component: Terminal, meta: { sidebar: true } },
     { path: '/ai', name: 'AiToolbox', component: AiToolbox, meta: { sidebar: true } },
@@ -101,11 +102,13 @@ CapacitorApp.addListener('appUrlOpen', (data) =>
     }
 });
 
-
-const theme = useTheme();
-theme.initialize();
-const user = useUser();
-user.reload();
+export const phone = ref(true);
+const update = debounce(() =>
+{
+    phone.value = window.innerWidth < window.innerHeight;
+}, 100);
+update();
+window.onresize = update;
 
 let scale = 1;
 export function getScale(): number
@@ -113,24 +116,38 @@ export function getScale(): number
     return scale;
 }
 
-const appEle = (document.querySelector('quiz-app') as any);
-(async () => {
-scale = Number(await storageGet('scale')) || (Capacitor.getPlatform() === 'web' ? 1 : 0.8);
-appEle.style = `
-    transform: scale(${scale});
-    transform-origin: top left;
-    width: ${100 / scale}%;
-    height: ${100 / scale}%;
-    min-width: ${100 / scale}%;
-    min-height: ${100 / scale}%;
-    max-width: ${100 / scale}%;
-    max-height: ${100 / scale}%;
-    overflow: hidden;
-`;
-})();
+(async () =>
+{
 
-createApp(App)
-    .use(router)
-    .directive('markdown', vMarkdown)
-    .directive('section-content', vSectionContent)
-    .mount('quiz-app');
+    try
+    {
+        const theme = useTheme();
+        await theme.initialize();
+        const user = useUser();
+        await user.reload();
+    }
+    catch (error)
+    {
+        console.error(error);
+    }
+    const appEle = (document.querySelector('quiz-app') as any);
+    scale = Number(await storageGet('scale')) || (Capacitor.getPlatform() === 'web' ? 1 : 0.8);
+    appEle.style = `
+        transform: scale(${scale});
+        transform-origin: top left;
+        width: ${100 / scale}%;
+        height: ${100 / scale}%;
+        min-width: ${100 / scale}%;
+        min-height: ${100 / scale}%;
+        max-width: ${100 / scale}%;
+        max-height: ${100 / scale}%;
+        overflow: hidden;
+    `;
+
+    createApp(App)
+        .use(router)
+        .directive('markdown', vMarkdown)
+        .directive('section-content', vSectionContent)
+        .mount('quiz-app');
+
+})();

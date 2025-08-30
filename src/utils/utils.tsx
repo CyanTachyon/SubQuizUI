@@ -14,7 +14,7 @@ import { useNotification } from "../stores/notification.ts";
 import Button from "../components/Button.vue";
 import { InAppBrowser, ToolBarType } from "@capgo/inappbrowser";
 import { login } from "../networks/backend/oauth.ts";
-import { ScreenOrientation } from "@capacitor/screen-orientation";
+// import { ScreenOrientation } from "@capacitor/screen-orientation";
 import { getScale } from "../main.ts";
 import { Clipboard } from "@capacitor/clipboard";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
@@ -42,10 +42,10 @@ if (Capacitor.getPlatform() !== 'web')
         if (!code) return;
         await login(code);
     });
-    InAppBrowser.addListener("closeEvent", async () =>
-    {
-        await ScreenOrientation.lock({ orientation: 'landscape' });
-    });
+    // InAppBrowser.addListener("closeEvent", async () =>
+    // {
+    //     await ScreenOrientation.lock({ orientation: 'landscape' });
+    // });
 }
 
 export function tryOpenSSO(url: string)
@@ -63,7 +63,7 @@ export function tryOpenSSO(url: string)
         const target = connectUrl(Target.SSO_FRONTEND, url, { from: callbackUrl });
         (async () =>
         {
-            await ScreenOrientation.unlock();
+            // await ScreenOrientation.unlock();
             await InAppBrowser.openWebView({ 
                 url: target,
                 toolbarType: ToolBarType.BLANK,

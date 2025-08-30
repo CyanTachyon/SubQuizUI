@@ -110,7 +110,7 @@ quiz-notifications-wrapper {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    z-index: 9999;
+    z-index: $notification-z-index;
     max-height: 100vh;
     min-width: 30vw;
     max-width: 30vw;

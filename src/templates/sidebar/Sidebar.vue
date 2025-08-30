@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Card from "../../components/Card.vue";
-import { ref } from "vue";
+import { onUnmounted, ref } from "vue";
 import MenuOpenIcon from "vue-material-design-icons/MenuOpen.vue";
 import MenuCloseIcon from "vue-material-design-icons/MenuClose.vue";
 import LogoutIcon from "vue-material-design-icons/Logout.vue";
@@ -12,41 +12,29 @@ import InfoMationOutlineIcon from "vue-material-design-icons/InformationOutline.
 import AccountMultipleIcon from "vue-material-design-icons/AccountMultiple.vue";
 import ShieldCrownOutlineIcon from "vue-material-design-icons/ShieldCrownOutline.vue";
 import RobotExcitedOutlineIcon from "vue-material-design-icons/RobotExcitedOutline.vue";
-import { createAnimationsController } from "../../utils/AnimationsController.ts";
 import Button from "../../components/Button.vue";
 import Image from "../../components/Image.vue";
 import { useUser } from "../../stores/user.ts";
-import { sleep } from "../../utils/sleep.ts";
 import { tryLogin, tryOpenSSO } from "../../utils/utils.tsx";
 import { useRouter } from "vue-router";
 import SidebarItem from "./SidebarItem.vue";
 import SettingIcon from "vue-material-design-icons/CogOutline.vue";
 import Spacer from "../../components/Spacer.vue";
-import { storageGet, storageSet } from "../../utils/storage.ts";
+import { storageGet } from "../../utils/storage.ts";
+import MenuIcon from "vue-material-design-icons/Menu.vue";
+import { phone } from "../../main.ts";
+import { getSidebars } from "../../stores/sidebar.ts";
 
-const open = ref(true);
-const sidebarClassName = ref('');
+const open = ref(!phone.value);
 (async () => 
 {
-    open.value = await storageGet('sidebar-open') !== 'false';
-    sidebarClassName.value = open.value ? 'sidebar-opened' : 'sidebar-closed';
+    if (!phone.value) open.value = await storageGet('sidebar-open') !== 'false';
 })();
-const controller = createAnimationsController();
 const router = useRouter();
 
 function changeSidebarState()
 {
-    controller.push([
-        () =>
-        {
-            open.value = !open.value;
-            storageSet('sidebar-open', open.value.toString());
-            sidebarClassName.value = open.value ? 'sidebar-open' : 'sidebar-close';
-        },
-        () => sleep(200),
-        () => sidebarClassName.value = open.value ? 'sidebar-opened' : 'sidebar-closed',
-
-    ], false);
+    open.value = !open.value;
 }
 
 function goto(path: string)
@@ -54,7 +42,7 @@ function goto(path: string)
     router.push(path);
 }
 
-let user = useUser();
+const user = useUser();
 
 function gotoSSO()
 {
@@ -62,30 +50,74 @@ function gotoSSO()
     else tryLogin();
 }
 
+function closeSidebar()
+{
+    open.value = false;
+    getSidebars().forEach((item) => item.open = false);
+}
+
+function itemClick()
+{
+    if (phone.value)
+        closeSidebar();
+}
+
+const currentTime = ref('');
+
+const id = setInterval(() => 
+{
+    //以 `上午/下午HH:mm:ss` 的格式显示当前时间
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const seconds = now.getSeconds().toString().padStart(2, '0');
+    const period = 
+        hours < 6 ? '凌晨' :
+        hours < 9 ? '早上' :
+        hours < 12 ? '上午' :
+        hours < 14 ? '中午' :
+        hours < 18 ? '下午' :
+        hours < 22 ? '晚上' : 
+        '深夜';
+    const displayHours = (hours % 12 || 12).toString().padStart(2, '0');
+    currentTime.value = `${period}${displayHours}:${minutes}:${seconds}`;
+}, 1000);
+
+onUnmounted(() => 
+{
+    clearInterval(id);
+});
+
 </script>
 
 <template>
-    <quiz-sidebar-container>
-        <Card :class="sidebarClassName" class="sidebar">
+    <quiz-sidebar-container :class="{ phone, 'open': open || getSidebars().some((item) => item.open) }">
+        <div v-if="phone" class="sidebar-mask" @click="closeSidebar"/>
+        <Card v-if="phone" class="sidebar-header">
+            <MenuIcon @click="changeSidebarState" style="cursor: pointer;"/>
+            <component v-for="item in getSidebars()" :key="item.id" :is="item.icon" @click="item.open = !item.open" style="cursor: pointer;"/>
+            <span style="margin-left: auto;">{{ currentTime }}</span>
+        </Card>
+        <Card :class="{open, phone}" class="sidebar">
             <quiz-menu-title-box class="box" style="min-height: 80px; max-height: 80px;">
-                <Button @click="changeSidebarState" class="menu-btn">
-                    <MenuOpenIcon v-if="open" />
+                <Button v-if="!phone" @click="changeSidebarState" class="menu-btn">
+                    <MenuOpenIcon v-if="open || phone" />
                     <MenuCloseIcon v-else />
                 </Button>
-                <quiz-menu-title @click="goto('/')">SubQuiz</quiz-menu-title>
+                <quiz-menu-title @click="itemClick(); goto('/')">SubQuiz</quiz-menu-title>
             </quiz-menu-title-box>
 
             <quiz-center />
 
             <div class="sidebar-items">
-                <SidebarItem @click="goto('/admin/subject/list')" :icon="BookshelfIcon" title="学科列表" />
-                <SidebarItem @click="goto('/class')" :icon="AccountMultipleIcon" title="我的班级" />
-                <SidebarItem @click="goto('/history')" :icon="HistoryIcon" title="答题记录" />
-                <SidebarItem @click="goto('/ai')" :icon="RobotExcitedOutlineIcon" title="AI 助手" />
-                <SidebarItem v-if="user.hasAdmin()" @click="goto('/admin/admins')" :icon="ShieldCrownOutlineIcon" title="全局管理" />
-                <SidebarItem v-if="user.isRoot()" @click="goto('/terminal')" :icon="ConsoleIcon" title="控制台" />
-                <SidebarItem @click="goto('/setting')" :icon="SettingIcon" title="系统设置" />
-                <SidebarItem @click="goto('/about')" :icon="InfoMationOutlineIcon" title="关于项目" />
+                <SidebarItem @click="itemClick(); goto('/admin/subject/list')" :icon="BookshelfIcon" title="学科列表" />
+                <SidebarItem @click="itemClick(); goto('/class')" :icon="AccountMultipleIcon" title="我的班级" />
+                <SidebarItem @click="itemClick(); goto('/history')" :icon="HistoryIcon" title="答题记录" />
+                <SidebarItem @click="itemClick(); goto('/ai')" :icon="RobotExcitedOutlineIcon" title="AI 助手" />
+                <SidebarItem v-if="user.hasAdmin()" @click="itemClick(); goto('/admin/admins')" :icon="ShieldCrownOutlineIcon" title="全局管理" />
+                <SidebarItem v-if="user.isRoot()" @click="itemClick(); goto('/terminal')" :icon="ConsoleIcon" title="控制台" />
+                <SidebarItem @click="itemClick(); goto('/setting')" :icon="SettingIcon" title="系统设置" />
+                <SidebarItem @click="itemClick(); goto('/about')" :icon="InfoMationOutlineIcon" title="关于项目" />
             </div>
 
             <Spacer />
@@ -101,7 +133,7 @@ function gotoSSO()
                 </quiz-logout-button>
             </quiz-user-box>
         </Card>
-
+        <component v-for="item in getSidebars()" :key="item.id" :is="item.sidebar" class="sidebar-sidebar" :class="{ open: item.open }"/>
         <quiz-main-content>
             <slot />
         </quiz-main-content>
@@ -139,44 +171,82 @@ quiz-main-content {
 }
 
 quiz-sidebar-container {
+    position: relative;
     height: 100%;
     width: 100%;
     display: flex;
     --transition: 'static';
 }
 
-@keyframes open-sidebar {
-    from {
-        width: var(--sidebar-close-width);
-        min-width: var(--sidebar-close-width);
-        max-width: var(--sidebar-close-width);
+quiz-sidebar-container.phone {
+    flex-direction: column;
+
+    &.open .sidebar-mask {
+        background-color: rgba(0, 0, 0, 0.5);
+        pointer-events: unset;
+    }
+    
+    .sidebar-mask {
+        z-index: calc($sidebar-z-index - 1);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        transition: background-color 0.2s ease-in-out;
     }
 
-    to {
+    .sidebar {
+        position: absolute;
+        z-index: $sidebar-z-index;
         width: var(--sidebar-open-width);
-        min-width: var(--sidebar-open-width);
-        max-width: var(--sidebar-open-width);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .sidebar:not(.open) {
+        transform: translateX(-215px);
+    }
+
+    .sidebar-header {
+        padding-left: 13px;
+        margin-bottom: 0;
+        margin-top: 10px;
+        height: 44px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
     }
 }
 
-.sidebar-opened {
+.sidebar-sidebar {
+    position: absolute;
+    z-index: $sidebar-z-index;
+    width: var(--sidebar-open-width);
+}
+
+.sidebar-sidebar.open {
+    transform: translateX(0);
+}
+
+.sidebar-sidebar:not(.open) {
+    transform: translateX(-215px);
+}
+
+.sidebar.open:not(.phone) {
     width: var(--sidebar-open-width);
     min-width: var(--sidebar-open-width);
     max-width: var(--sidebar-open-width);
 }
 
-.sidebar-closed {
+.sidebar:not(.open):not(.phone) {
     width: var(--sidebar-close-width);
     min-width: var(--sidebar-close-width);
     max-width: var(--sidebar-close-width);
-}
-
-.sidebar-open {
-    animation: open-sidebar 0.2s ease-in-out forwards;
-}
-
-.sidebar-close {
-    animation: open-sidebar 0.2s ease-in-out reverse forwards;
 }
 
 quiz-center {
@@ -189,6 +259,10 @@ quiz-center {
     overflow: hidden;
     display: flex;
     height: fit-content;
+}
+
+.phone .box {
+    justify-content: center;
 }
 
 quiz-menu-title-box {
