@@ -1,7 +1,7 @@
 import { createApp, ref } from 'vue';
 import './style.scss';
 import App from './App.vue';
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHistory, isNavigationFailure, type RouteRecordRaw } from 'vue-router';
 import Login from "./pages/Login.vue";
 import CustomLogin from "./pages/CustomLogin.vue";
 import About from "./pages/About.vue";
@@ -33,10 +33,27 @@ import AiToolbox from './pages/ai/Toolbox.vue';
 import AiImage from './pages/ai/AiImage.vue';
 import { useUser } from './stores/user';
 import { useTheme } from './stores/theme';
-import { storageGet } from './utils/storage';
+import { storageGet, storageSet } from './utils/storage';
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
 import debounce from './utils/debounce';
+import { $appearDuration, useTransitionActions } from './stores/transition';
 defineCustomElements(window);
+
+// 监听 deep link 事件
+CapacitorApp.addListener('appUrlOpen', (data) =>
+{
+    try
+    {
+        const parsedUrl = new URL(data.url);
+        const code = parsedUrl.searchParams.get('code') || '';
+        const from = parsedUrl.searchParams.get('from') || '/';
+        router.push({ path: '/login', query: { code, from } });
+    }
+    catch (err)
+    {
+        console.error('Failed to parse deep link URL:', err);
+    }
+});
 
 if (Capacitor.getPlatform() === 'web')
 {
@@ -86,20 +103,30 @@ export const router = createRouter({
     routes,
 });
 
-// 监听 deep link 事件
-CapacitorApp.addListener('appUrlOpen', (data) =>
+const transition = useTransitionActions();
+router.beforeEach((_, __, next) =>
 {
-    try
+    transition.onLeave();
+    return new Promise((resolve) =>
     {
-        const parsedUrl = new URL(data.url);
-        const code = parsedUrl.searchParams.get('code') || '';
-        const from = parsedUrl.searchParams.get('from') || '/';
-        router.push({ path: '/login', query: { code, from } });
-    }
-    catch (err)
+        setTimeout(() =>
+        {
+            resolve(next());
+        }, $appearDuration);
+    });
+});
+
+router.afterEach((_, __, failure) =>
+{
+    if (isNavigationFailure(failure)) return;
+    transition.onEnter();
+    return new Promise((resolve) =>
     {
-        console.error('Failed to parse deep link URL:', err);
-    }
+        setTimeout(() =>
+        {
+            resolve(transition.clear());
+        }, $appearDuration);
+    });
 });
 
 export const phone = ref(true);
@@ -149,5 +176,20 @@ export function getScale(): number
         .directive('markdown', vMarkdown)
         .directive('section-content', vSectionContent)
         .mount('quiz-app');
+
+    if (Capacitor.getPlatform() === 'android') 
+    {
+        const route = await storageGet('route');
+        if (route) 
+        {
+            console.log(route);
+            router.push(route);
+        }
+        router.afterEach((to, __, failure) =>
+        {
+            if (isNavigationFailure(failure)) return;
+            return storageSet('route', to.path);
+        });
+    }
 
 })();

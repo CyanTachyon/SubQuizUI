@@ -14,6 +14,7 @@ import NotFound from "../NotFound.vue";
 import Spacer from "../../components/Spacer.vue";
 import type { PreparationGroup } from "../../dataClasses/PreparationGroup.ts";
 import { getPreparationGroupList } from "../../networks/backend/preparationGroup.ts";
+import { phone } from "../../main.ts";
 
 document.title = '学科信息 - SubQuiz';
 
@@ -66,7 +67,7 @@ function timeToString(time: number)
 <template>
     <NotFound v-if="subjectInfo === null"/>
     <Loading v-else-if="groups === undefined || subjectInfo === undefined" class="loading"/>
-    <div v-else class="section-types-container">
+    <div v-else class="section-types-container" :class="{phone}">
         <Text class="main-title">{{ subjectInfo.name }}</Text>
         <Text class="main-description">{{ subjectInfo.description }}</Text>
         <div class="section-types-container-header">
@@ -146,6 +147,18 @@ function timeToString(time: number)
     justify-content: start;
     overflow-y: auto;
     scrollbar-width: none;
+}
+
+@media (max-width: 540px) {
+    .phone .section-types {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .phone .section-types quiz-card {
+        width: 100%;
+    }
 }
 
 .section-type {

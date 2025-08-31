@@ -13,6 +13,7 @@ import Button from "../../components/Button.vue";
 import {useUser} from "../../stores/user.ts";
 import Text from "../../components/Text.vue";
 import Spacer from "../../components/Spacer.vue";
+import { phone } from "../../main.ts";
 
 document.title = '学科列表 - SubQuiz';
 
@@ -60,7 +61,7 @@ const user = useUser();
 
 <template>
     <Loading v-if="data === null" class="loading"/>
-    <quiz-subjects-container v-else>
+    <quiz-subjects-container v-else :class="{ phone }">
         <Button
             v-if="user.hasAdmin()"
             class="create-subject"
@@ -109,6 +110,18 @@ quiz-subjects {
     justify-content: start;
     overflow-y: auto;
     scrollbar-width: none;
+}
+
+@media (max-width: 540px) {
+    .phone quiz-subjects {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .phone quiz-subjects quiz-card {
+        width: 100%;
+    }
 }
 
 quiz-card {

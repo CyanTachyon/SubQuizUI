@@ -18,7 +18,7 @@
         </filter>
     </svg>
 
-    <TransitionGroup name="notification" tag="quiz-notifications-wrapper">
+    <TransitionGroup name="notification" tag="quiz-notifications-wrapper" class="phone">
         <quiz-notification-item v-for="notification in getNotifications()" :key="notification.id"
             :class="[notification.type || 'info']">
             {{ notification.message }}
@@ -34,8 +34,7 @@
     </main>
 </template>
 <script setup lang="ts">
-import { isNavigationFailure, useRoute, useRouter } from "vue-router";
-import { $appearDuration, useTransitionActions } from "./stores/transition.ts";
+import { useRoute } from "vue-router";
 import { getNotifications } from "./stores/notification.ts";
 import Sidebar from "./templates/sidebar/Sidebar.vue";
 import DownloadNewVersion from "./pages/_app/DownloadNewVersion.vue";
@@ -43,34 +42,7 @@ import { CheckUpdateReason, checkUpdate, versionInfo } from "./utils/utils";
 import { Capacitor } from "@capacitor/core";
 import { onMounted } from "vue";
 
-const router = useRouter();
 const route = useRoute();
-const transition = useTransitionActions();
-
-router.beforeEach((_, __, next) =>
-{
-    transition.onLeave();
-    return new Promise((resolve) =>
-    {
-        setTimeout(() =>
-        {
-            resolve(next());
-        }, $appearDuration);
-    });
-});
-
-router.afterEach((_, __, failure) =>
-{
-    if (isNavigationFailure(failure)) return;
-    transition.onEnter();
-    return new Promise((resolve) =>
-    {
-        setTimeout(() =>
-        {
-            resolve(transition.clear());
-        }, $appearDuration);
-    });
-});
 checkUpdate(CheckUpdateReason.NONE);
 
 onMounted(() =>
@@ -115,6 +87,10 @@ quiz-notifications-wrapper {
     min-width: 30vw;
     max-width: 30vw;
     overflow: visible;
+}
+
+quiz-notifications-wrapper.phone {
+    top: 60px;
 }
 
 quiz-notification-item {

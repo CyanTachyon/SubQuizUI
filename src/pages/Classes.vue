@@ -134,8 +134,19 @@ function createExam()
 }
 
 const sidebar = defineComponent({
-    setup() 
+    props: {
+        onItemClick: {
+            type: Function,
+            required: false,
+        }
+    },
+    setup(props) 
     {
+        function itemClick()
+        {
+            props.onItemClick?.();
+        }
+
         return () => (
             <Card class="class-sidebar">
                 <div class="menu-title-box box">
@@ -143,9 +154,9 @@ const sidebar = defineComponent({
                 </div>
 
                 <Spacer style="margin-bottom: 10px;" />
-                {classes.value.length && <div class="classes" onScroll={handleScroll}>
+                {classes.value.length > 0 && <div class="classes" onScroll={handleScroll}>
                     {classes.value.map((clazz) => (
-                        <Button class="item" onClick={() => changeClass(clazz)}>
+                        <Button class="item" onClick={() => { itemClick(); changeClass(clazz) }}>
                             {clazz.name}
                         </Button>
                     ))}

@@ -133,7 +133,7 @@ onUnmounted(() =>
                 </quiz-logout-button>
             </quiz-user-box>
         </Card>
-        <component v-for="item in getSidebars()" :key="item.id" :is="item.sidebar" class="sidebar-sidebar" :class="{ open: item.open }"/>
+        <component v-for="item in getSidebars()" :key="item.id" :is="item.sidebar" class="sidebar-sidebar" :class="{ open: item.open }" @item-click="itemClick"/>
         <quiz-main-content>
             <slot />
         </quiz-main-content>

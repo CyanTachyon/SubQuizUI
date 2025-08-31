@@ -12,6 +12,7 @@ import { pushUrl } from "../utils/utils.tsx";
 import Text from "../components/Text.vue";
 import Spacer from "../components/Spacer.vue";
 import type { AnswerType } from "../dataClasses/Question.ts";
+import { phone } from "../main.ts";
 
 document.title = '答题记录 - SubQuiz';
 
@@ -85,7 +86,7 @@ function getTotalPage()
 
 <template>
     <Loading v-if="data === null"/>
-    <quiz-quizzes-container v-else>
+    <quiz-quizzes-container v-else :class="{phone}">
         <Text v-if="data.list.length === 0" class="no-quizzes">暂无测试记录</Text>
         <quiz-quizzes>
             <Card v-for="q in data.list" @click="gotoQuiz(q)" :max-tilt="5">
@@ -123,6 +124,17 @@ quiz-quizzes {
     justify-content: start;
     overflow-y: auto;
     scrollbar-width: none;
+}
+
+@media (max-width: 600px) {
+    .phone quiz-quizzes {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .phone quiz-quizzes quiz-card {
+        width: 100%;
+    }
 }
 
 quiz-card {

@@ -78,21 +78,33 @@ watch(info, (newInfo) =>
 });
 
 const sidebar = defineComponent({
-    setup() {
+    props: {
+        onItemClick: {
+            type: Function,
+            required: false,
+        }
+    },
+    setup(props) 
+    {
+        function itemClick()
+        {
+            props.onItemClick?.();
+        }
+        
         return () => (
         <Card class="ai-chat-sidebar">
             <div class="menu-title-box box">
                 <div class="menu-title">Quiz AI</div>
             </div>
 
-            <SidebarItem title="新建对话" icon={PlusIcon} onClick={() => info.value = 0} />
+            <SidebarItem title="新建对话" icon={PlusIcon} onClick={() => { itemClick(); info.value = 0 }} />
             <Spacer style="margin-top: 10px; margin-bottom: 10px;" />
             {chats.value.length == 0 && <Text class="sidebar-empty">
                 还没有对话记录
             </Text>}
             {chats.value.length > 0 && <div class="chats" onScroll={ handleScroll }>
                 {chats.value.map(chat => (
-                    <Button class="item" key={chat.id} onClick={() => info.value = chat.id}>
+                    <Button class="item" key={chat.id} onClick={() => { itemClick(); info.value = chat.id }}>
                         { chat.title }
                     </Button> 
                 ))}

@@ -654,7 +654,7 @@ function confirmEditLastMessage(event?: KeyboardEvent)
         '--pin-border-color': getThemes().isDark ? 'unset' : 'var(--button-highlight-border)',
         '--pin-text-color': getThemes().isDark ? 'var(--color)' : 'var(--button-highlight-border)',
     }">
-        <Loading v-if="loading"></Loading>
+        <Loading v-if="loading"/>
         <template v-else>
             <div style="display: flex; align-items: center; justify-content: center; height: 60px; padding: 0 10px; font-size: 1.2rem; font-weight: bold; gap: 10px; position: relative; min-height: 60px;">
                 {{ info?.title ?? '新建对话' }}
@@ -710,6 +710,11 @@ function confirmEditLastMessage(event?: KeyboardEvent)
                         <ContentCopyIcon :size="20" class="icon" @click="copy(item.messages)"/> 
                         <SyncIcon v-if="item.role === 'assistant' && index === info.histories.length - 1" :size="20" class="icon" @click="onSubmit(null, true)"/>
                     </div>
+                </div>
+                <div style="display: flex; flex-direction: row; justify-content: center;">
+                    <Button v-if="info.histories.length && !info.showAnswering" :down="true" @click="onNewChat(0)" class="new-chat">
+                        新建对话
+                    </Button>
                 </div>
             </div>
 
@@ -963,6 +968,13 @@ function confirmEditLastMessage(event?: KeyboardEvent)
     .content {
         margin-left: 3px;
     }
+}
+
+.new-chat {
+    margin-top: -30px;
+    margin-bottom: 0;
+    padding: 5px 10px;
+    border-radius: 1.5em;
 }
 
 .img-container {
