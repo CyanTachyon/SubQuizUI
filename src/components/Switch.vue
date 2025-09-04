@@ -4,7 +4,7 @@ import { createAnimationsController } from '../utils/AnimationsController';
 import { sleep } from '../utils/sleep';
 import { $appearDuration, isStatic, State, useTransitionStore } from '../stores/transition';
 
-const { onClick, on, disappear, disabled } = defineProps({
+const props = defineProps({
     onClick: {
         type: Function,
         default() {
@@ -24,8 +24,8 @@ const { onClick, on, disappear, disabled } = defineProps({
     }
 });
 
-let controller = createAnimationsController();
-let className = ref('');
+const controller = createAnimationsController();
+const className = ref('');
 
 function onDisappearChange(value: boolean, oldValue: boolean)
 {
@@ -46,7 +46,7 @@ function onTransitionChange(value: State, oldValue: State | undefined)
 
 const wrapper = ref<HTMLElement | null>(null);
 let transitionStore = useTransitionStore();
-watch(() => disappear, onDisappearChange);
+watch(() => props.disappear, onDisappearChange);
 onMounted(() => {
     if (!isStatic(wrapper.value))
     {
@@ -56,8 +56,8 @@ onMounted(() => {
 </script>
 
 <template>
-    <quiz-switch @click="onClick()" ref="wrapper" :disabled="disabled" :class="className">
-        <quiz-switch-thumb :class="{ on: on }"></quiz-switch-thumb>
+    <quiz-switch @click="props.onClick()" ref="wrapper" :disabled="props.disabled" :class="className">
+        <quiz-switch-thumb :class="{ on: props.on }"></quiz-switch-thumb>
     </quiz-switch>
 </template>
 

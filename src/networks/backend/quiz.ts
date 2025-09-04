@@ -1,4 +1,4 @@
-import {checkResponse, ResponseError} from "../utils/checkResponse.ts";
+import {checkResponse} from "../utils/checkResponse.ts";
 import type {Quiz} from "../../dataClasses/Quiz.ts";
 import {sendRequest, Target} from "../utils/sendRequest.ts";
 import type {Slice} from "../../dataClasses/Slice.ts";
@@ -7,21 +7,13 @@ import type { KnowledgePointId } from "../../dataClasses/Ids.ts";
 const newQuizUrl = '/quiz/new';
 export async function newQuiz(count: number, knowledgePoints: KnowledgePointId[] | null)
 {
-    try
-    {
-        return await checkResponse<Quiz<null, null, null>>(sendRequest({
-            target: Target.BACKEND,
-            url: newQuizUrl,
-            method: 'POST',
-            params: {count},
-            data: knowledgePoints,
-        }));
-    }
-    catch (e)
-    {
-        if (e instanceof ResponseError && e.response.code === 406) return e.response.data as Quiz<null, AnswerType | null, null>;
-        throw e;
-    }
+    return await checkResponse<Quiz<null, null, null>>(sendRequest({
+        target: Target.BACKEND,
+        url: newQuizUrl,
+        method: 'POST',
+        params: {count},
+        data: knowledgePoints,
+    }));
 }
 
 const saveQuizUrl = '/quiz/{id}/save';
@@ -36,21 +28,31 @@ export async function saveQuiz(id: number, data: Quiz<any, AnswerType | null, an
     }));
 }
 
-const getQuizAnalysisUrl = '/quiz/{id}/analysis';
-export async function getQuizAnalysis(id: number): Promise<Quiz<AnswerType, AnswerType, string> | null>
+const getQuizUrl = '/quiz/{id}';
+export async function getQuiz(id: number): Promise<Quiz<AnswerType | null, AnswerType | null, any | null> | null>
 {
-    return await checkResponse<Quiz<AnswerType, AnswerType, string> | null>(sendRequest({
+    return await checkResponse<Quiz<AnswerType | null, AnswerType | null, any | null> | null>(sendRequest({
         target: Target.BACKEND,
-        url: getQuizAnalysisUrl,
+        url: getQuizUrl,
         method: 'GET',
         params: {id},
+    }));
+}
+
+const getUnfinishedQuizzesUrl = '/quiz/unfinished';
+export async function getUnfinishedQuizzes(): Promise<Quiz<null, AnswerType | null, null>[]>
+{
+    return await checkResponse<Quiz<null, AnswerType | null, null>[]>(sendRequest({
+        target: Target.BACKEND,
+        url: getUnfinishedQuizzesUrl,
+        method: 'GET',
     }));
 }
 
 const getQuizHistoryUrl = '/quiz/histories';
 export async function getQuizHistories(begin: number, count: number)
 {
-    return await checkResponse<Slice<Quiz<AnswerType, AnswerType, string>>>(sendRequest({
+    return await checkResponse<Slice<Quiz<AnswerType | null, AnswerType | null, any | null>>>(sendRequest({
         target: Target.BACKEND,
         url: getQuizHistoryUrl,
         method: 'GET',

@@ -2,12 +2,13 @@
 import { useRoute } from "vue-router";
 import { onUnmounted, ref } from "vue";
 import type { Quiz } from "../dataClasses/Quiz.ts";
-import { getQuizAnalysis } from "../networks/backend/quiz.ts";
 import Loading from "../components/Loading.vue";
 import QuizView from "../templates/QuizView.vue";
 import NotFound from "./NotFound.vue";
 import type { AnswerType } from "../dataClasses/Question.ts";
 import { useNotification } from "../stores/notification.ts";
+import { getQuiz } from "../networks/backend/quiz.ts";
+import { router } from "../main.ts";
 
 document.title = '答题分析 - SubQuiz';
 
@@ -23,11 +24,16 @@ let timeout;
 function init()
 {
     if (quit) return;
-    getQuizAnalysis(id).then(quiz =>
+    getQuiz(id).then(quiz =>
     {
         if (quit) return;
         if (quiz !== null) 
         {
+            if (!quiz.finished) 
+            {
+                router.replace('/quiz?id=' + id);
+                return;
+            }
             data.value = quiz;
             notificationStore.remove(notificationId);
         }

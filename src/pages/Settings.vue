@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import { useTheme, getThemes } from '../stores/theme';
 import Button from '../components/Button.vue';
 import Switch from '../components/Switch.vue';
@@ -16,6 +16,8 @@ import debounce from '../utils/debounce';
 import currentVersion from '../../public/android_latest.json';
 import { checkUpdate, CheckUpdateReason } from '../utils/utils';
 import { storageGet, storageSet } from '../utils/storage';
+import { dialog } from '../utils/utils';
+import { getCustomModel, setCustomModel, type CustomModelInfo } from '../networks/backend/ai';
 
 document.title = '设置 - SubQuiz';
 
@@ -156,12 +158,141 @@ const handleScaleChange = (newScale: number) =>
     setScale(newScale);
 };
 
+let count = 0;
+
+async function showCustomModelDialog()
+{
+    try
+    {
+        const currentModel = await getCustomModel();
+        const modelData = ref<CustomModelInfo>({
+            model: currentModel?.model || '',
+            url: currentModel?.url || '',
+            maxToken: currentModel?.maxToken || 32768,
+            toolable: currentModel?.toolable || false,
+            imageable: currentModel?.imageable || false,
+            key: currentModel?.key || '',
+            customRequestParms: currentModel?.customRequestParms || {}
+        });
+        
+        const ToolableSwitch = () => (
+            <Switch
+                on={modelData.value.toolable}
+                onClick={() => {
+                    modelData.value.toolable = !modelData.value.toolable;
+                }}
+            />
+        );
+        
+        const ImageableSwitch = () => (
+            <Switch
+                on={modelData.value.imageable}
+                onClick={() => {
+                    modelData.value.imageable = !modelData.value.imageable;
+                }}
+            />
+        );
+
+        const close = dialog(
+            <div style="padding: 20px; width: 500px; max-width: 90vw;">
+                <Text><h2 style="margin-bottom: 20px; text-align: center;">自定义AI模型设置</h2></Text>
+
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div>
+                        <Text><label style="display: block; margin-bottom: 5px;">模型名称:</label></Text>
+                        <Input
+                            v-model={modelData.value.model}
+                            placeholder="例如: gpt-4, claude-3-sonnet"
+                            style="width: 100%;"
+                        />
+                    </div>
+
+                    <div>
+                        <Text><label style="display: block; margin-bottom: 5px;">API URL:</label></Text>
+                        <Input
+                            v-model={modelData.value.url}
+                            placeholder="例如: https://api.openai.com/v1/chat/completions"
+                            style="width: 100%;"
+                        />
+                    </div>
+
+                    <div>
+                        <Text><label style="display: block; margin-bottom: 5px;">API Key:</label></Text>
+                        <Input
+                            v-model={modelData.value.key}
+                            type="password"
+                            placeholder="输入API密钥"
+                            style="width: 100%;"
+                        />
+                    </div>
+
+                    <div>
+                        <Text><label style="display: block; margin-bottom: 5px;">最大Token数:</label></Text>
+                        <Input
+                            v-model={modelData.value.maxToken}
+                            type="number"
+                            placeholder="4096"
+                            style="width: 100%;"
+                        />
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <Text><label>支持工具调用:</label></Text>
+                        <ToolableSwitch />
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <Text><label>支持图像处理:</label></Text>
+                        <ImageableSwitch />
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 25px;">
+                    <Button onClick={() => close()}>
+                        取消
+                    </Button>
+                    <Button onClick={async () =>
+                    {
+                        try
+                        {
+                            await setCustomModel(modelData.value);
+                            useNotification().addSuccess('自定义模型设置已保存');
+                            close();
+                        }
+                        catch (error)
+                        {
+                            useNotification().addError('保存失败: ' + (error as Error).message);
+                        }
+                    }}>
+                        保存
+                    </Button>
+                </div>
+            </div>,
+            () => close()
+        );
+    }
+    catch (error)
+    {
+        useNotification().addError('获取模型配置失败: ' + (error as Error).message);
+    }
+}
+
+function clickTitle()
+{
+    count++;
+    if (count >= 5)
+    {
+        showCustomModelDialog();
+    }
+    setTimeout(() => count--, 1500);
+}
+
 </script>
 
 <template>
     <div class="theme-page">
         <div class="theme-container">
-            <Text>
+            <Text @click="clickTitle">
                 <h1 class="page-title">主题设置</h1>
             </Text>
 
@@ -429,7 +560,7 @@ const handleScaleChange = (newScale: number) =>
 
 .theme-label {
     font-size: 1rem;
-    font-weight: 500;
+   
     color: var(--primary-text);
     text-align: center;
 }
@@ -454,7 +585,7 @@ const handleScaleChange = (newScale: number) =>
 
 .effect-name {
     font-size: 1.1rem;
-    font-weight: 500;
+   
     color: var(--primary-text);
     margin-bottom: 4px;
 }

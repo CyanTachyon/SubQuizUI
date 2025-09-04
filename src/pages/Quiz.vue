@@ -3,7 +3,7 @@
 import Loading from "../components/Loading.vue";
 import { ref, watch } from "vue";
 import type { Quiz } from "../dataClasses/Quiz.ts";
-import { newQuiz, saveQuiz } from "../networks/backend/quiz.ts";
+import { getQuiz, newQuiz, saveQuiz } from "../networks/backend/quiz.ts";
 import { startExam } from "../networks/backend/exam.ts";
 import { useRoute, useRouter } from "vue-router";
 import QuizView from "../templates/QuizView.vue";
@@ -28,13 +28,16 @@ const kps: (null | (KnowledgePointId[])) = (() => {
     return kps1;
 })();
 const exam = Number(route.query.exam);
+const id = Number(route.query.id);
 
 const setData = (quiz: Quiz<null, AnswerType | null, null>) =>
 {
     if (quiz.finished) router.replace('/analysis/' + quiz.id);
     else data.value = quiz;
 };
-if (!exam) newQuiz(count, kps).then(setData, router.back);
+
+if (id) getQuiz(id).then(setData, router.back);
+else if (!exam) newQuiz(count, kps).then(setData, router.back);
 else startExam(exam).then(setData, router.back);
 
 let submitted = false;
@@ -47,7 +50,7 @@ const save = async function (autoSave: boolean = false)
     {
         await saveQuiz(data.value.id, data.value, !autoSave).then(() =>
         {
-            if (!autoSave) router.push('/analysis/' + data.value.id);
+            if (!autoSave) router.replace('/analysis/' + data.value.id);
         });
     }
     catch (error)

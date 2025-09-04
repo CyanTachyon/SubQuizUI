@@ -31,7 +31,7 @@ const data = ref(null as null | Slice<Quiz<AnswerType | null, AnswerType | null,
 function gotoQuiz(q: Quiz<AnswerType | null, AnswerType | null, string>)
 {
     if (q.finished) router.push('/analysis/' + q.id);
-    else router.push('/quiz');
+    else router.push('/quiz?id=' + q.id);
 }
 
 function durationToString(duration: number | null)

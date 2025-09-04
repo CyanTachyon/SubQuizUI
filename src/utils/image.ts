@@ -15,7 +15,7 @@ export async function compressImageToMaxBytes(
         maxHeight?: number;                // 初始最大高（可不设）
         minQuality?: number;               // 质量下限（0-1），默认 0.4
         maxQuality?: number;               // 质量上限（0-1），默认 0.92
-        minScale?: number;                 // 最小缩放比例，默认 0.2
+        minScale?: number;                 // 最小缩放比例，默认为缩放到1024x1024
         alphaToWhite?: boolean;            // 若导出 JPEG 且存在透明，是否以白底铺底，默认 false
         qualitySearchSteps?: number;       // 质量二分迭代次数，默认 3
         scaleSearchSteps?: number;         // 缩放二分迭代次数，默认 3
@@ -23,6 +23,10 @@ export async function compressImageToMaxBytes(
     }
 ): Promise<File | null>
 {
+
+    const image = await loadImageBitmap(file);
+    const { width: origW, height: origH } = image;
+
     const {
         maxBytes = 1_000_000,
         mime = 'image/png',
@@ -30,15 +34,12 @@ export async function compressImageToMaxBytes(
         maxHeight,
         minQuality = 0.4,
         maxQuality = 0.92,
-        minScale = 0.2,
+        minScale = Math.min(1024 / origW, 1024 / origH),
         alphaToWhite = false,
         qualitySearchSteps = 3,
         scaleSearchSteps = 3,
         fileNameSuffix = '.compressed',
     } = options || {};
-
-    const image = await loadImageBitmap(file);
-    const { width: origW, height: origH } = image;
 
     // 初次缩放（按传入最大宽高）
     let initialScale = 1;

@@ -39,7 +39,7 @@ function copy()
 function selectImage()
 {
     uploadingImage.value = true;
-    pickImage().then((img0)=>img.value=img0).finally(()=>uploadingImage.value=false);
+    pickImage().then((img0)=>img.value=img0.data).finally(()=>uploadingImage.value=false);
 }
 
 </script>

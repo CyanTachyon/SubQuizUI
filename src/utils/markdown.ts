@@ -8,7 +8,7 @@ import { all, createStarryNight } from '@wooorm/starry-night';
 import { toHtml } from 'hast-util-to-html'
 import "./markdown-code.scss";
 import { useNotification } from "../stores/notification";
-import { richtextToString } from "./utils";
+import { copyToClipboard, richtextToString } from "./utils";
 
 let starryNight: Awaited<ReturnType<typeof createStarryNight>>;
 
@@ -79,8 +79,26 @@ function markdownToHtml(markdown: string, imgBaseUrl?: string): string
         const lang = info.lang || '';
         const code = info.text || '';
         const scope = starryNight.flagToScope(lang);
-        if (!scope) return `<code>${code}</code>`;
-        return `<code>` + toHtml(starryNight.highlight(code, scope)) + `</code>`;
+        let inner: string;
+        if (!scope) inner = `<code>${code}</code>`;
+        else inner = `<code>` + toHtml(starryNight.highlight(code, scope)) + `</code>`;
+
+        const tempDiv = document.createElement('div');
+        const copyEle = document.createElement('span');
+        copyEle.className = 'code-copy';
+        copyEle.setAttribute('code', code);
+        copyEle.innerText = '复制';
+        tempDiv.appendChild(copyEle);
+        
+
+        return `
+        <div class="code">
+            <div class="code-header">
+                <span class="code-lang">${lang}</span>
+                ${tempDiv.innerHTML}
+            </div>
+            ${inner}
+        </div>`;
     };
     const res = marked.parse(markdown, { renderer }) as string;
     const html = `<quiz-markdown-body class="markdown-body">${res}</quiz-markdown-body>`;
@@ -97,6 +115,7 @@ export interface MarkdownContent
     section?: SectionId;
     content: string;
     parseHtml?: (ele: HTMLElement) => void;
+    codeHeader?: boolean;
 }
 
 export const vMarkdown: Directive<any, MarkdownContent> = {
@@ -112,13 +131,21 @@ export const vMarkdown: Directive<any, MarkdownContent> = {
 
 function updateMarkdown(el: HTMLElement, binding: MarkdownContent) 
 {
-    const { markdown, content, section, parseHtml } = binding;
+    const { markdown, content, section, parseHtml, codeHeader } = binding;
     if (markdown !== false)
     {
         const tmpDiv = document.createElement('div');
         tmpDiv.className = 'quiz-markdown-tmp-div';
         if (section) tmpDiv.innerHTML = sectionMarkdownToHtml(section, content);
         else tmpDiv.innerHTML = markdownToHtml(content);
+        tmpDiv.querySelectorAll('.code-copy').forEach((ele) => 
+        {
+            const code = ele.getAttribute('code');
+            if (!code) return;
+            ele.addEventListener('click', () => copyToClipboard(code));
+            ele.removeAttribute('code');
+        });
+        if (codeHeader === false) tmpDiv.querySelectorAll('.code-header').forEach((ele) => ele.remove());
         if (parseHtml) parseHtml(tmpDiv.firstElementChild as HTMLElement);
         el.innerHTML = '';
         el.appendChild(tmpDiv.firstElementChild as HTMLElement);

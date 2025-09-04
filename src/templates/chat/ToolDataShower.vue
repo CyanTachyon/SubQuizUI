@@ -10,6 +10,7 @@ import Desmos from 'desmos';
 import type { ChatId } from '../../dataClasses/Ids';
 import QuizView from '../QuizView.vue';
 import type { Quiz } from '../../dataClasses/Quiz';
+import FileDocumentOutlineIcon from "vue-material-design-icons/FileDocumentOutline.vue";
 
 const { chat, type, path, close: close_, dataset, customInfo } = defineProps<{
     chat: ChatId,
@@ -83,7 +84,7 @@ const updateFileName = async() =>
 {
     if (info.value.type === 'FILE') 
     {
-        const uuid = info.value.value.trim();
+        const uuid = info.value.value.trim().replace(/^uuid:/, '');
         fileName.value = (await getFileInfo(chat, uuid)).name;
         fileUrl.value = getFileUrl(chat, uuid, true);
     }
@@ -317,9 +318,10 @@ function updateQuiz()
             </div>
             <Button v-if="info.value.startsWith('<!--show-download-image-->')" style="margin-left: auto; right: 0;" @click="downloadImage">截取图片</Button>
         </div>
-        <div v-else-if="info.type === 'FILE'">
-            <Button @click="close(); safeRedirect(fileUrl)" style="margin-left: auto; right: 0;">
-                下载文件 ({{ fileName }})
+        <div v-else-if="info.type === 'FILE'" style="margin: -10px;">
+            <Button @click="close(); safeRedirect(fileUrl)" class="file-button">
+                <FileDocumentOutlineIcon class="icon" :size="35"/>
+                <span class="name">{{ fileName }}</span>
             </Button>
         </div>
         <div v-else-if="info.type === 'IMAGE'">
@@ -408,5 +410,21 @@ iframe {
     height: auto; 
     display: inline-block;
     border-radius: 10px;
+}
+
+.file-button {
+    margin-left: auto; 
+    right: 0; 
+    display: flex; 
+    flex-direction: row;
+    span.icon {
+        padding: 5px;
+        background-color: cadetblue;
+        border-radius: 10px;
+    }
+    span.name {
+        height: 100%;
+        margin-left: 10px;
+    }
 }
 </style>

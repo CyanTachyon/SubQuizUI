@@ -103,7 +103,7 @@ export function dialog(
 
     const open = ref(true);
     const app = createApp({
-        render()
+        setup()
         {
             const scale = getScale();
             const css = `
@@ -121,7 +121,7 @@ export function dialog(
                 position: fixed;
                 transform-origin: top left;
             `.replace(/\s+/g, ' ').trim();
-            return <Dialog open={open.value} onClose={onClose} style={css}>{innerHtml}</Dialog>;
+            return () => <Dialog open={open.value} onClose={onClose} style={css}>{innerHtml}</Dialog>;
         }
     }).directive('markdown', vMarkdown).directive('section-content', vSectionContent);
     app.mount(container);
@@ -277,30 +277,38 @@ export function copyToClipboard(text: string)
     }
 }
 
-export async function pickImage(maxBytes?: number): Promise<string | null>
+export async function pickFile(accept?: string): Promise<{name: string,data: string,} | null>
+{
+    return new Promise<{name: string, data: string} | null>(async (resolve) =>
+    {
+        const input = document.createElement('input');
+        input.type = 'file';
+        if (accept) input.accept = accept;
+        input.addEventListener("cancel", () => resolve(null), { once: true });
+        input.addEventListener("change", (event) =>
+        {
+            resolve((async () =>
+            {
+                const file = (event.target as HTMLInputElement).files?.[0];
+                if (!file) return null;
+                return { name: file.name, data: await readFileAsDataURL(file) };
+            })());
+        }, { once: true });
+        input.click();
+        input.remove();
+    });
+}
+
+export async function pickImage(maxBytes?: number): Promise<{name: string,data: string} | null>
 {
     let dataUrl: string | null = null;
     let fileName: string | null = null;
     if (Capacitor.getPlatform() === 'web')
     {
-        dataUrl = await new Promise<string | null>(async (resolve) =>
-        {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.addEventListener("cancel", () => resolve(null), { once: true });
-            input.addEventListener("change", (event) =>
-            {
-                resolve((async () =>
-                {
-                    const file = (event.target as HTMLInputElement).files?.[0];
-                    if (!file) return null;
-                    return await readFileAsDataURL(file);
-                })());
-            }, { once: true });
-            input.click();
-            input.remove();
-        });
+        const file = await pickFile('image/*');
+        if (!file) return null;
+        dataUrl = file.data;
+        fileName = file.name;
     }
     else
     {
@@ -339,26 +347,28 @@ export async function pickImage(maxBytes?: number): Promise<string | null>
             source: source,
         });
         dataUrl = img.dataUrl;
-        fileName = img.path
     }
     if (!dataUrl) return null;
-    if (!maxBytes) return dataUrl;
-    if (dataUrl.startsWith('data:image/png')) fileName = 'image.png';
-    else if (dataUrl.startsWith('data:image/jpeg')) fileName = 'image.jpg';
-    else if (dataUrl.startsWith('data:image/webp')) fileName = 'image.webp';
-    else if (dataUrl.startsWith('data:image/gif')) fileName = 'image.gif';
-    else 
+    if (!fileName)
     {
-        useNotification().addWarning("不支持的图片格式");
-        return null;
+        if (dataUrl.startsWith('data:image/png')) fileName = 'image.png';
+        else if (dataUrl.startsWith('data:image/jpeg')) fileName = 'image.jpg';
+        else if (dataUrl.startsWith('data:image/webp')) fileName = 'image.webp';
+        else if (dataUrl.startsWith('data:image/gif')) fileName = 'image.gif';
+        else 
+        {
+            useNotification().addWarning("不支持的图片格式");
+            return null;
+        }
     }
+    if (!maxBytes) return { name: fileName, data: dataUrl };
 
     const blob = await (await fetch(dataUrl)).blob();
     const file = new File([blob], fileName, { type: blob.type });
-    if (file.size < maxBytes) return dataUrl;
+    if (file.size < maxBytes) return { name: fileName, data: dataUrl };
 
     const compressed = await compressImageToMaxBytes(file, { maxBytes });
-    return compressed ? (await readFileAsDataURL(compressed)) : null;
+    return compressed ? { name: fileName, data: (await readFileAsDataURL(compressed))! } : null;
 }
 
 async function readFileAsDataURL(file: File): Promise<string | null>
@@ -372,11 +382,11 @@ async function readFileAsDataURL(file: File): Promise<string | null>
     });
 }
 
-export async function base64ToFile(base64: string): Promise<File | null>
+export async function base64ToFile(fileName: string, base64: string): Promise<File | null>
 {
     const response = await fetch(base64);
     const blob = await response.blob();
-    const fileName = `image.${blob.type.split('/')[1]}`;
+    fileName = fileName || `image.${blob.type.split('/')[1]}`;
     return new File([blob], fileName, { type: blob.type });
 }
 
@@ -384,5 +394,5 @@ export async function pickImageToFile(maxBytes?: number): Promise<File | null>
 {
     const base64 = await pickImage(maxBytes);
     if (!base64) return null;
-    return await base64ToFile(base64);
+    return await base64ToFile(base64.name, base64.data);
 }

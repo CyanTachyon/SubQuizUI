@@ -130,12 +130,6 @@ router.afterEach((_, __, failure) =>
 });
 
 export const phone = ref(true);
-const update = debounce(() =>
-{
-    phone.value = window.innerWidth < window.innerHeight;
-}, 100);
-update();
-window.onresize = update;
 
 let scale = 1;
 export function getScale(): number
@@ -170,6 +164,13 @@ export function getScale(): number
         max-height: ${100 / scale}%;
         overflow: hidden;
     `;
+
+    const update = debounce(() =>
+    {
+        phone.value = window.innerWidth <= window.innerHeight * 3 / 2;
+    }, 100);
+    update();
+    window.onresize = update;
 
     createApp(App)
         .use(router)

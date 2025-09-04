@@ -1,12 +1,12 @@
 <script lang="tsx" setup>
-import { ref, nextTick, computed } from 'vue';
+import { ref, nextTick } from 'vue';
 import type { AnswerType } from '../../dataClasses/Question';
 import type { Section } from '../../dataClasses/Section';
-import { cancelChat, chatSSE, createChat, deleteChat, getChat, getContentText, mergeContent, parseChatUrl, sendContent, type AiHistory, type AiMessage, type Model, type ModelInfo, type ToolDataInfo, } from '../../networks/backend/ai';
+import { cancelChat, chatSSE, createChat, deleteChat, getChat, getContentText, mergeContent, parseChatUrl, sendContent, type AiHistory, type AiMessage, type Content, type Model, type ModelInfo, type ToolDataInfo, } from '../../networks/backend/ai';
 import Input from '../../components/Input.vue';
 import { useNotification } from '../../stores/notification';
 import LoadingIcon from 'vue-material-design-icons/Loading.vue';
-import { copyToClipboard, dialog, pickImage } from '../../utils/utils';
+import { copyToClipboard, dialog, pickFile, pickImage } from '../../utils/utils';
 import ChevronRightIcon from 'vue-material-design-icons/ChevronRight.vue';
 import ChevronDownIcon from 'vue-material-design-icons/ChevronDown.vue';
 import type { Chat } from '../../dataClasses/Chat';
@@ -33,6 +33,7 @@ import StopCircleOutlineIcon from "vue-material-design-icons/StopCircleOutline.v
 import SyncIcon from "vue-material-design-icons/Sync.vue";
 import TrashCanIcon from "vue-material-design-icons/TrashCan.vue";
 import PencilIcon from "vue-material-design-icons/Pencil.vue";
+import FileDocumentOutlineIcon from "vue-material-design-icons/FileDocumentOutline.vue";
 
 export type DisplayMessage = AiMessage & {
     showReasoning: boolean;
@@ -225,43 +226,66 @@ const init = async () =>
 init().then(() => { loading.value = false; nextTick(scrollToBottom); });
 
 const input = ref('');
-const inputImages = ref<string[]>([]);
+const inputFiles = ref<{
+    name: string,
+    type: 'image' | 'file',
+    data: string,
+}[]>([]);
 const editingLastMessage = ref(false);
-const editContent = ref('');
-const editImages = ref<string[]>([]);
-const uploadingImage = ref(false);
-const inputImagesWithoutPrefix = computed(() => 
-{
-    return inputImages.value.map((img) => img.replace(/^data:image\/[a-z]+;base64,/, ''));
-});
+const editInput = ref('');
+const editFiles = ref<{
+    name: string,
+    type: 'image' | 'file',
+    data: string,
+}[]>([]);
+const uploadingFile = ref(false);
 
-function uploadImage()
+function uploadFile(image: boolean, edit: boolean)
 {
-    if (uploadingImage.value) return;
-    if (inputImages.value.length >= 5) 
+    const files = edit ? editFiles : inputFiles;
+
+    if (uploadingFile.value) return;
+    if (files.value.length >= 10) 
     {
-        useNotification().addWarning('一次最多只能上传5张图片');
+        useNotification().addWarning('一次最多只能上传10个附件');
         return;
     }
 
-    uploadingImage.value = true;
-    pickImage(1_000_000).then((img0) => 
+    uploadingFile.value = true;
+    const p = image ? pickImage(1_000_000) : pickFile();
+    p.then(async (file0) => 
     {
-        if (!img0) return;
-        if (inputImages.value.includes(img0)) 
+        if (!file0) return;
+        if (files.value.find(f => f.data === file0.data))
         {
-            useNotification().addWarning('请勿重复上传相同图片');
+            useNotification().addWarning('请勿重复上传相同文件');
             return;
         }
-        inputImages.value.push(img0);
+
+        if (!file0.data.startsWith('uuid:'))
+        {
+            const blob = await fetch(file0.data).then(r => r.blob());
+            if (blob.size > 10 * 1024 * 1024)
+            {
+                useNotification().addWarning('文件大小不得超过10MB');
+                return;
+            }
+        }
+        
+        files.value.push({
+            name: file0.name,
+            type: image ? 'image' : 'file',
+            data: file0.data,
+        });
     }).finally(() => 
     {
-        uploadingImage.value = false;
+        uploadingFile.value = false;
     });
 }
-function deleteImage(img: string)
+function deleteFile(file: string, edit: boolean)
 {
-    inputImages.value = inputImages.value.filter(i => i !== img);
+    const files = edit ? editFiles : inputFiles;
+    files.value = files.value.filter(i => i.data !== file);
 }
 
 const model = ref<Model>('');
@@ -299,6 +323,23 @@ function isMobileDevice()
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
+function makeUploadContent(text: string, files: {
+    name: string,
+    type: 'image' | 'file',
+    data: string,
+}[]): Content
+{
+    const content: Content = [];
+    for (const file of files)
+    {
+        const url = file.data.startsWith('uuid:') ? file.data : file.data.replace(/^data:image\/[a-z]+;base64,/, '');
+        if (file.type === 'image') content.push({ type: 'image_url', image_url: { url } });
+        else content.push({ type: 'file', file: { filename: file.name, file_data: url }})
+    }
+    if (text.trim()) content.push({ type: 'text', text });
+    return content;
+}
+
 function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = false)
 {
     if (event && (event.shiftKey || isMobileDevice())) return;
@@ -319,7 +360,7 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
     // 编辑模式下的验证
     if (editMode)
     {
-        if (editContent.value.trim() === '' || info.value.inAnswering || !editingLastMessage.value) return;
+        if (editInput.value.trim() === '' || info.value.inAnswering || !editingLastMessage.value) return;
     }
     else
     {
@@ -331,9 +372,9 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
         useNotification().addError('请求正在处理中，请稍等片刻。');
         return;
     }
-    else if (uploadingImage.value)
+    else if (uploadingFile.value)
     {
-        useNotification().addError('正在上传图片，请稍等片刻。');
+        useNotification().addError('正在上传附件，请稍等片刻。');
         return;
     }
     
@@ -349,139 +390,93 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
     
     if (!info.value.id)
     {
-        const id = await createChat(info.value.section, input.value, inputImagesWithoutPrefix.value, model.value)
+        const id = await createChat(info.value.section, makeUploadContent(input.value, inputFiles.value), model.value)
         props.onNewChat(id);
         return;
     }
-    else 
+
+    let content: Content;
+
+    if (regenerate)
     {
-        let content: string;
-        let images: string[];
-
-        if (regenerate)
+        let lstUserMessageIndex: number = -1;
+        for (let i = info.value.histories.length - 1; i >= 0; i--) 
         {
-            let lstUserMessageIndex: number = -1;
-            for (let i = info.value.histories.length - 1; i >= 0; i--) 
+            if (info.value.histories[i].role === 'user') 
             {
-                if (info.value.histories[i].role === 'user') 
-                {
-                    lstUserMessageIndex = i;
-                    break;
-                }
+                lstUserMessageIndex = i;
+                break;
             }
-            if (lstUserMessageIndex !== -1) 
-            {
-                const content0 = info.value.histories[lstUserMessageIndex].messages[0].content;
-                if (typeof content0 === 'string')
-                    content = content0;
-                else 
-                {
-                    content = getContentText(content0);
-                    images = content0.filter(c => c.type === 'image_url').map(c => c.image_url.url);
-                }
-            }
-            while(info.value.histories.length > lstUserMessageIndex + 1)
-                info.value.histories.pop();
         }
-        else if (editMode)
+        if (lstUserMessageIndex !== -1) 
+            content = info.value.histories[lstUserMessageIndex].messages[0].content;
+        while(info.value.histories.length > lstUserMessageIndex + 1)
+            info.value.histories.pop();
+    }
+    else if (editMode)
+    {
+        // 编辑模式逻辑
+        let lastUserMessageIndex = -1;
+        for (let i = info.value.histories.length - 1; i >= 0; i--) 
         {
-            // 编辑模式逻辑
-            let lastUserMessageIndex = -1;
-            for (let i = info.value.histories.length - 1; i >= 0; i--) 
+            if (info.value.histories[i].role === 'user') 
             {
-                if (info.value.histories[i].role === 'user') 
-                {
-                    lastUserMessageIndex = i;
-                    break;
-                }
+                lastUserMessageIndex = i;
+                break;
             }
-            
-            if (lastUserMessageIndex === -1) return;
-            
-            // 移除最后用户消息之后的所有消息
-            while(info.value.histories.length > lastUserMessageIndex + 1)
-                info.value.histories.pop();
-            
-            content = editContent.value;
-            
-            // 处理图片 - 分离新图片(base64)和已有图片
-            const newImages: string[] = [];
-            const existingImages: string[] = [];
-            
-            for (const img of editImages.value)
-            {
-                if (img.startsWith('data:image/'))
-                {
-                    // 新图片 - 提取base64
-                    newImages.push(img.replace(/^data:image\/[a-z]+;base64,/, ''));
-                }
-                else
-                {
-                    // 已有图片
-                    existingImages.push(img);
-                }
-            }
-            
-            images = [...existingImages, ...newImages];
-            const contentArray = [
-                ...editImages.value.map(img => ({
-                    type: 'image_url' as const,
-                    image_url: { url: img }
-                })),
-                { type: 'text' as const, text: content }
-            ];
-            info.value.histories[lastUserMessageIndex].messages[0].content = contentArray;
-            // 清空编辑状态
-            editContent.value = '';
-            editImages.value = [];
-            regenerate = true; // 编辑模式总是使用regenerate逻辑
         }
-        else
-        {
-            content = input.value;
-            images = inputImagesWithoutPrefix.value;
-            info.value.histories.push({
-                role: 'user',
-                messages: [
-                    {
-                        content: [
-                            ...inputImages.value.map(img => ({
-                                type: 'image_url' as const,
-                                image_url: { url: img }
-                            })),
-                            { type: 'text' as const, text: content },
-                        ],
-                    }
-                ]
-            });
-            input.value = '';
-            inputImages.value = [];
-        }
-
-        const newInfo = await sendContent({
-            chatId: info.value.id, 
-            content: content,
-            images: images,
-            model: model.value, 
-            hash: info.value.hash,
-            regenerate: regenerate,
-        })
-        if (newInfo) 
-        {
-            info.value.hash = newInfo.hash;
-            info.value.histories[info.value.histories.length - 1].messages = [
+        
+        if (lastUserMessageIndex === -1) return;
+        
+        // 移除最后用户消息之后的所有消息
+        while(info.value.histories.length > lastUserMessageIndex + 1)
+            info.value.histories.pop();
+        
+        content = makeUploadContent(editInput.value, editFiles.value);
+        info.value.histories[lastUserMessageIndex].messages[0].content = content;
+        // 清空编辑状态
+        editInput.value = '';
+        editFiles.value = [];
+        regenerate = true;
+    }
+    else
+    {
+        content = makeUploadContent(input.value, inputFiles.value);
+        info.value.histories.push({
+            role: 'user',
+            messages: [
                 {
-                    content: newInfo.content,
-                    showReasoning: false,
+                    content: content,
                 }
             ]
-        } 
-        else 
-        {
-            useNotification().addError('发生冲突，请刷新页面重试。');
-            info.value.showAnswering = false;
-            return;
-        }
+        });
+        input.value = '';
+        inputFiles.value = [];
+    }
+
+    const newInfo = await sendContent({
+        chatId: info.value.id, 
+        content: content,
+        model: model.value, 
+        hash: info.value.hash,
+        regenerate: regenerate,
+    })
+    
+    if (newInfo) 
+    {
+        info.value.hash = newInfo.hash;
+        info.value.histories[info.value.histories.length - 1].messages = [
+            {
+                content: newInfo.content,
+                showReasoning: false,
+            }
+        ]
+    } 
+    else 
+    {
+        useNotification().addError('发生冲突，请刷新页面重试。');
+        info.value.showAnswering = false;
+        return;
     }
 
     info.value.histories.push({
@@ -578,7 +573,6 @@ function startEditLastMessage()
 {
     if (info.value.inAnswering || editingLastMessage.value) return;
     
-    // Find the last user message
     let lastUserMessageIndex = -1;
     for (let i = info.value.histories.length - 1; i >= 0; i--) 
     {
@@ -596,13 +590,25 @@ function startEditLastMessage()
     
     if (typeof content0 === 'string')
     {
-        editContent.value = content0;
-        editImages.value = [];
+        editInput.value = content0;
+        editFiles.value = [];
     }
     else 
     {
-        editContent.value = getContentText(content0);
-        editImages.value = content0.filter(c => c.type === 'image_url').map(c => c.image_url.url);
+        editInput.value = getContentText(content0);
+        editFiles.value = content0.filter(c => c.type === 'image_url' || c.type === 'file').map(c => 
+        {
+            if (c.type === 'image_url') return {
+                name: 'img.png',
+                type: 'image',
+                data: c.image_url.url,
+            };
+            else return {
+                name: c.file.filename,
+                type: 'file',
+                data: c.file.file_data,
+            };
+        });
     }
     
     editingLastMessage.value = true;
@@ -611,34 +617,8 @@ function startEditLastMessage()
 function cancelEditLastMessage()
 {
     editingLastMessage.value = false;
-    editContent.value = '';
-    editImages.value = [];
-}
-
-function deleteEditImage(img: string)
-{
-    const index = editImages.value.indexOf(img);
-    if (index > -1) 
-    {
-        editImages.value.splice(index, 1);
-    }
-}
-
-function uploadEditImage()
-{
-    if (uploadingImage.value) return;
-    
-    uploadingImage.value = true;
-    pickImage().then((img) => 
-    {
-        if (img) 
-        {
-            editImages.value.push(img);
-        }
-    }).finally(() => 
-    {
-        uploadingImage.value = false;
-    });
+    editInput.value = '';
+    editFiles.value = [];
 }
 
 function confirmEditLastMessage(event?: KeyboardEvent)
@@ -696,6 +676,7 @@ function confirmEditLastMessage(event?: KeyboardEvent)
                                 <template v-if="msg.content && (typeof msg.content !== 'string')" v-for="c in msg.content">
                                     <Text class="content" v-if="c.type === 'text' && c.text.trim()" v-markdown="{ markdown: item.role === 'assistant', content: c.text, section: info.section?.id, parseHtml }" />
                                     <ToolDataShower v-else-if="c.type === 'image_url'" :chat="info.id" :inline="true" :custom-info="{ type: 'IMAGE', value: c.image_url.url }" />
+                                    <ToolDataShower v-else-if="c.type === 'file'" :chat="info.id" :inline="true" :custom-info="{ type: 'FILE', value: c.file.file_data }" />
                                 </template>
                                 <Text class="content" v-else-if="msg.content && (msg.content as string).trim()" v-markdown="{ markdown: item.role === 'assistant', content: msg.content, section: info.section?.id, parseHtml }" />
                             </template>
@@ -711,28 +692,42 @@ function confirmEditLastMessage(event?: KeyboardEvent)
                         <SyncIcon v-if="item.role === 'assistant' && index === info.histories.length - 1" :size="20" class="icon" @click="onSubmit(null, true)"/>
                     </div>
                 </div>
-                <div style="display: flex; flex-direction: row; justify-content: center;">
-                    <Button v-if="info.histories.length && !info.showAnswering" :down="true" @click="onNewChat(0)" class="new-chat">
+                <div style="display: flex; flex-direction: row; justify-content: center; margin-top: auto;" v-if="info.histories.length && !info.showAnswering">
+                    <Button :down="true" @click="onNewChat(0)" class="new-chat">
                         新建对话
                     </Button>
                 </div>
             </div>
 
             <div class="img-container">
-                <div v-for="(img, index) in (editingLastMessage ? editImages : inputImages)" :key="index" class="img" :style="{ backgroundImage: `url(${parseChatUrl(info.id, img)})` }">
-                    <TrashCanIcon :size="30" @click="editingLastMessage? deleteEditImage(img) : deleteImage(img)" class="remove-img"/>
+                <div v-for="(file, index) in (editingLastMessage ? editFiles : inputFiles)" 
+                    :key="index" 
+                    class="img" 
+                    :style="{ 
+                        backgroundImage: file.type === 'image' ? `url(${parseChatUrl(info.id, file.data)})` : '', 
+                        backgroundColor: file.type === 'image' ? '' : 'cadetblue',
+                    }">
+                    <TrashCanIcon :size="30" @click="deleteFile(file.data, editingLastMessage)" class="remove-img"/>
+                    <FileDocumentOutlineIcon :size="40" v-if="file.type === 'file'"/>
+                    <span v-if="file.type === 'file'" class="file-name"> {{ file.name }} </span>
                 </div>
             </div>
             
-            <Input v-if="editingLastMessage" v-model="editContent" placeholder="编辑消息内容" :area="true" @keydown.enter="confirmEditLastMessage" @keydown.esc="cancelEditLastMessage()" class="edit-input"/>
+            <Input v-if="editingLastMessage" v-model="editInput" placeholder="编辑消息内容" :area="true" @keydown.enter="confirmEditLastMessage" @keydown.esc="cancelEditLastMessage()" class="edit-input"/>
             <Input v-else v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
             
             <Text class="bottom-bar">
                 <SelectMenu :model-value="model" :options="models.map(m => ({ label: m.displayName, value: m.model }))" class="model-name" :placeholder="'选择模型'" @update:model-value="changeModel" :direction="'up'"/>
                 <LightbulbOnIcon v-if="models.find(m => m.model === model)?.toolable" class="intelligent-icon" @click="showIntelligentTips(true)"/>
                 <LightbulbOutlineIcon v-else class="intelligent-icon" @click="showIntelligentTips(false)"/>
-                <span class="upload-img" @click="editingLastMessage ? uploadEditImage() : uploadImage()">
-                    <ImageOutlineIcon class="icon" v-if="!uploadingImage"/>
+                <span class="upload-img" @click="uploadFile(false, editingLastMessage)" style="margin-left: auto;">
+                    <FileDocumentOutlineIcon class="icon" v-if="!uploadingFile"/>
+                    <div class="loading-icon" v-else>
+                        <LoadingIcon />
+                    </div>
+                </span>
+                <span class="upload-img" @click="uploadFile(true, editingLastMessage)">
+                    <ImageOutlineIcon class="icon" v-if="!uploadingFile"/>
                     <div class="loading-icon" v-else>
                         <LoadingIcon />
                     </div>
@@ -742,7 +737,7 @@ function confirmEditLastMessage(event?: KeyboardEvent)
                 </span>
                 <span class="send" @click="editingLastMessage ? confirmEditLastMessage() : onSubmit(null)">
                     <div v-if="info.showAnswering">
-                        <StopCircleOutlineIcon class="icon" />
+                        <StopCircleOutlineIcon class="icon"/>
                     </div>
                     <div class="loading-icon" v-else-if="info.inAnswering">
                         <LoadingIcon />
@@ -895,8 +890,8 @@ function confirmEditLastMessage(event?: KeyboardEvent)
             width: fit-content;
             -webkit-user-select: text;
             user-select: text;
-            border-radius: 0.75rem;
-            padding: 0.5rem;
+            border-radius: 26px;
+            padding: 10px;
             background-color: rgba(0,0,0,0.15);
         }
     }
@@ -1001,12 +996,23 @@ function confirmEditLastMessage(event?: KeyboardEvent)
         min-width: 100px;
         width: 100px;
         border-radius: 0.5rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
         .remove-img {
             position: absolute;
             bottom: 5px;
             right: 5px;
             color: red;
             cursor: pointer;
+        }
+        .file-name {
+            font-size: 0.3em;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            width: 50%;
         }
     }
 }
@@ -1040,7 +1046,7 @@ function confirmEditLastMessage(event?: KeyboardEvent)
         bottom: 0;
         padding: 0.5rem 1rem;
         border-radius: 1rem;
-        margin: 10px 10px 10px auto;
+        margin: 10px;
         right: 0;
         background-color: rgba(76, 107, 190, 0.4);
         display: flex;

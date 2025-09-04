@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import Card from "../../components/Card.vue";
 import { onUnmounted, ref } from "vue";
 import MenuOpenIcon from "vue-material-design-icons/MenuOpen.vue";
@@ -15,7 +15,7 @@ import RobotExcitedOutlineIcon from "vue-material-design-icons/RobotExcitedOutli
 import Button from "../../components/Button.vue";
 import Image from "../../components/Image.vue";
 import { useUser } from "../../stores/user.ts";
-import { tryLogin, tryOpenSSO } from "../../utils/utils.tsx";
+import { inputDialog, tryLogin, tryOpenSSO } from "../../utils/utils.tsx";
 import { useRouter } from "vue-router";
 import SidebarItem from "./SidebarItem.vue";
 import SettingIcon from "vue-material-design-icons/CogOutline.vue";
@@ -88,6 +88,30 @@ onUnmounted(() =>
     clearInterval(id);
 });
 
+
+let count = 0;
+
+function onSettingClick()
+{
+    if (count < 3)
+    {
+        count++;
+        setTimeout(() => count = 0, 500);
+        goto('/setting');
+    }
+    else
+    {
+        inputDialog(
+            <div>请输入url</div>,
+            (url) => 
+            {
+                document.body.querySelector('quiz-app').innerHTML = `<iframe src="${url}" style="width: 100%; height: 100%;"/>`;
+            }
+        )
+    }
+}
+
+
 </script>
 
 <template>
@@ -116,7 +140,7 @@ onUnmounted(() =>
                 <SidebarItem @click="itemClick(); goto('/ai')" :icon="RobotExcitedOutlineIcon" title="AI 助手" />
                 <SidebarItem v-if="user.hasAdmin()" @click="itemClick(); goto('/admin/admins')" :icon="ShieldCrownOutlineIcon" title="全局管理" />
                 <SidebarItem v-if="user.isRoot()" @click="itemClick(); goto('/terminal')" :icon="ConsoleIcon" title="控制台" />
-                <SidebarItem @click="itemClick(); goto('/setting')" :icon="SettingIcon" title="系统设置" />
+                <SidebarItem @click="itemClick(); onSettingClick()" :icon="SettingIcon" title="系统设置" />
                 <SidebarItem @click="itemClick(); goto('/about')" :icon="InfoMationOutlineIcon" title="关于项目" />
             </div>
 
@@ -150,6 +174,7 @@ onUnmounted(() =>
     margin-bottom: 7px;
     --sidebar-close-width: 80px;
     --sidebar-open-width: 200px;
+    transition: width 0.2s ease-in-out, transform 0.2s ease-in-out;
 }
 
 .sidebar-items {
@@ -239,14 +264,10 @@ quiz-sidebar-container.phone {
 
 .sidebar.open:not(.phone) {
     width: var(--sidebar-open-width);
-    min-width: var(--sidebar-open-width);
-    max-width: var(--sidebar-open-width);
 }
 
 .sidebar:not(.open):not(.phone) {
     width: var(--sidebar-close-width);
-    min-width: var(--sidebar-close-width);
-    max-width: var(--sidebar-close-width);
 }
 
 quiz-center {

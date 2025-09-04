@@ -824,7 +824,6 @@
     margin: 0;
     font-size: 85%;
     white-space: break-spaces;
-    background-color: var(--bgColor-neutral-muted);
     border-radius: 6px;
 }
 
@@ -1230,4 +1229,46 @@
 
 .markdown-body .highlight pre:has(+.zeroclipboard-container) {
     min-height: 52px;
+}
+
+.markdown-body .code {
+    // overflow: hidden;
+    background-color: var(--bgColor-neutral-muted);
+    border-radius: 16px;
+    padding: 16px;
+    position: relative;
+    .code-header {
+        user-select: none;
+        position: sticky;
+        top: -1px;
+        background-color: var(--background);
+        border-radius: 16px 16px 0 0;
+        height: 3em;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px;
+        margin: -16px;
+        margin-bottom: 16px;
+        backdrop-filter: blur(10px);
+
+        .code-copy {
+            padding: 4px 9px 4px 9px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            &:hover {
+                background-color: var(--button-background);
+            }
+            &:active {
+                background-color: var(--button-hover-background);
+            }
+        }
+    }
+
+    code {
+        padding: 0;
+    }
 }

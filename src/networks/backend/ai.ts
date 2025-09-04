@@ -23,6 +23,12 @@ export type Content = (({
     image_url: {
         url: string;
     }
+} | {
+    type: 'file';
+    file: {
+        filename: string;
+        file_data: string;
+    }
 })[]) | string;
 export type AiHistory = {
     role: 'assistant' | 'user';
@@ -102,7 +108,7 @@ export async function getChatList(begin: number, count: number): Promise<Slice<C
     }));
 }
 
-export async function createChat(section: Section<AnswerType, AnswerType, string> | null, content: string, images: string[], model: Model)
+export async function createChat(section: Section<AnswerType, AnswerType, string> | null, content: Content, model: Model)
 {
     return checkResponse<ChatId>(sendRequest({
         target: Target.BACKEND,
@@ -112,12 +118,11 @@ export async function createChat(section: Section<AnswerType, AnswerType, string
             section,
             content,
             model,
-            images,
         }
     }));
 }
 
-export async function sendContent(data: {chatId: number, content: string, images: string[], regenerate: boolean, model: Model, hash: string}): Promise<{hash: string, content: Content} | null>
+export async function sendContent(data: {chatId: number, content: Content, regenerate: boolean, model: Model, hash: string}): Promise<{hash: string, content: Content} | null>
 {
     return checkResponse<{hash: string, content: Content} | null>(
         sendRequest({
@@ -141,6 +146,36 @@ export async function cancelChat(chat: ChatId): Promise<void>
         url: cancelChatUrl,
         method: 'POST',
         params: { chat }
+    }));
+}
+
+const customModelUrl = '/ai/chat/customModel';
+export interface CustomModelInfo
+{
+    model: string;
+    url: string;
+    maxToken: number;
+    toolable: boolean;
+    imageable: boolean;
+    key: string;
+    customRequestParms: any;
+}
+export async function getCustomModel(): Promise<CustomModelInfo>
+{
+    return checkResponse<CustomModelInfo>(sendRequest({
+        target: Target.BACKEND,
+        url: customModelUrl,
+        method: 'GET'
+    }));
+}
+
+export async function setCustomModel(model: CustomModelInfo): Promise<void>
+{
+    return checkResponse<void>(sendRequest({
+        target: Target.BACKEND,
+        url: customModelUrl,
+        method: 'PUT',
+        data: model
     }));
 }
 

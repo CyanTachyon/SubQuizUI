@@ -1,7 +1,7 @@
 import type { AnswerType } from "./Question.ts";
 import type {Section} from "./Section.ts";
 
-export interface Quiz<Answer extends AnswerType | null, UserAnswer extends AnswerType | null, Analysis extends string | null>
+export interface Quiz<Answer extends AnswerType | null, UserAnswer extends AnswerType | null, Analysis extends any | null>
 {
     id: number,
     user: number,

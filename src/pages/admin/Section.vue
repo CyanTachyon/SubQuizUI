@@ -532,7 +532,7 @@ function deleteImage(name: string)
                 <p style="margin-left: 10px; cursor: pointer; " @click="addImage">图库</p> 
                 <Text @click="addImage" style="cursor: pointer; "><PlusIcon /></Text>
             </div>
-            <Spacer style="width: 200px; margin-bottom: 10px;"/>
+            <Spacer style="width: 220px; margin-bottom: 10px;"/>
             <Loading v-if="loadingImages"/>
             <template v-else>
                 <div v-if="images.length" style="margin-left: 10px;">
@@ -723,9 +723,9 @@ quiz-small-title {
 .img-sources {
     // width: 100%;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     scrollbar-width: none;
-    overflow-x: auto;
+    overflow-y: auto;
     gap: 10px;
     margin-left: 10px;
     margin-right: 10px;
