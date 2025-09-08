@@ -117,7 +117,7 @@ const actions = {
         if (themeInfo.value.background === '#') 
         {
             if (themeInfo.value.isDark)
-                document.body.style.backgroundColor = '#1E2024';
+                document.body.style.backgroundColor = '#151517';
             else
                 document.body.style.backgroundColor = '#B9BABB';
             document.body.style.backgroundImage = 'none';

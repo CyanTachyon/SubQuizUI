@@ -318,7 +318,7 @@ function updateQuiz()
             </div>
             <Button v-if="info.value.startsWith('<!--show-download-image-->')" style="margin-left: auto; right: 0;" @click="downloadImage">截取图片</Button>
         </div>
-        <div v-else-if="info.type === 'FILE'" style="margin: -10px;">
+        <div v-else-if="info.type === 'FILE'" style="margin: -10px; max-width: 100%; text-overflow: ellipsis; overflow: hidden;">
             <Button @click="close(); safeRedirect(fileUrl)" class="file-button">
                 <FileDocumentOutlineIcon class="icon" :size="35"/>
                 <span class="name">{{ fileName }}</span>
@@ -355,12 +355,14 @@ function updateQuiz()
     padding: 10px;
     scrollbar-width: none;
     width: 100%;
+    max-width: 100%;
     height: 100%;
     overflow-y: scroll;
 }
 .container-inline {
     padding: 10px;
     width: 100%;
+    max-width: 100%;
     scrollbar-width: none;
     display: flex;
 }
@@ -417,6 +419,7 @@ iframe {
     right: 0; 
     display: flex; 
     flex-direction: row;
+    overflow: hidden;
     span.icon {
         padding: 5px;
         background-color: cadetblue;
@@ -425,6 +428,9 @@ iframe {
     span.name {
         height: 100%;
         margin-left: 10px;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
     }
 }
 </style>

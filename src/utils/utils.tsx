@@ -19,9 +19,11 @@ import { getScale } from "../main.ts";
 import { Clipboard } from "@capacitor/clipboard";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { compressImageToMaxBytes } from "./image.ts";
+import { useUser } from "../stores/user.ts";
 
 export function tryLogin()
 {
+    useUser().logout();
     tryOpenSSO('/oauth?needAuthorize=' + environment.ssoServiceId);
 }
 
@@ -81,12 +83,12 @@ export function getUrlSearchParams(): Record<string, string>
 /**
  * 设置当前的url，但是不触发vue router的跳转
  */
-export function pushUrl(url: string = location.pathname, query: Record<string, string> = getUrlSearchParams())
+export function pushUrl(url: string = location.pathname, query: Record<string, any> = getUrlSearchParams())
 {
     window.history.pushState({}, '', connectUrl(Target.EMPTY, url, query));
 }
 
-export function replaceUrl(url: string = location.pathname, query: Record<string, string> = getUrlSearchParams())
+export function replaceUrl(url: string = location.pathname, query: Record<string, any> = getUrlSearchParams())
 {
     window.history.replaceState({}, '', connectUrl(Target.EMPTY, url, query));
 }
@@ -167,7 +169,7 @@ export function getOptionName(index: number)
 
 export function richtextToString(richtext: any)
 {
-    if (!richtext) return '';
+    if (!richtext) return richtext;
     if (typeof richtext !== 'object') return '' + richtext;
     if (Array.isArray(richtext)) return richtext.map(richtextToString).join('');
     if (richtext.text) return richtext.text;

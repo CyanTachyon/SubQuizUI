@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { computed, type Component } from "vue";
 
+const { sub } = defineProps({
+    sub: {
+        type: Boolean,
+        default: false,
+    }
+})
+
 export type TreeNode<T> = {
     id: string | number;
     icon?: Component;
@@ -41,9 +48,9 @@ const nodes = computed(() => {
                 </quiz-tree-node-label>
             </quiz-tree-node-title>
 
-            <TreeView v-if="node.expand" :model-value="node" :key="node.id" style="margin-left: 20px;"/>
+            <TreeView v-if="node.expand" :model-value="node" :key="node.id" style="margin-left: 20px;" :sub="true"/>
         </quiz-tree-node>
-        <quiz-tree-node v-if="nodes.length === 0">
+        <quiz-tree-node v-if="sub && nodes.length === 0">
             <quiz-tree-node-title>
                 <quiz-tree-node-label>
                     暂无内容

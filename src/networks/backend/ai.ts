@@ -154,7 +154,6 @@ export interface CustomModelInfo
 {
     model: string;
     url: string;
-    maxToken: number;
     toolable: boolean;
     imageable: boolean;
     key: string;

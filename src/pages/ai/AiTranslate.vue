@@ -12,6 +12,7 @@ import { translateSSE } from '../../networks/backend/ai';
 import SelectMenu from '../../components/SelectMenu.vue';
 import SwapHorizontalIcon from 'vue-material-design-icons/SwapHorizontal.vue';
 import { copyToClipboard } from '../../utils/utils';
+import { phone } from '../../main';
 
 document.title = 'AI翻译 - SubQuiz';
 
@@ -57,7 +58,11 @@ function translate()
 </script>
 
 <template>
-    <Split min-left-width="460px" min-right-width="112px">
+    <Split 
+        :min-left-width="phone ? '200px' : '460px'" 
+        :min-right-width="phone ? '200px' : '112px'" 
+        :direction="phone ? 'column' : 'row'"
+    >
         <template #left>
             <Card class="card" style="min-width: 300px;">
                 <div style="display: flex;">

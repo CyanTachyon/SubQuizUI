@@ -2,7 +2,7 @@
 import { ref, nextTick } from 'vue';
 import type { AnswerType } from '../../dataClasses/Question';
 import type { Section } from '../../dataClasses/Section';
-import { cancelChat, chatSSE, createChat, deleteChat, getChat, getContentText, mergeContent, parseChatUrl, sendContent, type AiHistory, type AiMessage, type Content, type Model, type ModelInfo, type ToolDataInfo, } from '../../networks/backend/ai';
+import { cancelChat, chatSSE, createChat, deleteChat, getChat, getContentText, getCustomModel, mergeContent, parseChatUrl, sendContent, setCustomModel, type AiHistory, type AiMessage, type Content, type CustomModelInfo, type Model, type ModelInfo, type ToolDataInfo, } from '../../networks/backend/ai';
 import Input from '../../components/Input.vue';
 import { useNotification } from '../../stores/notification';
 import LoadingIcon from 'vue-material-design-icons/Loading.vue';
@@ -25,8 +25,7 @@ import ContentCopyIcon from 'vue-material-design-icons/ContentCopy.vue';
 import FileQuestionIcon from 'vue-material-design-icons/FileQuestion.vue';
 import ToolsIcon from 'vue-material-design-icons/Tools.vue';
 import Button from '../../components/Button.vue';
-import LightbulbOnIcon from 'vue-material-design-icons/LightbulbOn.vue';
-import LightbulbOutlineIcon from 'vue-material-design-icons/LightbulbOutline.vue';
+import CogOutlineIcon from 'vue-material-design-icons/CogOutline.vue';
 import { getThemes } from '../../stores/theme';
 import ToolDataShower from './ToolDataShower.vue';
 import StopCircleOutlineIcon from "vue-material-design-icons/StopCircleOutline.vue";
@@ -34,6 +33,7 @@ import SyncIcon from "vue-material-design-icons/Sync.vue";
 import TrashCanIcon from "vue-material-design-icons/TrashCan.vue";
 import PencilIcon from "vue-material-design-icons/Pencil.vue";
 import FileDocumentOutlineIcon from "vue-material-design-icons/FileDocumentOutline.vue";
+import Switch from '../../components/Switch.vue';
 
 export type DisplayMessage = AiMessage & {
     showReasoning: boolean;
@@ -297,7 +297,7 @@ const models = ref<ModelInfo[]>([
     }
 ]);
 
-(async () =>
+const updateModels = (async () =>
 {
     models.value = await getAiModels();
     const savedModel = await storageGet('quiz-ai-model') as Model;
@@ -309,12 +309,17 @@ const models = ref<ModelInfo[]>([
     {
         model.value = models.value[0].model;
     }
-})();
+});
+updateModels();
 
 function changeModel(newModel: Model)
 {
     model.value = newModel;
     storageSet('quiz-ai-model', newModel);
+    if (models.value.some(m => m.model === newModel && !m.toolable))
+    {
+        useNotification().addWarning('该模型不支持工具调用，多数功能将无法使用');  
+    }
 }
 
 function isMobileDevice()
@@ -516,18 +521,6 @@ function openSection()
     </div>, () => {close();});
 }
 
-function showIntelligentTips(isEnabled: boolean)
-{
-    if (isEnabled)
-    {
-        useNotification().addInfo('该模型支持高级功能！');
-    } 
-    else
-    {
-        useNotification().addWarning('该模型不支持高级功能, 建议切换到支持的模型以获得更好的体验。');
-    }
-}
-
 const bdfzData = ref<{ [key: string]: Record<string, ToolDataInfo> }>({});
 
 function parseHtml(ele: HTMLElement)
@@ -626,6 +619,119 @@ function confirmEditLastMessage(event?: KeyboardEvent)
     onSubmit(event || null, false, true);
 }
 
+
+/// 自定义AI模型设置
+
+async function showCustomModelDialog()
+{
+    try
+    {
+        const currentModel = await getCustomModel();
+        const modelData = ref<CustomModelInfo>({
+            model: currentModel?.model || '',
+            url: currentModel?.url || '',
+            toolable: currentModel?.toolable || false,
+            imageable: currentModel?.imageable || false,
+            key: currentModel?.key || '',
+            customRequestParms: currentModel?.customRequestParms || {}
+        });
+
+        const ToolableSwitch = () => (
+            <Switch
+                on={modelData.value.toolable}
+                onClick={() =>
+                {
+                    modelData.value.toolable = !modelData.value.toolable;
+                }}
+            />
+        );
+
+        const ImageableSwitch = () => (
+            <Switch
+                on={modelData.value.imageable}
+                onClick={() =>
+                {
+                    modelData.value.imageable = !modelData.value.imageable;
+                }}
+            />
+        );
+
+        const close = dialog(
+            <div style="padding: 20px; width: 500px; max-width: 90vw;">
+                <Text><h2 style="margin-bottom: 20px; text-align: center;">自定义AI模型设置</h2></Text>
+
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div>
+                        <Text><label style="display: block; margin-bottom: 5px;">模型名称:</label></Text>
+                        <Input
+                            v-model={modelData.value.model}
+                            placeholder="例如: gpt-4, claude-3-sonnet"
+                            style="width: 100%;"
+                        />
+                    </div>
+
+                    <div>
+                        <Text><label style="display: block; margin-bottom: 5px;">API URL:</label></Text>
+                        <Input
+                            v-model={modelData.value.url}
+                            placeholder="例如: https://api.openai.com/v1/chat/completions"
+                            style="width: 100%;"
+                        />
+                    </div>
+
+                    <div>
+                        <Text><label style="display: block; margin-bottom: 5px;">API Key:</label></Text>
+                        <Input
+                            v-model={modelData.value.key}
+                            type="password"
+                            placeholder="输入API密钥"
+                            style="width: 100%;"
+                        />
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <Text><label>支持工具调用:</label></Text>
+                        <ToolableSwitch />
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <Text><label>支持图像处理:</label></Text>
+                        <ImageableSwitch />
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 25px;">
+                    <Button onClick={() => close()}>
+                        取消
+                    </Button>
+                    <Button onClick={async () =>
+                    {
+                        try
+                        {
+                            await setCustomModel(modelData.value);
+                            if (modelData.value.toolable) useNotification().addSuccess('自定义模型设置已保存');
+                            else useNotification().addWarning('由于模型不支持工具调用，多数功能将无法使用');
+                            close();
+                            updateModels();
+                        }
+                        catch (error)
+                        {
+                            useNotification().addError('保存失败: ' + (error as Error).message);
+                        }
+                    }}>
+                        保存
+                    </Button>
+                </div>
+            </div>,
+            () => close()
+        );
+    }
+    catch (error)
+    {
+        useNotification().addError('获取模型配置失败: ' + (error as Error).message);
+    }
+}
+
 </script>
 
 <template>
@@ -636,8 +742,8 @@ function confirmEditLastMessage(event?: KeyboardEvent)
     }">
         <Loading v-if="loading"/>
         <template v-else>
-            <div style="display: flex; align-items: center; justify-content: center; height: 60px; padding: 0 10px; font-size: 1.2rem; font-weight: bold; gap: 10px; position: relative; min-height: 60px;">
-                {{ info?.title ?? '新建对话' }}
+            <div class="title-bar">
+                <span>{{ info?.title ?? '新建对话' }}</span>
                 <TrashIcon v-if="info?.id" @click="deleteChat(info?.id).then(() => onNewChat(0))" style="color: red; width: 20px; height: 20px; opacity: 0.7; cursor: pointer;" />
             </div>
             <Text class="section" v-if="info.section" @click="openSection">
@@ -718,8 +824,7 @@ function confirmEditLastMessage(event?: KeyboardEvent)
             
             <Text class="bottom-bar">
                 <SelectMenu :model-value="model" :options="models.map(m => ({ label: m.displayName, value: m.model }))" class="model-name" :placeholder="'选择模型'" @update:model-value="changeModel" :direction="'up'"/>
-                <LightbulbOnIcon v-if="models.find(m => m.model === model)?.toolable" class="intelligent-icon" @click="showIntelligentTips(true)"/>
-                <LightbulbOutlineIcon v-else class="intelligent-icon" @click="showIntelligentTips(false)"/>
+                <CogOutlineIcon class="intelligent-icon" @click="showCustomModelDialog()"/>
                 <span class="upload-img" @click="uploadFile(false, editingLastMessage)" style="margin-left: auto;">
                     <FileDocumentOutlineIcon class="icon" v-if="!uploadingFile"/>
                     <div class="loading-icon" v-else>
@@ -757,6 +862,27 @@ function confirmEditLastMessage(event?: KeyboardEvent)
     margin-bottom: 6px;
     display: flex;
     flex-direction: column;
+}
+
+.title-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 60px;
+    padding: 0 10px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    gap: 10px;
+    position: relative;
+    min-height: 60px;
+    span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    svg {
+        min-width: 20px;
+    }
 }
 
 .section {
@@ -887,7 +1013,7 @@ function confirmEditLastMessage(event?: KeyboardEvent)
                 bottom: 0;
             }
             margin-left: 13px;
-            width: fit-content;
+            max-width: fit-content;
             -webkit-user-select: text;
             user-select: text;
             border-radius: 26px;

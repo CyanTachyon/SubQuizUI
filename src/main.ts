@@ -154,6 +154,7 @@ export function getScale(): number
     const appEle = (document.querySelector('quiz-app') as any);
     scale = Number(await storageGet('scale')) || (Capacitor.getPlatform() === 'web' ? 1 : 0.8);
     appEle.style = `
+        --scale: ${scale};
         transform: scale(${scale});
         transform-origin: top left;
         width: ${100 / scale}%;
@@ -192,5 +193,4 @@ export function getScale(): number
             return storageSet('route', to.path);
         });
     }
-
 })();

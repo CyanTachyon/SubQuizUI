@@ -144,18 +144,19 @@ function togglePin(sectionIndex: number)
 
 <template>
     <Card v-for="(section, sectionIndex) in quiz.sections" class="section" :key="sectionIndex" :class="{'pinned': pin.includes(sectionIndex)}">
+        <span style="position: absolute; left: 22px; top: 3px">ID: {{ section.id }}</span>
         <div v-if="richtextToString(section.description)" style="display: inline;" class="wrapper1">
             <div class="pin-icon" @click="togglePin(sectionIndex)">
                 <PinOutline v-if="!pin.includes(sectionIndex)"/>
                 <PinOffOutline v-else/>
             </div>
-            <ResizableWrapper class="section-description-wrapper" height-resizable :width-resizable="pin.includes(sectionIndex)"> 
+            <ResizableWrapper class="section-description-wrapper" :height-resizable="!pin.includes(sectionIndex)" :width-resizable="pin.includes(sectionIndex)" :key="sectionIndex + '-' + pin.includes(sectionIndex)"> 
                 <Card class="section-description" scroll v-section-content="{content: section.description, id: section.id}">
                 </Card> 
             </ResizableWrapper>
             <Spacer v-if="!pin.includes(sectionIndex)"/>
         </div>
-        <div style="display: inline;">
+        <div style="display: inline; flex-grow: 1;">
             <br/>
             <div v-for="(question, questionIndex) in section.questions" :id="`q-${sectionIndex}-${questionIndex}`" class="question">
                 <div class="question-description">
@@ -214,7 +215,7 @@ function togglePin(sectionIndex: number)
                         <CheckIcon/>
                     </Button>
                 </div>
-                <div v-else-if="question.type === 'fill'" class="option-box">
+                <div v-else-if="question.type === 'fill'">
                     <Input :area="false" placeholder="请输入答案" type="text" :value="question.userAnswer" @input="fillAnswer(sectionIndex, questionIndex, $event.target.value)" class="fill-option-input" :disabled="!editable"/>
                 </div>
                 <div v-else-if="question.type === 'essay'">
@@ -392,9 +393,8 @@ $answer-color-duration: 0.4s;
 }
 
 .fill-option-input {
-    width: 30%;
-    max-width: 30%;
     white-space: pre-wrap;
+    width: min(calc(100% - 20px), 400px);
 }
 
 .essay-option-input {

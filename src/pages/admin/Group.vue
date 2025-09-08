@@ -37,6 +37,7 @@ import Pagination from "../../components/Pagination.vue";
 import FolderOutlineIcon from "vue-material-design-icons/FolderOutline.vue";
 import FolderOpenOutlineIcon from "vue-material-design-icons/FolderOpenOutline.vue";
 import CheckboxBlankOutlineIcon from "vue-material-design-icons/CheckboxBlankOutline.vue";
+import MinusBoxMultipleOutlineIcon from "vue-material-design-icons/MinusBoxMultipleOutline.vue";
 import CheckboxMultipleBlankOutlineIcon from "vue-material-design-icons/CheckboxMultipleBlankOutline.vue";
 import CheckboxMarkedIcon from "vue-material-design-icons/CheckboxMarked.vue";
 import CheckboxMultipleMarked from "vue-material-design-icons/CheckboxMultipleMarked.vue";
@@ -155,17 +156,16 @@ function toTreeNode(node: KnowledgePointTree, selectable: boolean): TreeNode<{ s
             if (this.folder)
             {
                 let allSelect = true;
+                let hasSelect = false;
                 for (const child of this.children)
                 {
-                    if (!child.select)
-                    {
-                        allSelect = false;
-                        break;
-                    }
+                    allSelect &&= child.select;
+                    hasSelect ||= (child.select !== false);
                 }
-                if (allSelect !== this.select)
+                const rSelect = allSelect ? true : hasSelect ? null : false;                
+                if (this.select !== rSelect)
                 {
-                    this.select = allSelect;
+                    this.select = rSelect;
                     if (this.father) this.father.updateSelect();
                 }
             }
@@ -173,7 +173,7 @@ function toTreeNode(node: KnowledgePointTree, selectable: boolean): TreeNode<{ s
             let icon: Component;
             if (selectable)
             {
-                if (this.folder && !this.expand) icon = this.select ? CheckboxMultipleMarked : CheckboxMultipleBlankOutlineIcon;
+                if (this.folder) icon = this.select ? CheckboxMultipleMarked : this.select === null ? MinusBoxMultipleOutlineIcon : CheckboxMultipleBlankOutlineIcon;
                 else icon = this.select ? CheckboxMarkedIcon : CheckboxBlankOutlineIcon;
             }
             else icon = this.folder ? (this.expand ? FolderOpenOutlineIcon : FolderOutlineIcon) : AdjustIcon;

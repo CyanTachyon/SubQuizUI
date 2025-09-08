@@ -145,12 +145,28 @@ function updateMarkdown(el: HTMLElement, binding: MarkdownContent)
             ele.addEventListener('click', () => copyToClipboard(code));
             ele.removeAttribute('code');
         });
+        tmpDiv.querySelectorAll('.katex').forEach((ele: HTMLElement) => 
+        {
+            ele.style.display = 'block';
+            ele.style.overflowX = 'auto';
+            ele.style.overflowY = 'hidden';
+            ele.classList.add('scrollbar');
+        });
         if (codeHeader === false) tmpDiv.querySelectorAll('.code-header').forEach((ele) => ele.remove());
         if (parseHtml) parseHtml(tmpDiv.firstElementChild as HTMLElement);
         el.innerHTML = '';
         el.appendChild(tmpDiv.firstElementChild as HTMLElement);
     }
-    else el.innerText = content;
+    else 
+    {
+        const markdownBody = document.createElement('quiz-markdown-body');
+        markdownBody.className = 'markdown-body';
+        const p = document.createElement('p');
+        p.innerText = content;
+        markdownBody.appendChild(p);
+        el.innerHTML = '';
+        el.appendChild(markdownBody);
+    }
 }
 
 export type SectionContent = {

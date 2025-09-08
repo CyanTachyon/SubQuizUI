@@ -18,7 +18,7 @@
         </filter>
     </svg>
 
-    <TransitionGroup name="notification" tag="quiz-notifications-wrapper" class="phone">
+    <TransitionGroup name="notification" tag="quiz-notifications-wrapper" :class="{ phone }">
         <quiz-notification-item v-for="notification in getNotifications()" :key="notification.id"
             :class="[notification.type || 'info']">
             {{ notification.message }}
@@ -41,14 +41,19 @@ import DownloadNewVersion from "./pages/_app/DownloadNewVersion.vue";
 import { CheckUpdateReason, checkUpdate, versionInfo } from "./utils/utils";
 import { Capacitor } from "@capacitor/core";
 import { onMounted } from "vue";
+import { phone } from "./main.ts";
+import { sleep } from "./utils/sleep.ts";
 
 const route = useRoute();
 checkUpdate(CheckUpdateReason.NONE);
 
 onMounted(() =>
 {
-    const splashScreen = document.querySelector('quiz-splash-screen') as any;
-    splashScreen.remove();
+    sleep(1500).then(() => 
+    {
+        const splashScreen = document.querySelector('quiz-splash-screen') as any;
+        splashScreen.remove();
+    });
 });
 </script>
 <style lang="scss">

@@ -11,6 +11,7 @@ import debounce from "../utils/debounce.ts";
 import { useNotification } from "../stores/notification.ts";
 import type { AnswerType } from "../dataClasses/Question.ts";
 import type { KnowledgePointId } from "../dataClasses/Ids.ts";
+import { replaceUrl } from "../utils/utils.tsx";
 
 document.title = '测试 - SubQuiz';
 
@@ -33,7 +34,11 @@ const id = Number(route.query.id);
 const setData = (quiz: Quiz<null, AnswerType | null, null>) =>
 {
     if (quiz.finished) router.replace('/analysis/' + quiz.id);
-    else data.value = quiz;
+    else 
+    {
+        replaceUrl('/quiz', { id: quiz.id });
+        data.value = quiz;
+    }
 };
 
 if (id) getQuiz(id).then(setData, router.back);

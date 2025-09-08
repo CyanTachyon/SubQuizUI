@@ -10,6 +10,8 @@ interface Props
     maxLeftWidth?: string;
     minRightWidth?: string;
     maxRightWidth?: string;
+
+    direction?: 'row' | 'column';
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -18,12 +20,15 @@ const props = withDefaults(defineProps<Props>(), {
     maxLeftWidth: '100%',
     minRightWidth: '100px',
     maxRightWidth: '100%',
+
+    direction: 'row',
 });
 
 const leftWidth = ref(0);
-onMounted(() => {
+onMounted(() => 
+{
     const rect = splitContainer.value.getBoundingClientRect();
-    leftWidth.value = convertToPercentage(props.initialLeftWidth || '50%', rect.width);
+    leftWidth.value = convertToPercentage(props.initialLeftWidth || '50%', props.direction === 'row' ? rect.width : rect.height);
 })
 const isDragging = ref(false);
 const splitContainer = ref<HTMLElement>();
@@ -44,10 +49,15 @@ const convertToPercentage = (value: string, containerWidth: number): number =>
 const getEventX = (event: MouseEvent | TouchEvent): number =>
 {
     if ('touches' in event) 
-    {
         return event.touches[0]?.clientX || 0;
-    }
     return event.clientX;
+};
+
+const getEventY = (event: MouseEvent | TouchEvent): number =>
+{
+    if ('touches' in event) 
+        return event.touches[0]?.clientY || 0;
+    return event.clientY;
 };
 
 const startDrag = (event: MouseEvent | TouchEvent) =>
@@ -76,8 +86,18 @@ const onDrag = (event: MouseEvent | TouchEvent) =>
     const containerWidth = containerRect.width;
     const eventX = getEventX(event);
     const mouseX = eventX - containerRect.left;
+    const containerHeight = containerRect.height;
+    const eventY = getEventY(event);
+    const mouseY = eventY - containerRect.top;
 
-    leftWidth.value = (mouseX / containerWidth) * 100;
+    if (props.direction === 'row')
+    {
+        leftWidth.value = (mouseX / containerWidth) * 100;
+    }
+    else
+    {
+        leftWidth.value = (mouseY / containerHeight) * 100;
+    }
 };
 
 const stopDrag = () =>
@@ -103,9 +123,13 @@ onUnmounted(() =>
 });
 </script>
 <template>
-    <div ref="splitContainer" class="split-container">
-        <div class="split-left" :style="{ width: `${leftWidth}%`, maxWidth: props.maxLeftWidth, minWidth: props.minLeftWidth }">
-            <slot name="left"></slot>
+    <div ref="splitContainer" class="split-container" :class="{ 'split-row': props.direction === 'row', 'split-column': props.direction === 'column' }">
+        <div class="split-left" :style="{ 
+            [props.direction === 'row' ? 'width' : 'height']: `${leftWidth}%`,
+            [props.direction === 'row' ? 'maxWidth' : 'maxHeight']: props.maxLeftWidth, 
+            [props.direction === 'row' ? 'minWidth' : 'minHeight']: props.minLeftWidth
+        }">
+            <slot name="left"/>
         </div>
         <Text 
             class="split-divider"
@@ -114,8 +138,12 @@ onUnmounted(() =>
             >
             <div/>
         </Text>
-        <div class="split-right" :style="{ width: `${rightWidth}%`, maxWidth: props.maxRightWidth, minWidth: props.minRightWidth }">
-            <slot name="right"></slot>
+        <div class="split-right" :style="{ 
+            [props.direction === 'row' ? 'width' : 'height']: `${rightWidth}%`, 
+            [props.direction === 'row' ? 'maxWidth' : 'maxHeight']: props.maxRightWidth,
+            [props.direction === 'row' ? 'minWidth' : 'minHeight']: props.minRightWidth 
+        }">
+            <slot name="right"/>
         </div>
     </div>
 </template>
@@ -127,6 +155,14 @@ onUnmounted(() =>
     position: relative;
 }
 
+.split-container.split-row {
+    flex-direction: row;
+}
+
+.split-container.split-column {
+    flex-direction: column;
+}
+
 .split-left,
 .split-right {
     overflow: hidden;
@@ -134,19 +170,13 @@ onUnmounted(() =>
 }
 
 .split-divider {
-    cursor: col-resize;
     position: relative;
     flex-shrink: 0;
     touch-action: none; /* 防止触摸时的默认行为 */
-    width: 4px;
+    
 
     div {
         opacity: 0.2;
-        cursor: col-resize;
-        height: 100%;
-        left: -8px;
-        right: -8px;
-        width: calc(100% + 16px);
         position: absolute;
     }
 
@@ -180,4 +210,29 @@ onUnmounted(() =>
         height: 100%;
     }
 }
+
+.split-row .split-divider {
+    width: 4px;
+    cursor: col-resize;
+    div {
+        cursor: col-resize;
+        height: 100%;
+        left: -8px;
+        right: -8px;
+        width: calc(100% + 16px);
+    }
+}
+
+.split-column .split-divider {
+    height: 4px;
+    cursor: row-resize;
+    div {
+        cursor: row-resize;
+        width: 100%;
+        top: -8px;
+        bottom: -8px;
+        height: calc(100% + 16px);
+    }
+}
+
 </style>
