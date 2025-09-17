@@ -27,11 +27,11 @@ const actions = {
         const savedBackgroundBlur = await storageGet('background-blur');
         const savedBackgroundOverlay = await storageGet('background-overlay');
         themeInfo.value.theme = savedTheme === 'dark' ? 'dark' : savedTheme === 'light' ? 'light' : 'unset';
-        themeInfo.value.useBlur = (savedBlur ? savedBlur !== 'off' : true);
-        themeInfo.value.useGlass = (savedGlass ? savedGlass !== 'off' : true);
-        themeInfo.value.background = savedBackground || '';
-        themeInfo.value.useSolidColor = (savedSolidColor ? savedSolidColor === 'on' : false);
-        themeInfo.value.backgroundBlur = savedBackgroundBlur ? Number(savedBackgroundBlur) : 20;
+        themeInfo.value.useBlur = savedBlur === 'on';
+        themeInfo.value.useGlass = savedGlass === 'in';
+        themeInfo.value.background = savedBackground || '#';
+        themeInfo.value.useSolidColor = (savedSolidColor ? savedSolidColor !== 'off' : true);
+        themeInfo.value.backgroundBlur = savedBackgroundBlur ? Number(savedBackgroundBlur) || 20 : 20;
         if (savedBackgroundOverlay)
         {
             try
@@ -58,44 +58,20 @@ const actions = {
     },
     setBlur: (blur: 'on' | 'off') =>
     {
-        if (blur === 'off')
-        {
-            storageSet('theme-blur', 'off');
-            themeInfo.value.useBlur = false;
-        }
-        else
-        {
-            storageRemove('theme-blur');
-            themeInfo.value.useBlur = true;
-        }
+        storageSet('theme-blur', blur);
+        themeInfo.value.useBlur = blur === 'on';
         actions.applyTheme();
     },
     setGlass: (glass: 'on' | 'off') =>
     {
-        if (glass === 'off')
-        {
-            storageSet('theme-glass', 'off');
-            themeInfo.value.useGlass = false;
-        }
-        else
-        {
-            storageRemove('theme-glass');
-            themeInfo.value.useGlass = true;
-        }
+        storageSet('theme-glass', glass);
+        themeInfo.value.useGlass = glass === 'on';
         actions.applyTheme();
     },
     setSolidColor: (solidColor: 'on' | 'off') =>
     {
-        if (solidColor === 'off')
-        {
-            storageRemove('theme-solid-color');
-            themeInfo.value.useSolidColor = false;
-        }
-        else
-        {
-            storageSet('theme-solid-color', 'on');
-            themeInfo.value.useSolidColor = true;
-        }
+        storageSet('theme-solid-color', solidColor);
+        themeInfo.value.useSolidColor = solidColor === 'on';
         actions.applyTheme();
     },
     applyTheme: () =>

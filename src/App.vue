@@ -49,10 +49,11 @@ checkUpdate(CheckUpdateReason.NONE);
 
 onMounted(() =>
 {
-    sleep(1500).then(() => 
+    sleep(1000).then(() => 
     {
         const splashScreen = document.querySelector('quiz-splash-screen') as any;
-        splashScreen.remove();
+        splashScreen.style.opacity = 0;
+        splashScreen.style.pointerEvents = 'none';
     });
 });
 </script>
@@ -88,14 +89,18 @@ quiz-notifications-wrapper {
     align-items: center;
     gap: 0.5rem;
     z-index: $notification-z-index;
-    max-height: 100vh;
-    min-width: 30vw;
-    max-width: 30vw;
+    max-height: 100%;
+    min-width: 30%;
+    width: 30%;
+    max-width: 30%;
     overflow: visible;
 }
 
 quiz-notifications-wrapper.phone {
     top: 60px;
+    width: 95%;
+    max-width: 95%;
+    min-width: 95%;
 }
 
 quiz-notification-item {

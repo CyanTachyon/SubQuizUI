@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref, onUnmounted, onMounted, watch } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import { getFileInfo, getFileUrl, getToolData, parseChatUrl, type ToolDataInfo } from '../../networks/backend/ai';
 import { safeRedirect } from '../../utils/redirect';
 import Button from '../../components/Button.vue';
@@ -11,6 +11,7 @@ import type { ChatId } from '../../dataClasses/Ids';
 import QuizView from '../QuizView.vue';
 import type { Quiz } from '../../dataClasses/Quiz';
 import FileDocumentOutlineIcon from "vue-material-design-icons/FileDocumentOutline.vue";
+import ResizableWrapper from '../../components/ResizableWrapper.vue';
 
 const { chat, type, path, close: close_, dataset, customInfo } = defineProps<{
     chat: ChatId,
@@ -118,87 +119,6 @@ const updateDesmos = () =>
 onMounted(updateDesmos);
 
 const iframe = ref<HTMLIFrameElement | null>(null);
-const iframeWrapper = ref<HTMLElement | null>(null);
-const isResizing = ref(false);
-const iframeSize = ref({ width: '100%', height: 'min(500px, 85vh)' });
-
-let startX = 0;
-let startY = 0;
-let startWidth = 0;
-let startHeight = 0;
-
-const startResize = (e: MouseEvent | TouchEvent) => 
-{
-    if (!iframeWrapper.value) return;
-    
-    isResizing.value = true;
-    if (e instanceof MouseEvent) 
-    {
-        startX = e.clientX;
-        startY = e.clientY;
-    } 
-    else if (e instanceof TouchEvent) 
-    {
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-    }
-    
-    const rect = iframeWrapper.value.getBoundingClientRect();
-    startWidth = rect.width;
-    startHeight = rect.height;
-    
-    document.addEventListener('mousemove', doResize);
-    document.addEventListener('mouseup', stopResize);
-    document.addEventListener('touchmove', doResize, { passive: false });
-    document.addEventListener('touchend', stopResize);
-    e.preventDefault();
-};
-
-const doResize = (e: MouseEvent | TouchEvent) => 
-{
-    if (!isResizing.value || !iframeWrapper.value) return;
-
-    let clientX = 0;
-    let clientY = 0;
-
-    if (e instanceof MouseEvent) 
-    {
-        clientX = e.clientX;
-        clientY = e.clientY;
-    } 
-    else if (e instanceof TouchEvent) 
-    {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-    }
-
-    const deltaX = clientX - startX;
-    const deltaY = clientY - startY;
-
-    const newWidth = Math.max(200, startWidth + deltaX);
-    const newHeight = Math.max(150, startHeight + deltaY);
-    
-    iframeSize.value = {
-        width: `${newWidth}px`,
-        height: `${newHeight}px`
-    };
-};
-
-const stopResize = () => 
-{
-    isResizing.value = false;
-    document.removeEventListener('mousemove', doResize);
-    document.removeEventListener('mouseup', stopResize);
-    document.removeEventListener('touchmove', doResize);
-    document.removeEventListener('touchend', stopResize);
-};
-
-onUnmounted(() => {
-    document.removeEventListener('mousemove', doResize);
-    document.removeEventListener('mouseup', stopResize);
-    document.removeEventListener('touchmove', doResize);
-    document.removeEventListener('touchend', stopResize);
-});
 
 const downloadImage = () =>
 {
@@ -307,15 +227,14 @@ function updateQuiz()
             </div>
         </div>
         <div v-else-if="info.type === 'HTML' || info.type === 'PAGE'" style="display: inline; width: 100%;">
-            <div class="iframe-wrapper" ref="iframeWrapper" :style="{ height: iframeSize.height }">
+            <ResizableWrapper height-resizable class="iframe-wrapper" :height="750">
                 <iframe 
                     :srcdoc="info.type === 'HTML' ? info.value : undefined"
                     :src="info.type === 'PAGE' ? parseChatUrl(chat, info.value) : undefined" 
                     style="border: none;" 
                     ref="iframe"
-                ></iframe>
-                <div class="resize-handle" @mousedown="startResize" @touchstart="startResize" :class="{ 'dragging': isResizing }"></div>
-            </div>
+                />
+            </ResizableWrapper>
             <Button v-if="info.value.startsWith('<!--show-download-image-->')" style="margin-left: auto; right: 0;" @click="downloadImage">截取图片</Button>
         </div>
         <div v-else-if="info.type === 'FILE'" style="margin: -10px; max-width: 100%; text-overflow: ellipsis; overflow: hidden;">
@@ -333,10 +252,9 @@ function updateQuiz()
             </div>
         </div>
         <div v-else-if="info.type === 'MATH'" style="display: inline; width: 100%;" class="math">
-            <div class="iframe-wrapper" ref="iframeWrapper" :style="{ height: iframeSize.height }">
+            <ResizableWrapper height-resizable class="iframe-wrapper" :height="750">
                 <div ref="desmos" style="width: 100%; height: 100%;"></div>
-                <div class="resize-handle" @mousedown="startResize" @touchstart="startResize" :class="{ 'dragging': isResizing }"></div>
-            </div>
+            </ResizableWrapper>
         </div>
         <div v-else-if="info.type === 'QUIZ'" style="width: 100%;">
             <QuizView v-model="quiz" :editable="true" :ai="false"/>
@@ -375,12 +293,10 @@ iframe {
 }
 
 .iframe-wrapper {
-    position: relative;
     border-radius: 10px;
-    overflow: hidden;
-    resize: none;
-    min-width: 200px;
     min-height: 150px;
+    width: 100%;
+    padding-bottom: 10px;
 }
 
 .resize-handle {

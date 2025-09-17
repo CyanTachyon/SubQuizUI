@@ -382,15 +382,20 @@ const handleScaleChange = (newScale: number) =>
 
 <style scoped lang="scss">
 .theme-page {
-    min-height: 100vh;
+    min-height: 100%;
+    height: 100%;
+    width: 100%;
     padding: 20px;
     display: flex;
     justify-content: center;
+    overflow-y: auto;
+    scrollbar-width: none;
 }
 
 .theme-container {
     max-width: 800px;
     width: 100%;
+    height: fit-content;
 }
 
 .page-title {

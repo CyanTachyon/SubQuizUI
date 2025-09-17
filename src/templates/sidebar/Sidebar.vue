@@ -189,7 +189,8 @@ function onSettingClick()
 quiz-main-content {
     width: 100%;
     height: 100%;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     scrollbar-width: none;
     position: relative;
     --transition: 'default';

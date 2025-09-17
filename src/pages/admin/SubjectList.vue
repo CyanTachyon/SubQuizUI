@@ -34,6 +34,7 @@ function gotoSubject(q: Subject)
     router.push('/admin/subject/' + q.id)
 }
 
+const loadingPage = ref(false);
 function handlePageChange(newPage: number)
 {
     if (page.value !== newPage)
@@ -41,7 +42,8 @@ function handlePageChange(newPage: number)
         pushUrl('/admin/subject/list', {page: newPage.toString()});
         page.value = newPage;
     }
-    getSubjectList(getStart(), count).then(value => data.value = value);
+    loadingPage.value = true;
+    getSubjectList(getStart(), count).then(value => data.value = value).finally(() => loadingPage.value = false);
 }
 
 handlePageChange(page.value)
@@ -70,15 +72,16 @@ const user = useUser();
             创建新科目
         </Button>
         <quiz-subjects>
-            <Card :max-tilt="5" v-for="q in data.list" @click="gotoSubject(q)">
+            <Loading v-if="loadingPage"/>
+            <Card :max-tilt="5" v-if="data?.list?.length" v-for="q in data.list" @click="gotoSubject(q)">
                 <p class="title">{{ q.name }}</p>
                 <Spacer/>
                 <p>ID: {{ q.id }}</p>
                 <p class="description">{{ q.description }}</p>  <!-- 添加class -->
             </Card>
-            <Text v-if="data.list.length === 0" class="no-subjects">暂无科目</Text>
+            <Text v-else class="no-subjects">暂无科目</Text>
         </quiz-subjects>
-        <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange"/>
+        <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" :disabled="loadingPage"/>
     </quiz-subjects-container>
 </template>
 

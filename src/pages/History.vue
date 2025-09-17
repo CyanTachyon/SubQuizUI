@@ -67,6 +67,7 @@ function startTimeToString(time: number)
     return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ${padZero(date.getHours())}:${padZero(date.getMinutes())}:${padZero(date.getSeconds())}`;
 }
 
+const loadingPage = ref(false);
 function handlePageChange(newPage: number)
 {
     if (page.value !== newPage)
@@ -74,7 +75,8 @@ function handlePageChange(newPage: number)
         pushUrl('/history', { page: newPage.toString() });
         page.value = newPage;
     }
-    getQuizHistories(getStart(), count).then(value => data.value = value);
+    loadingPage.value = true;
+    getQuizHistories(getStart(), count).then(value => data.value = value).finally(() => loadingPage.value = false);
 }
 handlePageChange(page.value);
 
@@ -87,8 +89,9 @@ function getTotalPage()
 <template>
     <Loading v-if="data === null"/>
     <quiz-quizzes-container v-else :class="{phone}">
-        <Text v-if="data.list.length === 0" class="no-quizzes">暂无测试记录</Text>
-        <quiz-quizzes>
+        <Loading v-if="loadingPage"/>
+        <Text v-else-if="data.list.length === 0" class="no-quizzes">暂无测试记录</Text>
+        <quiz-quizzes v-else>
             <Card v-for="q in data.list" @click="gotoQuiz(q)" :max-tilt="5">
                 <p class="title">{{ startTimeToString(q.time) }}</p>
                 <Spacer />
@@ -98,7 +101,7 @@ function getTotalPage()
                 <p>答题用时：{{ durationToString(q.duration) }}</p>
             </Card>
         </quiz-quizzes>
-        <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange"/>
+        <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" :disabled="loadingPage"/>
     </quiz-quizzes-container>
 </template>
 

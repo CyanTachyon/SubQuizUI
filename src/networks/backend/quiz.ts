@@ -3,7 +3,7 @@ import type {Quiz} from "../../dataClasses/Quiz.ts";
 import {sendRequest, Target} from "../utils/sendRequest.ts";
 import type {Slice} from "../../dataClasses/Slice.ts";
 import type {AnswerType} from "../../dataClasses/Question.ts";
-import type { KnowledgePointId } from "../../dataClasses/Ids.ts";
+import type { KnowledgePointId, QuizId } from "../../dataClasses/Ids.ts";
 const newQuizUrl = '/quiz/new';
 export async function newQuiz(count: number, knowledgePoints: KnowledgePointId[] | null)
 {
@@ -17,7 +17,7 @@ export async function newQuiz(count: number, knowledgePoints: KnowledgePointId[]
 }
 
 const saveQuizUrl = '/quiz/{id}/save';
-export async function saveQuiz(id: number, data: Quiz<any, AnswerType | null, any>, finish: boolean = false)
+export async function saveQuiz(id: QuizId, data: Quiz<any, AnswerType | null, any>, finish: boolean = false)
 {
     return await checkResponse<null>(sendRequest({
         target: Target.BACKEND,
@@ -29,7 +29,7 @@ export async function saveQuiz(id: number, data: Quiz<any, AnswerType | null, an
 }
 
 const getQuizUrl = '/quiz/{id}';
-export async function getQuiz(id: number): Promise<Quiz<AnswerType | null, AnswerType | null, any | null> | null>
+export async function getQuiz(id: QuizId): Promise<Quiz<AnswerType | null, AnswerType | null, any | null> | null>
 {
     return await checkResponse<Quiz<AnswerType | null, AnswerType | null, any | null> | null>(sendRequest({
         target: Target.BACKEND,

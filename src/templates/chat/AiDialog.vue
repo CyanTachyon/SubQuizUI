@@ -173,6 +173,7 @@ const onMessage = (message: AiMessage & { finished: boolean, banned: boolean }) 
 
 const init = async () => 
 {
+    loading.value = true;
     if (typeof props.info === 'number' && props.info > 0)
     {
         const chat = await getChat(props.info);
@@ -204,6 +205,7 @@ const init = async () =>
         };
     }
 
+    loading.value = false;
     if (!info.value.id) return;
 
     if (info.value.histories[info.value.histories.length - 1].role !== 'assistant')
@@ -216,14 +218,27 @@ const init = async () =>
     }
 
     info.value.inAnswering = true;
-    chatSSE(
-        info.value.id,
-        info.value.hash,
-        onMessage,
-        onNamed,
-    ).finally(() => info.value.inAnswering = info.value.showAnswering = false);
+
+    try
+    {
+        const r = await chatSSE(
+            info.value.id,
+            info.value.hash,
+            onMessage,
+            onNamed,
+        )
+        if (!r) throw new Error('sse close not expected');
+    }
+    catch(e)
+    {
+        setTimeout(init, 500);
+    }
+    finally
+    {
+        info.value.inAnswering = info.value.showAnswering = false;
+    }
 };
-init().then(() => { loading.value = false; nextTick(scrollToBottom); });
+init();
 
 const input = ref('');
 const inputFiles = ref<{
@@ -252,7 +267,7 @@ function uploadFile(image: boolean, edit: boolean)
     }
 
     uploadingFile.value = true;
-    const p = image ? pickImage(1_000_000) : pickFile();
+    const p = image ? pickImage(5_000_000) : pickFile();
     p.then(async (file0) => 
     {
         if (!file0) return;
@@ -391,7 +406,7 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
     
     info.value.inAnswering = true;
 
-    (async () => {
+(async () => {
     
     if (!info.value.id)
     {
@@ -496,21 +511,20 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
     info.value.showAnswering = true;
     try 
     {
-        await chatSSE(
+        const r = await chatSSE(
             info.value.id,
             info.value.hash,  
             onMessage,
             onNamed,
         )
-    }
-    finally
-    {
+        if (!r) throw new Error('sse close not expected');
         info.value.showAnswering = false;
     }
-    })().finally(() => 
-    { 
-        info.value.inAnswering = false;
-    });
+    catch(e)
+    {
+        setTimeout(init, 0);
+    }
+})().finally(() => info.value.inAnswering = false);
 }
 
 function openSection()

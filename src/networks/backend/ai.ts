@@ -201,8 +201,9 @@ export async function chatSSE(
     hash: string,
     onMessage: (message: AiMessage & {finished: boolean, banned: boolean}) => void,
     onChatNamed: (title: string) => void,
-)
+): Promise<boolean>
 {
+    let end = false;
     await sseRequest({
         target: Target.BACKEND,
         url: sseUrl,
@@ -220,18 +221,15 @@ export async function chatSSE(
             useNotification().addError(`Error parsing AI message`);
         }
         else if (event === 'finished')
-        {
             onMessage({ content: '', reasoning_content: '', type: null, finished: true, banned: false });
-        }
         else if (event === 'banned')
-        {
             onMessage({ content: '', reasoning_content: '', type: null, finished: true, banned: true });
-        }
         else if (event === 'name')
-        {
             onChatNamed(JSON.parse(data).name);
-        }
+        else if (event === 'end')
+            end = true;
     });
+    return end;
 }
 
 export interface ToolDataInfo

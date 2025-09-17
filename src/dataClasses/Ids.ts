@@ -7,3 +7,5 @@ export type KnowledgePointId = number;
 export type ExamId = number;
 export type ChatId = number;
 export type ClassId = number;
+export type PracticeId = number;
+export type QuizId = number;

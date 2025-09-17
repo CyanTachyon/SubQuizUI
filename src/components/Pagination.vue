@@ -3,7 +3,7 @@ import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import debounce from "../utils/debounce.ts";
 import Button from "./Button.vue";
 
-const {count, current, onChangePage} = defineProps({
+const {count, current, onChangePage, disabled} = defineProps({
     count: {
         type: Number,
         required: true
@@ -17,6 +17,10 @@ const {count, current, onChangePage} = defineProps({
         default: () =>
         {
         }
+    },
+    disabled: {
+        type: Boolean,
+        default: false
     }
 })
 
@@ -128,22 +132,9 @@ watch(() => ({count, current}), (newVal, oldVal) =>
 <template>
     <quiz-pagination ref="containerRef">
         <template v-for="page in pages" :key="page">
-            <Button v-if="page === -1"
-                    class="ellipsis"
-                    @click="handleEllipsisClick(-1)"
-            >...
-            </Button>
-            <Button v-else-if="page === -2"
-                    class="ellipsis"
-                    @click="handleEllipsisClick(1)"
-            >...
-            </Button>
-            <Button v-else
-                    :down="page === current"
-                    class="page-button"
-                    @click="handlePageClick(page)"
-            >{{ page }}
-            </Button>
+            <Button v-if="page === -1" :disabled="disabled" class="ellipsis" @click="handleEllipsisClick(-1)"> ... </Button>
+            <Button v-else-if="page === -2" :disabled="disabled" class="ellipsis" @click="handleEllipsisClick(1)"> ... </Button>
+            <Button v-else :disabled="disabled" :down="page === current" class="page-button" @click="handlePageClick(page)">{{ page }}</Button>
         </template>
     </quiz-pagination>
 </template>

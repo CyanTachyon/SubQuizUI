@@ -31,6 +31,7 @@ import Theme from './pages/Settings.vue';
 import AiTranslate from './pages/ai/AiTranslate.vue';
 import AiToolbox from './pages/ai/Toolbox.vue';
 import AiImage from './pages/ai/AiImage.vue';
+import Practice from './pages/Practice.vue';
 import { useUser } from './stores/user';
 import { useTheme } from './stores/theme';
 import { storageGet, storageSet } from './utils/storage';
@@ -81,6 +82,7 @@ const routes: Readonly<RouteRecordRaw[]> = [
     { path: '/class', name: 'Class', component: Classes, meta: { sidebar: true } },
     { path: '/setting', name: 'Theme', component: Theme, meta: { sidebar: true } },
     { path: '/admin/admins', name: 'Admins', component: Admins, meta: { sidebar: true } },
+    { path: '/practice/:id', name: 'Practice', component: Practice, meta: { sidebar: true } },
 
     { path: '/admin/subject/list', component: SubjectList, meta: { sidebar: true } },
     { path: '/admin/subject/edit/:id', component: EditSubject, meta: { sidebar: true } },
@@ -152,7 +154,7 @@ export function getScale(): number
         console.error(error);
     }
     const appEle = (document.querySelector('quiz-app') as any);
-    scale = Number(await storageGet('scale')) || (Capacitor.getPlatform() === 'web' ? 1 : 0.8);
+    scale = Number(await storageGet('scale')) || 0.8;
     appEle.style = `
         --scale: ${scale};
         transform: scale(${scale});
@@ -168,7 +170,8 @@ export function getScale(): number
 
     const update = debounce(() =>
     {
-        phone.value = window.innerWidth <= window.innerHeight * 3 / 2;
+        // phone.value = window.innerWidth <= window.innerHeight * 4 / 3;
+        phone.value = window.innerWidth <= 1300 * scale;
     }, 100);
     update();
     window.onresize = update;

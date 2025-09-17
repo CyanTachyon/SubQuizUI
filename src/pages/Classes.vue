@@ -20,12 +20,18 @@ import { dialog, inputDialog } from "../utils/utils";
 import { phone } from "../main";
 import { addSidebar, removeSidebar } from "../stores/sidebar";
 import AccountMultipleIcon from "vue-material-design-icons/AccountMultiple.vue";
+import type { PracticeId } from "../dataClasses/Ids";
+import { createPractice, getPractices } from "../networks/backend/practice";
+import type { Practice } from "../dataClasses/Practice";
+import Pagination from "../components/Pagination.vue";
+import type { Slice } from "../dataClasses/Slice";
 
 document.title = '班级 - SubQuiz';
 
 const router = useRouter();
 
 const isLoading = ref(false);
+const loadingPractices = ref(false);
 const hasMore = ref(true);
 const classes = ref<ClassWithMembers[]>([]);
 const info = ref(null as null | ClassWithMembers);
@@ -33,6 +39,10 @@ const pgName = ref('' as string);
 const exams = ref(null as null | Exam[]);
 const chosen = ref(0 as number);
 const admin = ref(null as boolean | null);
+
+const practicePage = ref(1);
+const practices = ref<Slice<Practice>>();
+const practicePageSize = 20;
 
 function loadClasses(reload: boolean)
 {
@@ -89,6 +99,8 @@ function changeClass(clazz: ClassWithMembers)
 
     if (useUser().hasAdmin()) admin.value = true;
     else getUserPermissionInGroup(info.value.group, 0).then((perm) => admin.value = isAdmin(perm));
+
+    changePracticePage(1);
 }
 
 function gotoExam(exam: Exam)
@@ -148,7 +160,7 @@ const sidebar = defineComponent({
         }
 
         return () => (
-            <Card class="class-sidebar">
+            <Card class={'class-sidebar ' + (phone.value ? 'phone' : '')}>
                 <div class="menu-title-box box">
                     <div class="menu-title">我的班级</div>
                 </div>
@@ -189,25 +201,85 @@ onUnmounted(() =>
     removeSidebar('class');
 })
 
+const gotoPractice = (practice: PracticeId) => router.push('/practice/' + practice);
+const newPractice = () => inputDialog(
+    <div>
+        请输入练习名称
+    </div>,
+    (name) =>
+    {
+        createPractice({
+            name,
+            available: false,
+            description: '',
+            clazz: info.value.id,
+            knowledgePoints: [],
+            sectionCount: 1,
+            accuracy: 0.0,
+            dueDate: null,
+        }).then((practice) => gotoPractice(practice));
+    }
+)
+
+const changePracticePage = (page: number) => 
+{
+    loadingPractices.value = true;
+    getPractices(info.value.id, practicePageSize * (page - 1), practicePageSize).then((result) => 
+    {
+        practicePage.value = page;
+        practices.value = result;
+    }).finally(() => loadingPractices.value = false);
+}
+
+function timeToString(time: number)
+{
+    if (!time) return '无';
+    const date = new Date(time);
+    const padZero = (num: number) => num.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ${padZero(date.getHours())}:${padZero(date.getMinutes())}:${padZero(date.getSeconds())}`;
+}
+
 </script>
 
 <template>
     <quiz-classes>
-        <sidebar v-if="!phone"/>
+        <sidebar v-if="!phone" />
         <Card class="main-content">
             <template v-if="info && pgName && exams !== null && admin !== null">
                 <Text class="main-title">{{ info.name }}</Text>
                 <Text class="main-description"> {{ pgName }} </Text>
                 <div class="section-types-container-header">
-                    <Button class="item" @click="chosen = 0" :down="chosen === 0">考试</Button>
-                    <Button class="item" @click="chosen = 1" :down="chosen === 1">成员</Button>
+                    <Button class="item" @click="chosen = 0" :down="chosen === 0">练习</Button>
+                    <Button class="item" @click="chosen = 1" :down="chosen === 1">考试</Button>
+                    <Button class="item" @click="chosen = 2" :down="chosen === 2">成员</Button>
                 </div>
                 <Spacer />
-                <div style="overflow: auto; scrollbar-width: none; flex-grow: 1;">
-                    <Button v-if="chosen === 0 && admin" style="margin-left: 20px;" @click="createExam()">
+
+                <Button v-if="chosen === 0 && admin" style="margin-left: 20px;" @click="newPractice()">
+                    新建练习
+                </Button>
+                <div v-if="chosen === 0" class="practices-wrapper" >
+                    <div v-if="practices?.list?.length" class="practices">
+                        <Loading v-if="loadingPractices" />
+                        <Card v-else v-for="p in practices?.list" @click="gotoPractice(p.id)" :max-tilt="5">
+                            <p class="title">{{ p.name }}</p>
+                            <Spacer />
+                            <p class="info">ID: {{ p.id }}</p>
+                            <p class="info">截至时间：{{ timeToString(p.dueDate) }}</p>
+                            <p class="info">大题数量：{{ p.sectionCount }}</p>
+                            <p class="description">{{ p.description }}</p>
+                        </Card>
+                    </div>
+                    <Text v-else class="no-practice">暂无练习</Text>
+                    <Pagination :count="Math.ceil(practices?.totalSize / practicePageSize) || 1" :current="practicePage" @change-page="changePracticePage" :disabled="loadingPractices" />
+                </div>
+
+                <div v-else style="overflow: auto; scrollbar-width: none; flex-grow: 1; display: flex; flex-direction: column;">
+                    <!-- exam -->
+                    <Button v-if="chosen === 1 && admin" style="margin-left: 20px;" @click="createExam()">
                         新建考试
                     </Button>
-                    <div class="exams" v-if="chosen === 0">
+                    <div class="exams" v-if="chosen === 1">
                         <Card v-for="e in exams" @click="gotoExam(e)" :max-tilt="5">
                             <p class="title">{{ e.name }}</p>
                             <Spacer />
@@ -217,7 +289,9 @@ onUnmounted(() =>
                         </Card>
                         <Text v-if="exams.length === 0" class="no-exam">暂无考试</Text>
                     </div>
-                    <div class="members" v-if="chosen === 1">
+
+                    <!-- members -->
+                    <div class="members" v-if="chosen === 2">
                         <Card v-for="m in info.members" :key="m.seiue.studentId" class="member-item" :max-tilt="7">
                             <quiz-user-box class="box">
                                 <Image class="avatar" :src="avatarUrl(m.user)" />
@@ -246,8 +320,9 @@ onUnmounted(() =>
     flex-direction: column;
     height: calc(100% - 20px);
     margin-bottom: 7px;
-    --sidebar-close-width: 80px;
-    --sidebar-open-width: 200px;
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
 
     .sidebar-empty {
         display: flex;
@@ -411,6 +486,55 @@ onUnmounted(() =>
         }
 
         .no-exam {
+            margin: 20px auto;
+        }
+    }
+
+    .practices-wrapper {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        overflow: auto;
+        scrollbar-width: none;
+
+        .practices {
+            flex-grow: 1;
+            margin: 20px 0 0 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+            justify-content: start;
+            overflow-y: auto;
+            scrollbar-width: none;
+
+            quiz-card {
+                padding: 15px 30px 30px 30px;
+                cursor: pointer;
+                max-height: 220px;
+                max-width: 400px;
+                display: flex;
+                flex-direction: column;
+                margin: 20px;
+
+                .description {
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                }
+
+                .title {
+                    font-size: 1.25em;
+                    margin-bottom: 0px;
+                    font-weight: bold;
+                }
+
+                .info {
+                    margin: 10px 0px;
+                }
+            }
+        }
+
+        .no-practice {
+            flex-grow: 1;
             margin: 20px auto;
         }
     }

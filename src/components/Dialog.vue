@@ -2,6 +2,7 @@
 import { onMounted } from "vue";
 import { ref, watch } from "vue";
 import Card from "./Card.vue";
+import { phone } from "../main";
 
 const { open, onClose } = defineProps(
     {
@@ -33,7 +34,7 @@ onMounted(() =>
 
 <template>
     <dialog ref="ele" @close="onClose()" @click.self="onClose()" @keydown.esc="onClose()">
-        <Card class="dialog-wrapper" :scroll="true">
+        <Card class="dialog-wrapper" :scroll="true" :class="{ phone }">
             <slot/>
         </Card>
     </dialog>
@@ -73,5 +74,10 @@ dialog::backdrop {
     max-width: 85%;
     max-height: 85%;
     display: flex;
+}
+
+.dialog-wrapper.phone {
+    max-width: 100%;
+    
 }
 </style>

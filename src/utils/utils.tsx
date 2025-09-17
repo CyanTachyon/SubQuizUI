@@ -20,12 +20,19 @@ import { Clipboard } from "@capacitor/clipboard";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { compressImageToMaxBytes } from "./image.ts";
 import { useUser } from "../stores/user.ts";
+import LoginCard from "../templates/LoginCard.vue";
 
 export function tryLogin()
 {
     useUser().logout();
+    const close = dialog(<LoginCard onLogin={ () => { close(); } }></LoginCard>);
+}
+
+export function ssoLogin()
+{
     tryOpenSSO('/oauth?needAuthorize=' + environment.ssoServiceId);
 }
+
 
 let isSeiueDialogOpen = false;
 export function tryBindSeiue()

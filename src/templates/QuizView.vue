@@ -144,7 +144,7 @@ function togglePin(sectionIndex: number)
 
 <template>
     <Card v-for="(section, sectionIndex) in quiz.sections" class="section" :key="sectionIndex" :class="{'pinned': pin.includes(sectionIndex)}">
-        <span style="position: absolute; left: 22px; top: 3px">ID: {{ section.id }}</span>
+        <span v-if="section.id > 0" style="position: absolute; left: 22px; top: 3px">ID: {{ section.id }}</span>
         <div v-if="richtextToString(section.description)" style="display: inline;" class="wrapper1">
             <div class="pin-icon" @click="togglePin(sectionIndex)">
                 <PinOutline v-if="!pin.includes(sectionIndex)"/>

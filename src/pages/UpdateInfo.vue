@@ -203,6 +203,14 @@ const updateInfo: UpdateInfo[] = ([
             '- 修复已知问题\n'
     },
     {
+        date: '2025-09-10',
+        version: '3.3.0',
+        description: '' +
+            '- 首页重构\n' +
+            '- 添加练习功能\n' +
+            '- 添加系统预置用户功能\n'
+    },
+    {
         version: 'TODO LIST',
         description: '以下是预计添加的新功能，但我开发速度有限，所以别急^v^\n' +
             "1. 简答/填空允许提交图片\n" +
@@ -225,6 +233,20 @@ const updateInfo: UpdateInfo[] = ([
 </template>
 
 <style scoped lang="scss">
+quiz-update-info-container {
+    overflow-y: auto;
+    scrollbar-width: none;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    height: 100%;
+    min-height: 100%;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+}
+
 quiz-card {
     padding: 20px;
 }

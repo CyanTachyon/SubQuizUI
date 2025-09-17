@@ -1,9 +1,9 @@
 {
     "name": "subquiz",
     "private": true,
-    "version": "3.2.3.22",
-    "versionId": 30203022,
-    "minVersionId": 30203019,
+    "version": "3.3.0.11",
+    "versionId": 30300011,
+    "minVersionId": 30300004,
     "downloadUrl": "https://quiz.bdfzscc.com/SubQuiz.apk",
     "type": "module",
     "scripts": {

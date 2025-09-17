@@ -12,9 +12,7 @@ import { copyToClipboard, richtextToString } from "./utils";
 
 let starryNight: Awaited<ReturnType<typeof createStarryNight>>;
 
-(async () => {
-    starryNight = await createStarryNight(all);
-})()
+createStarryNight(all).then((sn) => starryNight = sn);
 
 const katexOptions: MarkedKatexOptions = {
     throwOnError: false,
@@ -78,11 +76,18 @@ function markdownToHtml(markdown: string, imgBaseUrl?: string): string
     {
         const lang = info.lang || '';
         const code = info.text || '';
-        const scope = starryNight.flagToScope(lang);
         let inner: string;
-        if (!scope) inner = `<code>${code}</code>`;
-        else inner = `<code>` + toHtml(starryNight.highlight(code, scope)) + `</code>`;
-
+        try
+        {
+            const scope = starryNight.flagToScope(lang);
+            if (!scope) inner = `<code>${code}</code>`;
+            else inner = `<code>` + toHtml(starryNight.highlight(code, scope)) + `</code>`;
+        }
+        catch (e)
+        {
+            console.log(e);
+            inner = `<code>${code}</code>`;
+        }
         const tempDiv = document.createElement('div');
         const copyEle = document.createElement('span');
         copyEle.className = 'code-copy';
@@ -145,12 +150,17 @@ function updateMarkdown(el: HTMLElement, binding: MarkdownContent)
             ele.addEventListener('click', () => copyToClipboard(code));
             ele.removeAttribute('code');
         });
-        tmpDiv.querySelectorAll('.katex').forEach((ele: HTMLElement) => 
+        tmpDiv.querySelectorAll('.katex-display').forEach((ele: HTMLElement) => 
         {
             ele.style.display = 'block';
             ele.style.overflowX = 'auto';
             ele.style.overflowY = 'hidden';
             ele.classList.add('scrollbar');
+        });
+        tmpDiv.querySelectorAll('a').forEach((ele) => 
+        {
+            ele.setAttribute('target', '_blank');
+            ele.setAttribute('rel', 'noopener noreferrer');
         });
         if (codeHeader === false) tmpDiv.querySelectorAll('.code-header').forEach((ele) => ele.remove());
         if (parseHtml) parseHtml(tmpDiv.firstElementChild as HTMLElement);

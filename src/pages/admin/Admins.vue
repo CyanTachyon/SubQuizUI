@@ -154,10 +154,12 @@ function getTotalPage()
     return Math.ceil((admins.value?.totalSize || 0) / count) || 1;
 }
 
+const loadingPage = ref(false);
 function handlePageChange(newPage: number)
 {
     page.value = newPage;
-    fetchAdmins();
+    loadingPage.value = true;
+    fetchAdmins().finally(() => loadingPage.value = false);
 }
 
 </script>
@@ -179,15 +181,16 @@ function handlePageChange(newPage: number)
         </Card>
 
         <quiz-admins>
-            <Card @click="setAdmin(q)" v-for="q in admins.list">
+            <Loading v-if="loadingPage"/>
+            <Card v-else-if="admins?.list?.length" @click="setAdmin(q)" v-for="q in admins?.list">
                 <p class="username">{{ q.user.username }}</p>
                 <Spacer />
                 <p>ID: {{ q.user.id }}</p>
                 <p class="permission">权限：{{ q.permission }}</p> <!-- 添加class -->
             </Card>
-            <Text v-if="admins.list.length === 0" class="no-admins">暂无管理员</Text>
+            <Text v-else class="no-admins">暂无管理员</Text>
         </quiz-admins>
-        <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange"/>
+        <Pagination :count="getTotalPage()" :current="page" @change-page="handlePageChange" :disabled="loadingPage"/>
     </quiz-admins-container>
 </template>
 

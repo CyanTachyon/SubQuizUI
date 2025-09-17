@@ -298,18 +298,15 @@ function changeType(id: SectionTypeId | null)
     fetchSections();
 }
 
-function fetchSections()
+async function fetchSections()
 {
     if (current.value.knowledgePoint && !current.value.knowledgePoint.folder)
-        getSectionList(
+        current.value.sections = await getSectionList(
             sectionCount * (current.value.page - 1), 
             sectionCount, 
             current.value.knowledgePoint.id, 
             current.value.sectionType ?? undefined
         )
-        .then(value => {
-            current.value.sections = value;
-        });
     else 
         current.value.sections = null;
 }
@@ -383,10 +380,12 @@ function getTotalPage()
     return 1;
 }
 
+const loadingPage = ref(false);
 function changePage(page: number)
 {
+    loadingPage.value = true;
     current.value.page = page;
-    fetchSections();
+    fetchSections().finally(() => loadingPage.value = false);
 }
 
 // quiz
@@ -499,10 +498,13 @@ function startQuiz()
                             删除题目类型
                         </Button>
                     </quiz-sections-ops>
-                    <quiz-sections-empty v-if="current.sections && current.sections.list.length === 0">
+                    <quiz-sections-empty v-if="loadingPage">
+                        <Loading/>
+                    </quiz-sections-empty>
+                    <quiz-sections-empty v-else-if="current.sections && current.sections.list.length === 0">
                         <p> 此知识点暂无题目 </p>
                     </quiz-sections-empty>
-                    <quiz-sections-wrapper v-if="current.sections">
+                    <quiz-sections-wrapper v-else-if="current.sections">
                         <Card :max-tilt="5" v-for="section in current.sections.list" :key="section.id" @click="gotoSection(section)"
                             class="clickable">
                             <Text>小题数量：{{ section.questions.length }}</Text>
@@ -513,8 +515,7 @@ function startQuiz()
                             </p>
                         </Card>
                     </quiz-sections-wrapper>
-                    <Pagination v-if="current.sections && current.sections.list.length > 0" :count="getTotalPage()"
-                        :current="current.page" @change-page="changePage" />
+                    <Pagination v-if="current.sections" :count="getTotalPage()" :current="current.page" @change-page="changePage" :disabled="loadingPage" />
                 </template>
                 <!--  文件夹 -->
                 <template v-else-if="hasPermission">
