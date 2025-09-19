@@ -275,6 +275,7 @@ function updateTypes()
 {
     current.value.sectionType = null;
     current.value.page = 1;
+    loadingPage.value = true;
 
     if (current.value.knowledgePoint && !current.value.knowledgePoint.folder)
     {
@@ -286,6 +287,7 @@ function updateTypes()
     }
     else 
     {
+        loadingPage.value = false;
         current.value.sectionTypes = null;
         current.value.sections = null;
     }
@@ -300,15 +302,23 @@ function changeType(id: SectionTypeId | null)
 
 async function fetchSections()
 {
-    if (current.value.knowledgePoint && !current.value.knowledgePoint.folder)
-        current.value.sections = await getSectionList(
-            sectionCount * (current.value.page - 1), 
-            sectionCount, 
-            current.value.knowledgePoint.id, 
-            current.value.sectionType ?? undefined
-        )
-    else 
-        current.value.sections = null;
+    loadingPage.value = true;
+    try
+    {
+        if (current.value.knowledgePoint && !current.value.knowledgePoint.folder)
+            current.value.sections = await getSectionList(
+                sectionCount * (current.value.page - 1),
+                sectionCount,
+                current.value.knowledgePoint.id,
+                current.value.sectionType ?? undefined
+            )
+        else 
+            current.value.sections = null;
+    }
+    finally
+    {
+        loadingPage.value = false;
+    }
 }
 
 function addNewSectionType()
@@ -375,7 +385,7 @@ function getTotalPage()
 {
     if (current.value.sections)
     {
-        return Math.ceil(current.value.sections.totalSize / sectionCount);
+        return Math.ceil(current.value.sections.totalSize / sectionCount) || 1;
     }
     return 1;
 }
@@ -498,9 +508,9 @@ function startQuiz()
                             删除题目类型
                         </Button>
                     </quiz-sections-ops>
-                    <quiz-sections-empty v-if="loadingPage">
+                    <quiz-empty v-if="loadingPage" style="flex-grow: 1;">
                         <Loading/>
-                    </quiz-sections-empty>
+                    </quiz-empty>
                     <quiz-sections-empty v-else-if="current.sections && current.sections.list.length === 0">
                         <p> 此知识点暂无题目 </p>
                     </quiz-sections-empty>
