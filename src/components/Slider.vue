@@ -6,7 +6,7 @@ import {$appearDuration, isStatic, State, useTransitionStore} from '../stores/tr
 
 
 const value = defineModel<number>({required: true});
-const {minValue, maxValue, step, disappear, showStep} = defineProps({
+const { minValue, maxValue, step, disappear, showStep, ignoreRangeCheck } = defineProps({
     minValue: {
         type: Number,
         required: true
@@ -26,17 +26,24 @@ const {minValue, maxValue, step, disappear, showStep} = defineProps({
     showStep: {
         type: Boolean,
         default: false
+    },
+    ignoreRangeCheck: {
+        type: Boolean,
+        default: false
     }
 })
 
-if (value.value < minValue)
+if (!ignoreRangeCheck)
 {
-    value.value = minValue;
-}
+    if (value.value < minValue)
+    {
+        value.value = minValue;
+    }
 
-if (value.value > maxValue)
-{
-    value.value = maxValue;
+    if (value.value > maxValue)
+    {
+        value.value = maxValue;
+    }
 }
 
 let className = ref(disappear ? 'disappear-input' : 'appeared-input');
@@ -76,7 +83,7 @@ onMounted(() =>
 })
 
 const progressPercentage = ref(
-    ((value.value - minValue) / (maxValue - minValue)) * 100
+    Math.min(Math.max(((value.value - minValue) / (maxValue - minValue)) * 100, 0), 100)
 );
 
 const markers = computed(() =>
@@ -104,7 +111,7 @@ function updatePosition(clientX: number)
     if (newValue !== value.value)
     {
         value.value = newValue;
-        progressPercentage.value = ((newValue - minValue) / (maxValue - minValue)) * 100;
+        progressPercentage.value = Math.min(Math.max(((newValue - minValue) / (maxValue - minValue)) * 100, 0), 100);
     }
 }
 
@@ -145,9 +152,12 @@ function stopDrag()
 watch(value, (newVal, oldValue) =>
 {
     if (newVal === oldValue) return;
-    if (newVal < minValue) value.value = minValue;
-    else if (newVal > maxValue) value.value = maxValue;
-    progressPercentage.value = ((newVal - minValue) / (maxValue - minValue)) * 100;
+    if (!ignoreRangeCheck)
+    {
+        if (newVal < minValue) value.value = minValue;
+        else if (newVal > maxValue) value.value = maxValue;
+    }
+    progressPercentage.value = Math.min(Math.max(((newVal - minValue) / (maxValue - minValue)) * 100, 0), 100);
 });
 </script>
 
@@ -173,7 +183,7 @@ quiz-slider {
     overflow: hidden;
     margin: 10px;
 
-    border: solid 2px var(--button-hover-background);
+    border: solid 2px var(--button-border);
 }
 
 quiz-slider-container {
@@ -213,9 +223,9 @@ quiz-slider-container {
             transform: translate(-50%, -50%);
             cursor: grab;
 
-            border: solid 2px var(--button-hover-background);
+            border: solid 2px var(--button-border);
             backdrop-filter: blur(5px);
-            background: var(--button-hover-background);
+            background: var(--button-background);
         }
     }
 
@@ -233,7 +243,7 @@ quiz-slider-container {
             position: absolute;
             width: 5px;
             height: 5px;
-            background: var(--border);
+            background: var(--button-border);
             top: 50%;
             border-radius: 50%;
             transform: translateX(-50%) translateY(-50%);

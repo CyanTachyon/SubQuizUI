@@ -27,7 +27,7 @@ const { onClick, icon, title, iconLocation } = defineProps({
 <template>
     <Button class="item" @click="onClick()">
         <quiz-sidebar-item-wrapper :style="{ 'flex-direction': iconLocation === 'left' ? 'row' : 'row-reverse' }">
-            <quiz-sidebar-item-icon-wrapper><component :is="icon" :size="36"/></quiz-sidebar-item-icon-wrapper>
+            <quiz-sidebar-item-icon-wrapper><component :is="icon" :size="36" style="height: 36px; width: 36px;"/></quiz-sidebar-item-icon-wrapper>
             <quiz-sidebar-item-content-wrapper>{{ title }}</quiz-sidebar-item-content-wrapper>
         </quiz-sidebar-item-wrapper>
     </Button>

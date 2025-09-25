@@ -20,7 +20,7 @@ import CheckIcon from "vue-material-design-icons/Check.vue";
 import HelpCircleOutlineIcon from "vue-material-design-icons/HelpCircleOutline.vue";
 import Switch from "../../components/Switch.vue";
 import QuizView from "../../templates/QuizView.vue";
-import { dialog, getOptionName, pickImageToFile, pushUrl, richtextToString } from "../../utils/utils.tsx";
+import { getOptionName, pickImageToFile, pushUrl, richtextToString } from "../../utils/utils.tsx";
 import Slider from "../../components/Slider.vue";
 import type { SectionType } from "../../dataClasses/SectionType.ts";
 import { getKnowledgePoint } from "../../networks/backend/knowledgePoint.ts";
@@ -31,6 +31,7 @@ import { useNotification } from "../../stores/notification.ts";
 import { connectUrl, Target } from "../../networks/utils/sendRequest.ts";
 import { uploadSectionImage } from "../../utils/sectionImage.ts";
 import Text from "../../components/Text.vue";
+import { dialog } from "../../utils/dialog.tsx";
 
 document.title = '编辑题目 - SubQuiz';
 

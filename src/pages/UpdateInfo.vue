@@ -211,6 +211,25 @@ const updateInfo: UpdateInfo[] = ([
             '- 添加系统预置用户功能\n'
     },
     {
+        date: '2025-09-21',
+        version: '3.3.1',
+        description: '' +
+            '- 添加AI批改英语作文功能\n'
+    },
+    {
+        date: '2025-09-21',
+        version: '3.3.2',
+        description: '' +
+            '- 添加AI聊天分享功能\n'
+    },
+    {
+        date: '2025-09-22',
+        version: '3.3.3',
+        description: '' +
+            '- 新增自定义AI知识库功能\n' +
+            '- 修复已知问题\n'
+    },
+    {
         version: 'TODO LIST',
         description: '以下是预计添加的新功能，但我开发速度有限，所以别急^v^\n' +
             "1. 简答/填空允许提交图片\n" +

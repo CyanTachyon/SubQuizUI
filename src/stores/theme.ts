@@ -95,7 +95,7 @@ const actions = {
             if (themeInfo.value.isDark)
                 document.body.style.backgroundColor = '#151517';
             else
-                document.body.style.backgroundColor = '#B9BABB';
+                document.body.style.backgroundColor = '#C9CACB';
             document.body.style.backgroundImage = 'none';
             document.body.style.removeProperty('--background-blur');
             document.body.classList.remove('has-background-blur');
@@ -104,13 +104,13 @@ const actions = {
         }
         else
         {
-            if (themeInfo.value.background)
+            if (themeInfo.value.background === '-')
             {
-                document.body.style.backgroundImage = `url(${themeInfo.value.background})`;
+                document.body.style.backgroundImage = '';
             }
             else
             {
-                document.body.style.backgroundImage = '';
+                document.body.style.backgroundImage = `url(${themeInfo.value.background})`;
             }
 
             if (themeInfo.value.backgroundBlur > 0)

@@ -7,6 +7,7 @@ import { safeRedirect } from "../utils/redirect.ts";
 import { type Author, getAuthorInfo } from "../networks/backend/user.ts";
 import { ref } from "vue";
 import ChevronRightIcon from "vue-material-design-icons/ChevronRight.vue";
+import { isAiApp } from "../utils/utils.tsx";
 
 document.title = '关于 - SubQuiz';
 
@@ -55,7 +56,8 @@ function goto(url: string)
             </Button>
         </quiz-about-button-container>
         <Card :max-tilt="5">
-            <h1>SubQuiz</h1>
+            <h1 v-if="!isAiApp()">SubQuiz</h1>
+            <h1 v-else>SubQuizAI</h1>
             <p>Version: {{ version }}</p>
             <p class="clickable" @click="goto(author.website)"> Author: {{ author.name }} </p>
             <p class="clickable" @click="goto(author.website)"> Website: {{ author.website }} </p>

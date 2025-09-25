@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import Button from "../../components/Button.vue";
 import { safeRedirect } from "../../utils/redirect";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { FileOpener } from '@capacitor-community/file-opener';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { useNotification } from "../../stores/notification";
 import type { AndroidVersion } from "../../dataClasses/AndroidVersion";
+import { isAiApp } from "../../utils/utils";
 
 const { info } = defineProps<{info: AndroidVersion;}>();
+const url = computed(() => isAiApp() ? info.aiUrl : info.url);
 
 const downloadProgress = ref(0);
 const downloading = ref(false);
@@ -27,7 +29,7 @@ const download = async () => {
         });
 
         const download = Filesystem.downloadFile({
-            url: info.url,
+            url: url.value,
             path: fileName,
             directory: Directory.Cache,
             progress: true,
@@ -58,9 +60,7 @@ const download = async () => {
     {
         console.error('下载或安装APK出错:', error);
         useNotification().addError('下载或安装APK出错, 将使用浏览器打开链接...');
-        setTimeout(() => {
-            safeRedirect(info.url);
-        }, 2000);
+        setTimeout(() => safeRedirect(url.value), 2000);
         downloading.value = false;
     }
 }

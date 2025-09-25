@@ -1,12 +1,12 @@
 <script lang="tsx" setup>
-import { ref, nextTick } from 'vue';
+import { ref, nextTick, computed } from 'vue';
 import type { AnswerType } from '../../dataClasses/Question';
 import type { Section } from '../../dataClasses/Section';
-import { cancelChat, chatSSE, createChat, deleteChat, getChat, getContentText, getCustomModel, mergeContent, parseChatUrl, sendContent, setCustomModel, type AiHistory, type AiMessage, type Content, type CustomModelInfo, type Model, type ModelInfo, type ToolDataInfo, } from '../../networks/backend/ai';
+import { cancelChat, chatSSE, createChat, deleteChat, getChat, getContentText, getCustomModel, getShareHash, mergeContent, parseChatUrl, sendContent, setCustomModel, type AiHistory, type AiMessage, type Content, type CustomModelInfo, type Model, type ModelInfo, type ToolDataInfo, } from '../../networks/backend/ai';
 import Input from '../../components/Input.vue';
 import { useNotification } from '../../stores/notification';
 import LoadingIcon from 'vue-material-design-icons/Loading.vue';
-import { copyToClipboard, dialog, pickFile, pickImage } from '../../utils/utils';
+import { copyToClipboard, pickFile, pickImage } from '../../utils/utils';
 import ChevronRightIcon from 'vue-material-design-icons/ChevronRight.vue';
 import ChevronDownIcon from 'vue-material-design-icons/ChevronDown.vue';
 import type { Chat } from '../../dataClasses/Chat';
@@ -19,7 +19,7 @@ import { getAiModels } from '../../networks/backend/ai';
 import SelectMenu from '../../components/SelectMenu.vue';
 import { storageGet, storageSet } from '../../utils/storage';
 import { Capacitor } from '@capacitor/core';
-import { TrashIcon } from '@heroicons/vue/16/solid';
+import { TrashIcon, ShareIcon } from '@heroicons/vue/16/solid';
 import ImageOutlineIcon from 'vue-material-design-icons/ImageOutline.vue';
 import ContentCopyIcon from 'vue-material-design-icons/ContentCopy.vue';
 import FileQuestionIcon from 'vue-material-design-icons/FileQuestion.vue';
@@ -34,6 +34,10 @@ import TrashCanIcon from "vue-material-design-icons/TrashCan.vue";
 import PencilIcon from "vue-material-design-icons/Pencil.vue";
 import FileDocumentOutlineIcon from "vue-material-design-icons/FileDocumentOutline.vue";
 import Switch from '../../components/Switch.vue';
+import { dialog } from '../../utils/dialog';
+import { connectUrl, Target } from '../../networks/utils/sendRequest';
+import { sleep } from '../../utils/sleep';
+import { router } from '../../main';
 
 export type DisplayMessage = AiMessage & {
     showReasoning: boolean;
@@ -54,6 +58,7 @@ const info = ref<AiInfo>();
 const loading = ref(true);
 const historiesContainer = ref<HTMLElement>();
 const shouldAutoScroll = ref(true);
+const isShare = computed(() => typeof props.info === 'string');
 
 // 检查是否滚动到底部
 const isScrolledToBottom = () => 
@@ -174,7 +179,7 @@ const onMessage = (message: AiMessage & { finished: boolean, banned: boolean }) 
 const init = async () => 
 {
     loading.value = true;
-    if (typeof props.info === 'number' && props.info > 0)
+    if (typeof props.info === 'number' && props.info > 0 || typeof props.info === 'string')
     {
         const chat = await getChat(props.info);
         info.value = {
@@ -206,6 +211,7 @@ const init = async () =>
     }
 
     loading.value = false;
+    nextTick(scrollToBottom)
     if (!info.value.id) return;
 
     if (info.value.histories[info.value.histories.length - 1].role !== 'assistant')
@@ -221,12 +227,12 @@ const init = async () =>
 
     try
     {
-        const r = await chatSSE(
+        const r = isShare.value || await chatSSE(
             info.value.id,
             info.value.hash,
             onMessage,
             onNamed,
-        )
+        );
         if (!r) throw new Error('sse close not expected');
     }
     catch(e)
@@ -325,7 +331,7 @@ const updateModels = (async () =>
         model.value = models.value[0].model;
     }
 });
-updateModels();
+if (!isShare.value) updateModels().catch(async () => { await sleep(1000); updateModels(); })
 
 function changeModel(newModel: Model)
 {
@@ -395,6 +401,12 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
     else if (uploadingFile.value)
     {
         useNotification().addError('正在上传附件，请稍等片刻。');
+        return;
+    }
+
+    if (!model.value) 
+    {
+        useNotification().addError('模型加载中');
         return;
     }
     
@@ -547,7 +559,7 @@ function parseHtml(ele: HTMLElement)
         toolDataEle.classList.add('tool-data-link');
         if (path) toolDataEle.onclick = () =>
         {
-            const close = dialog(<ToolDataShower type={type} path={path} dataset={bdfzData} chat={info.value.id} close={() => close()} />, () => { close(); });
+            const close = dialog(<ToolDataShower type={type} path={path} dataset={bdfzData} chat={isShare.value ? props.info as ChatId : info.value.id} close={() => close()} />, () => { close(); });
         }
     });
 }
@@ -736,7 +748,8 @@ async function showCustomModelDialog()
                         保存
                     </Button>
                 </div>
-            </div>,
+            </div>
+            ,
             () => close()
         );
     }
@@ -744,6 +757,27 @@ async function showCustomModelDialog()
     {
         useNotification().addError('获取模型配置失败: ' + (error as Error).message);
     }
+}
+
+async function showSettingDialog()
+{
+    const close = dialog(
+        <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
+            <Button onClick={() => {close(); router.push("/ai/chat/lib")}}>AI知识库设置</Button>
+            <Button onClick={() => {close(); showCustomModelDialog()}}>自定义AI模型设置</Button>
+        </div>,
+        () => close()
+    );
+}
+
+async function shareChat()
+{
+    const shareUrl = connectUrl(Target.FRONTEND, "/ai/chat/" + await getShareHash(info.value.id))
+    const close = dialog(<>
+        <p>分享对话</p>
+        <p style="word-break: break-all; user-select: all;">{shareUrl}</p>
+        <Button onClick={() => copyToClipboard(shareUrl)} style="margin-left: auto">复制</Button>
+    </>, () => close());
 }
 
 </script>
@@ -758,7 +792,8 @@ async function showCustomModelDialog()
         <template v-else>
             <div class="title-bar">
                 <span>{{ info?.title ?? '新建对话' }}</span>
-                <TrashIcon v-if="info?.id" @click="deleteChat(info?.id).then(() => onNewChat(0))" style="color: red; width: 20px; height: 20px; opacity: 0.7; cursor: pointer;" />
+                <TrashIcon v-if="info?.id && !isShare" @click="deleteChat(info?.id).then(() => onNewChat(0))" style="color: red; width: 20px; height: 20px; opacity: 0.7; cursor: pointer;" />
+                <ShareIcon v-if="info?.id && !isShare" @click="shareChat()" style="width: 20px; height: 20px; opacity: 0.7; cursor: pointer;" :style="{ color: getThemes().isDark ? 'greenyellow' : 'green' }"/>
             </div>
             <Text class="section" v-if="info.section" @click="openSection">
                 <FileQuestionIcon />
@@ -781,7 +816,7 @@ async function showCustomModelDialog()
                             </template>
 
                             <template v-else-if="msg.type">
-                                <ToolDataShower :chat="info.id" :inline="true" :custom-info="{ type: msg.type, value: getContentText(msg.content) }"/>
+                                <ToolDataShower :chat="isShare ? props.info as ChatId : info.id" :inline="true" :custom-info="{ type: msg.type, value: getContentText(msg.content) }"/>
                             </template>
 
                             <template v-else>
@@ -795,8 +830,8 @@ async function showCustomModelDialog()
                                 </div>
                                 <template v-if="msg.content && (typeof msg.content !== 'string')" v-for="c in msg.content">
                                     <Text class="content" v-if="c.type === 'text' && c.text.trim()" v-markdown="{ markdown: item.role === 'assistant', content: c.text, section: info.section?.id, parseHtml }" />
-                                    <ToolDataShower v-else-if="c.type === 'image_url'" :chat="info.id" :inline="true" :custom-info="{ type: 'IMAGE', value: c.image_url.url }" />
-                                    <ToolDataShower v-else-if="c.type === 'file'" :chat="info.id" :inline="true" :custom-info="{ type: 'FILE', value: c.file.file_data }" />
+                                    <ToolDataShower v-else-if="c.type === 'image_url'" :chat="isShare ? props.info as ChatId : info.id" :inline="true" :custom-info="{ type: 'IMAGE', value: c.image_url.url }" />
+                                    <ToolDataShower v-else-if="c.type === 'file'" :chat="isShare ? props.info as ChatId : info.id" :inline="true" :custom-info="{ type: 'FILE', value: c.file.file_data }" />
                                 </template>
                                 <Text class="content" v-else-if="msg.content && (msg.content as string).trim()" v-markdown="{ markdown: item.role === 'assistant', content: msg.content, section: info.section?.id, parseHtml }" />
                             </template>
@@ -819,51 +854,53 @@ async function showCustomModelDialog()
                 </div>
             </div>
 
-            <div class="img-container">
-                <div v-for="(file, index) in (editingLastMessage ? editFiles : inputFiles)" 
-                    :key="index" 
-                    class="img" 
-                    :style="{ 
-                        backgroundImage: file.type === 'image' ? `url(${parseChatUrl(info.id, file.data)})` : '', 
-                        backgroundColor: file.type === 'image' ? '' : 'cadetblue',
-                    }">
-                    <TrashCanIcon :size="30" @click="deleteFile(file.data, editingLastMessage)" class="remove-img"/>
-                    <FileDocumentOutlineIcon :size="40" v-if="file.type === 'file'"/>
-                    <span v-if="file.type === 'file'" class="file-name"> {{ file.name }} </span>
+            <template v-if="!isShare">
+                <div class="img-container">
+                    <div v-for="(file, index) in (editingLastMessage ? editFiles : inputFiles)" 
+                        :key="index" 
+                        class="img" 
+                        :style="{ 
+                            backgroundImage: file.type === 'image' ? `url(${parseChatUrl(info.id, file.data)})` : '', 
+                            backgroundColor: file.type === 'image' ? '' : 'cadetblue',
+                        }">
+                        <TrashCanIcon :size="30" @click="deleteFile(file.data, editingLastMessage)" class="remove-img"/>
+                        <FileDocumentOutlineIcon :size="40" v-if="file.type === 'file'"/>
+                        <span v-if="file.type === 'file'" class="file-name"> {{ file.name }} </span>
+                    </div>
                 </div>
-            </div>
-            
-            <Input v-if="editingLastMessage" v-model="editInput" placeholder="编辑消息内容" :area="true" @keydown.enter="confirmEditLastMessage" @keydown.esc="cancelEditLastMessage()" class="edit-input"/>
-            <Input v-else v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
-            
-            <Text class="bottom-bar">
-                <SelectMenu :model-value="model" :options="models.map(m => ({ label: m.displayName, value: m.model }))" class="model-name" :placeholder="'选择模型'" @update:model-value="changeModel" :direction="'up'"/>
-                <CogOutlineIcon class="intelligent-icon" @click="showCustomModelDialog()"/>
-                <span class="upload-img" @click="uploadFile(false, editingLastMessage)" style="margin-left: auto;">
-                    <FileDocumentOutlineIcon class="icon" v-if="!uploadingFile"/>
-                    <div class="loading-icon" v-else>
-                        <LoadingIcon />
-                    </div>
-                </span>
-                <span class="upload-img" @click="uploadFile(true, editingLastMessage)">
-                    <ImageOutlineIcon class="icon" v-if="!uploadingFile"/>
-                    <div class="loading-icon" v-else>
-                        <LoadingIcon />
-                    </div>
-                </span>
-                <span class="send" v-if="editingLastMessage" @click="cancelEditLastMessage()">
-                    <span>取消</span>
-                </span>
-                <span class="send" @click="editingLastMessage ? confirmEditLastMessage() : onSubmit(null)">
-                    <div v-if="info.showAnswering">
-                        <StopCircleOutlineIcon class="icon"/>
-                    </div>
-                    <div class="loading-icon" v-else-if="info.inAnswering">
-                        <LoadingIcon />
-                    </div>
-                    <span v-else>发送</span>
-                </span>
-            </Text>
+                
+                <Input v-if="editingLastMessage" v-model="editInput" placeholder="编辑消息内容" :area="true" @keydown.enter="confirmEditLastMessage" @keydown.esc="cancelEditLastMessage()" class="edit-input"/>
+                <Input v-else v-model="input" placeholder="向AI提问" :area="true" @keydown.enter="onSubmit" />
+                
+                <Text class="bottom-bar">
+                    <SelectMenu :model-value="model" :options="models.map(m => ({ label: m.displayName, value: m.model }))" class="model-name" :placeholder="'选择模型'" @update:model-value="changeModel" :direction="'up'"/>
+                    <CogOutlineIcon class="intelligent-icon" @click="showSettingDialog()"/>
+                    <span class="upload-img" @click="uploadFile(false, editingLastMessage)" style="margin-left: auto;">
+                        <FileDocumentOutlineIcon class="icon" v-if="!uploadingFile"/>
+                        <div class="loading-icon" v-else>
+                            <LoadingIcon />
+                        </div>
+                    </span>
+                    <span class="upload-img" @click="uploadFile(true, editingLastMessage)">
+                        <ImageOutlineIcon class="icon" v-if="!uploadingFile"/>
+                        <div class="loading-icon" v-else>
+                            <LoadingIcon />
+                        </div>
+                    </span>
+                    <span class="send" v-if="editingLastMessage" @click="cancelEditLastMessage()">
+                        <span>取消</span>
+                    </span>
+                    <span class="send" @click="editingLastMessage ? confirmEditLastMessage() : onSubmit(null)">
+                        <div v-if="info.showAnswering">
+                            <StopCircleOutlineIcon class="icon"/>
+                        </div>
+                        <div class="loading-icon" v-else-if="info.inAnswering">
+                            <LoadingIcon />
+                        </div>
+                        <span v-else>发送</span>
+                    </span>
+                </Text>
+            </template>
         </template>
     </Card>
 </template>

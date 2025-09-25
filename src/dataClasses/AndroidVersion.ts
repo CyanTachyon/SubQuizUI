@@ -3,4 +3,5 @@ export interface AndroidVersion {
     versionCode: number;
     minVersionCode: number;
     url: string;
+    aiUrl: string;
 }   

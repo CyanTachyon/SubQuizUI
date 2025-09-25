@@ -1,12 +1,8 @@
-import { createApp, ref, type DefineComponent } from "vue";
+import { ref } from "vue";
 import { Capacitor } from '@capacitor/core';
 import { connectUrl, Target } from "../networks/utils/sendRequest.ts";
 import { safeRedirect } from "./redirect.ts";
-import Dialog from "../components/Dialog.vue";
-import Input from "../components/Input.vue";
-import type { JSX } from "vue/jsx-runtime";
 import RealNameRequired from "../templates/RealNameRequired.vue";
-import { vMarkdown, vSectionContent } from "./markdown.ts";
 import type { Section } from "../dataClasses/Section.ts";
 import type { AndroidVersion } from "../dataClasses/AndroidVersion.ts";
 import currentVersion from "../../public/android_latest.json";
@@ -15,12 +11,13 @@ import Button from "../components/Button.vue";
 import { InAppBrowser, ToolBarType } from "@capgo/inappbrowser";
 import { login } from "../networks/backend/oauth.ts";
 // import { ScreenOrientation } from "@capacitor/screen-orientation";
-import { getScale } from "../main.ts";
 import { Clipboard } from "@capacitor/clipboard";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { compressImageToMaxBytes } from "./image.ts";
 import { useUser } from "../stores/user.ts";
 import LoginCard from "../templates/LoginCard.vue";
+import { dialog } from "./dialog.tsx";
+import appInfo from "../../public/app_info.json";
 
 export function tryLogin()
 {
@@ -98,66 +95,6 @@ export function pushUrl(url: string = location.pathname, query: Record<string, a
 export function replaceUrl(url: string = location.pathname, query: Record<string, any> = getUrlSearchParams())
 {
     window.history.replaceState({}, '', connectUrl(Target.EMPTY, url, query));
-}
-
-export function dialog(
-    innerHtml: JSX.Element | string | DefineComponent,
-    onClose: () => void = () => {},
-)
-{
-    if (typeof innerHtml === 'string') innerHtml = <div innerHTML={innerHtml}></div>;
-    const container = document.createElement('div');
-    container.id = 'quiz-dialog-' + Math.random().toString(36).substring(2, 15);
-    document.body.appendChild(container);
-
-    const open = ref(true);
-    const app = createApp({
-        setup()
-        {
-            const scale = getScale();
-            const css = `
-                width: ${100 / scale}%;
-                height: ${100 / scale}%;
-                min-width: ${100 / scale}%;
-                min-height: ${100 / scale}%;
-                max-width: ${100 / scale}%;
-                max-height: ${100 / scale}%;
-                overflow: hidden;
-                transform: scale(${scale});
-                left: 0;
-                top: 0;
-                margin: 0;
-                position: fixed;
-                transform-origin: top left;
-            `.replace(/\s+/g, ' ').trim();
-            return () => <Dialog open={open.value} onClose={onClose} style={css}>{innerHtml}</Dialog>;
-        }
-    }).directive('markdown', vMarkdown).directive('section-content', vSectionContent);
-    app.mount(container);
-    return () =>
-    {
-        open.value = false;
-        app.unmount();
-        document.body.removeChild(container);
-    };
-}
-
-export function inputDialog(
-    content: JSX.Element,
-    submit: (value: string) => void,
-    cancel?: () => void,
-    defaultValue?: string,
-)
-{
-    const input = ref<string | null>(defaultValue || null);
-    const close = dialog(
-        <form autocomplete="off" onSubmit={ (event) => { event.preventDefault(); submit(input.value); close(); } } style="height: fit-content; width: fit-content; display: flex; flex-direction: column; gap: 10px;">
-            { content }
-            <Input placeholder="Enter here" v-model={ input.value } class="dialog-input"/>
-        </form>,
-        cancel ? cancel : (() => close()),
-    )
-    return close;
 }
 
 export function getOptionName(index: number)
@@ -312,7 +249,7 @@ export async function pickImage(maxBytes?: number): Promise<{name: string,data: 
 {
     let dataUrl: string | null = null;
     let fileName: string | null = null;
-    if (Capacitor.getPlatform() === 'web')
+    if (false && Capacitor.getPlatform() === 'web') // web也支持拍照，因此暂时禁用
     {
         const file = await pickFile('image/*');
         if (!file) return null;
@@ -404,4 +341,9 @@ export async function pickImageToFile(maxBytes?: number): Promise<File | null>
     const base64 = await pickImage(maxBytes);
     if (!base64) return null;
     return await base64ToFile(base64.name, base64.data);
+}
+
+export function isAiApp() 
+{
+    return appInfo.mode === 'AI';
 }

@@ -12,6 +12,7 @@ import QuizView from '../QuizView.vue';
 import type { Quiz } from '../../dataClasses/Quiz';
 import FileDocumentOutlineIcon from "vue-material-design-icons/FileDocumentOutline.vue";
 import ResizableWrapper from '../../components/ResizableWrapper.vue';
+import { getThemes } from '../../stores/theme';
 
 const { chat, type, path, close: close_, dataset, customInfo } = defineProps<{
     chat: ChatId,
@@ -30,8 +31,6 @@ const close = () =>
 {
     if (close_) close_();
 };
-
-
 
 function getData(type: string, path: string): ToolDataInfo
 {
@@ -209,11 +208,46 @@ function updateQuiz()
     }
 }
 
+const htmlContent_ = ref('');
+const htmlContent = computed(() => 
+{
+    if (info.value.type === 'HTML') return info.value.value;
+    else if (info.value.type === 'PAGE' && info.value.value.startsWith('uuid:')) 
+    {
+        if (htmlContent_.value) return htmlContent_.value;
+        fetch(parseChatUrl(chat, info.value.value)).then((res) => 
+        {
+            if (!res.ok) throw new Error('Failed to fetch page');
+            return res.text();
+        }).then((text) => 
+        {
+            const res = text
+                .replace('window.matchMedia("(prefers-color-scheme: dark)")', `{matches: ${getThemes().isDark}, addEventListener: () => {}, removeEventListener: () => {}}`)
+                .replace('window.matchMedia("(prefers-color-scheme: light)")', `{matches: !${getThemes().isDark}, addEventListener: () => {}, removeEventListener: () => {}}`)
+                .replace('@media (prefers-color-scheme: light)', `@media (color-scheme: light)`)
+                .replace('@media (prefers-color-scheme: dark)', `@media (color-scheme: dark)`);
+            htmlContent_.value = res;
+        });
+        return `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Loading...</title>
+            </head>
+            <body>
+                <h1>Loading...</h1>
+            </body>
+            </html>
+        `;
+    }
+    else return '';
+});
+
 </script>
 <template>
     <div :class="{'container': !inline, 'container-inline': !!inline}">
         <div v-if="info.type === 'MARKDOWN'" v-markdown="{ content: info.value, markdown: true }" />
-        <div v-else-if="info.type === 'URL'" style="padding: 10px;">
+        <div v-else-if="info.type === 'URL'" style="padding: 10px; max-width: 100%; overflow: hidden;">
             打开外部网站:
             <br />
             <br />
@@ -229,13 +263,14 @@ function updateQuiz()
         <div v-else-if="info.type === 'HTML' || info.type === 'PAGE'" style="display: inline; width: 100%;">
             <ResizableWrapper height-resizable class="iframe-wrapper" :height="750">
                 <iframe 
-                    :srcdoc="info.type === 'HTML' ? info.value : undefined"
-                    :src="info.type === 'PAGE' ? parseChatUrl(chat, info.value) : undefined" 
-                    style="border: none;" 
+                    title="web"
+                    :srcdoc="htmlContent || undefined"
+                    :src="info.type === 'PAGE' && !htmlContent ? parseChatUrl(chat, info.value) : undefined" 
+                    style="border: none; color-scheme: dark;"
                     ref="iframe"
                 />
             </ResizableWrapper>
-            <Button v-if="info.value.startsWith('<!--show-download-image-->')" style="margin-left: auto; right: 0;" @click="downloadImage">截取图片</Button>
+            <Button v-if="htmlContent && htmlContent.startsWith('<!--show-download-image-->')" style="margin-left: auto; right: 0;" @click="downloadImage">截取图片</Button>
         </div>
         <div v-else-if="info.type === 'FILE'" style="margin: -10px; max-width: 100%; text-overflow: ellipsis; overflow: hidden;">
             <Button @click="close(); safeRedirect(fileUrl)" class="file-button">

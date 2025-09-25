@@ -25,12 +25,14 @@ import { vMarkdown, vSectionContent } from './utils/markdown';
 import EditGroup from './pages/admin/EditGroup.vue';
 import Group from './pages/admin/Group.vue';
 import AiChats from './pages/ai/AiChats.vue';
+import AiChatShare from './pages/ai/AiChatShare.vue';
 import Classes from './pages/Classes.vue';
 import Exam from './pages/admin/Exam.vue';
 import Theme from './pages/Settings.vue';
 import AiTranslate from './pages/ai/AiTranslate.vue';
 import AiToolbox from './pages/ai/Toolbox.vue';
 import AiImage from './pages/ai/AiImage.vue';
+import AiEssayCorrection from './pages/ai/AiEssayCorrection.vue';
 import Practice from './pages/Practice.vue';
 import { useUser } from './stores/user';
 import { useTheme } from './stores/theme';
@@ -38,6 +40,9 @@ import { storageGet, storageSet } from './utils/storage';
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
 import debounce from './utils/debounce';
 import { $appearDuration, useTransitionActions } from './stores/transition';
+import AiLibrary from './templates/chat/AiLibrary.vue';
+import { isAiApp } from './utils/utils';
+import { checkClipboardAndHandle } from './utils/clipboard.tsx';
 defineCustomElements(window);
 
 // 监听 deep link 事件
@@ -66,7 +71,7 @@ else
 }
 
 const routes: Readonly<RouteRecordRaw[]> = [
-    { path: '/', name: 'Home', component: Home, meta: { sidebar: true } },
+    !isAiApp() ? { path: '/', name: 'Home', component: Home, meta: { sidebar: true } } : { path: '/', name: 'Home', component: AiChats, meta: { sidebar: true } },
     { path: '/about', name: 'About', component: About, meta: { sidebar: true } },
     { path: '/update-info', name: 'UpdateInfo', component: UpdateInfo, meta: { sidebar: true } },
     { path: '/analysis/:id', name: 'Analysis', component: Analysis, meta: { sidebar: true } },
@@ -77,7 +82,10 @@ const routes: Readonly<RouteRecordRaw[]> = [
     { path: '/terminal', name: 'Terminal', component: Terminal, meta: { sidebar: true } },
     { path: '/ai', name: 'AiToolbox', component: AiToolbox, meta: { sidebar: true } },
     { path: '/ai/chat', name: 'AIChats', component: AiChats, meta: { sidebar: true } },
+    { path: '/ai/chat/:id', name: 'AiChatShare', component: AiChatShare, meta: { sidebar: true } },
+    { path: '/ai/chat/lib', name: 'AiChatLib', component: AiLibrary, meta: { sidebar: true } },
     { path: '/ai/translate', name: 'AiTranslate', component: AiTranslate, meta: { sidebar: true } },
+    { path: '/ai/essay-correction', name: 'AiEssayCorrection', component: AiEssayCorrection, meta: { sidebar: true } },
     { path: '/ai/image', name: 'AiImage', component: AiImage, meta: { sidebar: true } },
     { path: '/class', name: 'Class', component: Classes, meta: { sidebar: true } },
     { path: '/setting', name: 'Theme', component: Theme, meta: { sidebar: true } },
@@ -105,9 +113,30 @@ export const router = createRouter({
     routes,
 });
 
+let beforeChange: {
+    id: bigint;
+    handler: () => boolean;
+}[] = [];
+let id = 0n;
+export function addBeforeChangeHandler(handler: () => boolean)
+{
+    beforeChange.push({ id: id, handler });
+    return id++;
+}
+
+export function removeBeforeChangeHandler(id: bigint)
+{
+    beforeChange = beforeChange.filter(item => item.id !== id);
+}
+
 const transition = useTransitionActions();
 router.beforeEach((_, __, next) =>
 {
+    const beforeChange0 = [...beforeChange].reverse();
+    for (const item of beforeChange0)
+    {
+        if (item.handler()) return next(false);
+    }
     transition.onLeave();
     return new Promise((resolve) =>
     {
@@ -196,4 +225,6 @@ export function getScale(): number
             return storageSet('route', to.path);
         });
     }
+
+    checkClipboardAndHandle();
 })();

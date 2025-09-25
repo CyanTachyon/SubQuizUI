@@ -231,7 +231,7 @@ const handleScaleChange = (newScale: number) =>
                     </Text>
 
                     <div class="background-actions">
-                        <Button @click="theme.setBackground('')">
+                        <Button @click="theme.setBackground('-')">
                             使用默认背景
                         </Button>
                         <Button @click="theme.setBackground('#')">
@@ -348,10 +348,8 @@ const handleScaleChange = (newScale: number) =>
 
                     <div class="background-actions">
                         <div style="width: calc(min(300px, 100%));">
-                            <Input style="width: calc(100% - 20px);" type="number" :modelValue="~~(scale * 100)"
-                                @update:modelValue="s => handleScaleChange(Number(s) / 100)" />
-                            <Slider style="width: calc(100% - 20px);" :minValue="0.5" :maxValue="2.5" :step="0.01"
-                                :modelValue="scale" @update:modelValue="handleScaleChange" />
+                            <Input style="width: calc(100% - 20px);" type="number" :modelValue="~~(scale * 100)" @update:modelValue="s => handleScaleChange(Number(s) / 100)" />
+                            <Slider style="width: calc(100% - 20px);" :minValue="0.5" :maxValue="2.5" :step="0.01" :modelValue="scale" @update:modelValue="handleScaleChange" ignoreRangeCheck />
                         </div>
                     </div>
                 </div>

@@ -12,11 +12,17 @@ import { getUnfinishedPractices } from '../networks/backend/practice.ts';
 import { getDoneSectionCount } from '../networks/backend/home.ts';
 import { useUser } from '../stores/user.ts';
 import LoginCard from '../templates/LoginCard.vue';
+import { isAiApp } from '../utils/utils.tsx';
 
 document.title = 'SubQuiz';
 
 const loading = ref(true);
 const router = useRouter();
+
+if (isAiApp()) 
+{
+    router.push("/ai/chat");
+}
 
 const unfinishedQuizzes = ref<Quiz<null, AnswerType | null, null>[]>([]);
 const unfinishedPractices = ref<Practice[]>([]);

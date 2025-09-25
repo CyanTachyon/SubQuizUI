@@ -11,7 +11,7 @@ import { getClass } from '../../networks/backend/class';
 import Text from '../../components/Text.vue';
 import SquareEditOutlineIcon from 'vue-material-design-icons/SquareEditOutline.vue';
 import DeleteIcon from 'vue-material-design-icons/Delete.vue';
-import { getSectionBrief, inputDialog } from '../../utils/utils';
+import { getSectionBrief } from '../../utils/utils';
 import { router } from '../../main';
 import type { Section } from '../../dataClasses/Section';
 import type { AnswerType } from '../../dataClasses/Question';
@@ -29,6 +29,7 @@ import OpenInNewIcon from 'vue-material-design-icons/OpenInNew.vue';
 import type { Quiz } from '../../dataClasses/Quiz';
 import { avatarUrl } from '../../networks/sso/avatar';
 import Image from '../../components/Image.vue';
+import { inputDialog } from '../../utils/dialog';
 
 document.title = '编辑考试 - SubQuiz';
 
@@ -76,11 +77,12 @@ async function init()
     const e = await getExam(examId);
     exam.value = e;
     clazz.value = await getClass(e.clazz);
-    
-    // 获取考试分数数据
-    try {
+    try
+    {
         rawExamScores.value = await getExamScores(examId);
-    } catch (error) {
+    } 
+    catch (error)
+    {
         console.error('获取考试分数失败:', error);
         rawExamScores.value = [];
     }

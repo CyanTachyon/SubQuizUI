@@ -1,10 +1,11 @@
 {
     "name": "subquiz",
     "private": true,
-    "version": "3.3.0.12",
-    "versionId": 30300012,
-    "minVersionId": 30300004,
+    "version": "3.3.3.7",
+    "versionId": 30303007,
+    "minVersionId": 30303007,
     "downloadUrl": "https://quiz.bdfzscc.com/SubQuiz.apk",
+    "aiDownloadUrl": "https://quiz.bdfzscc.com/SubQuizAI.apk",
     "type": "module",
     "scripts": {
         "dev": "vite",
@@ -12,6 +13,9 @@
         "typecheck:react": "tsc -p tsconfig.react.json --noEmit",
         "build-android": "npx cap sync && npx cap build android && cp ./android/app/build/outputs/apk/release/app-release-signed.apk ./dist/SubQuiz.apk",
         "build": "npm run build-web && npm run build-android && rm -rf dist/assets/*.woff2 dist/assets/*.woff dist/assets/*.ttf",
+        "build-ai": "ts-node update-version.ts ai && rm -rf dist/* && vue-tsc -b && vite build && npm run build-android && rm -rf dist/assets/*.woff2 dist/assets/*.woff dist/assets/*.ttf",
+
+        "build-all": "npm run build && mv ./dist ./tmp_dist && npm run build-ai && mv ./dist/SubQuiz.apk ./tmp_dist/SubQuizAI.apk && rm -rf ./dist && mv ./tmp_dist ./dist",
         "preview": "vite preview"
     },
     "dependencies": {

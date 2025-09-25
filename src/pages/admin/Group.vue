@@ -31,7 +31,7 @@ import FolderIcon from "vue-material-design-icons/Folder.vue";
 import PlusCircleOutlineIcon from "vue-material-design-icons/PlusCircleOutline.vue";
 import Button from "../../components/Button.vue";
 import TextBoxPlusOutlineIcon from "vue-material-design-icons/TextBoxPlusOutline.vue";
-import { getSectionBrief, inputDialog, pushUrl } from "../../utils/utils.tsx";
+import { getSectionBrief, pushUrl } from "../../utils/utils.tsx";
 import Pagination from "../../components/Pagination.vue";
 
 import FolderOutlineIcon from "vue-material-design-icons/FolderOutline.vue";
@@ -45,6 +45,7 @@ import Slider from "../../components/Slider.vue";
 import { useNotification } from "../../stores/notification.ts";
 import ShieldCrownOutlineIcon from "vue-material-design-icons/ShieldCrownOutline.vue";
 import Split from "../../templates/Split.vue";
+import { inputDialog } from "../../utils/dialog.tsx";
 
 document.title = '备课组 - SubQuiz';
 

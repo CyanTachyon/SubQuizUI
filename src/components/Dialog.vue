@@ -4,7 +4,7 @@ import { ref, watch } from "vue";
 import Card from "./Card.vue";
 import { phone } from "../main";
 
-const { open, onClose } = defineProps(
+const props = defineProps(
     {
         open: {
             type: Boolean,
@@ -21,11 +21,11 @@ const ele = ref(null as HTMLDialogElement);
 
 onMounted(() =>
 {
-    watch(() => open, (value) => {
+    watch(() => props.open, (value) => {
         if (value) {
-            ele.value.showModal();
+            ele.value?.showModal?.();
         } else {
-            ele.value.close();
+            ele.value?.close?.();
         }
     }, { immediate: true });
 })
@@ -33,7 +33,7 @@ onMounted(() =>
 </script>
 
 <template>
-    <dialog ref="ele" @close="onClose()" @click.self="onClose()" @keydown.esc="onClose()">
+    <dialog ref="ele" @cancel.prevent="props.onClose()" @click.self="props.onClose()">
         <Card class="dialog-wrapper" :scroll="true" :class="{ phone }">
             <slot/>
         </Card>

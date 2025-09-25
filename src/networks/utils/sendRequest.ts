@@ -56,7 +56,7 @@ export interface RequestData
     method: 'GET' | 'POST' | 'PUT' | 'DELETE';
     params?: Record<string, any>;
     withToken?: boolean;
-    data?: object;
+    data?: any;
 }
 
 export async function sendRequest<DATA>(data: RequestData): Promise<ResponseBody<DATA>>
@@ -145,11 +145,11 @@ export async function request(
     }
     if (body !== undefined) 
     {
-        data.body = JSON.stringify(body);
+        data.body = typeof body === 'string' ? body : JSON.stringify(body);
         data.headers['Content-Type'] = 'application/json';
     }
     data.headers['Accept'] = '*/*';
-    data.headers['Authorization'] = withToken ? `Bearer ${useUser().getToken()}` : '';
+    data.headers['Authorization'] = withToken && useUser().getToken() ? `Bearer ${useUser().getToken()}` : '';
     data.headers['X-Client-Version'] = clientVersion.versionCode;
     return fetch(url, data)
 }

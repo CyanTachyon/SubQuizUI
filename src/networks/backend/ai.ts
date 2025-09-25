@@ -122,7 +122,7 @@ export async function createChat(section: Section<AnswerType, AnswerType, string
     }));
 }
 
-export async function sendContent(data: {chatId: number, content: Content, regenerate: boolean, model: Model, hash: string}): Promise<{hash: string, content: Content} | null>
+export async function sendContent(data: {chatId: ChatId, content: Content, regenerate: boolean, model: Model, hash: string}): Promise<{hash: string, content: Content} | null>
 {
     return checkResponse<{hash: string, content: Content} | null>(
         sendRequest({
@@ -145,6 +145,17 @@ export async function cancelChat(chat: ChatId): Promise<void>
         target: Target.BACKEND,
         url: cancelChatUrl,
         method: 'POST',
+        params: { chat }
+    }));
+}
+
+const getShareHashUrl = '/ai/chat/{chat}/share';
+export async function getShareHash(chat: ChatId): Promise<string>
+{
+    return checkResponse<string>(sendRequest({
+        target: Target.BACKEND,
+        url: getShareHashUrl,
+        method: 'GET',
         params: { chat }
     }));
 }
@@ -268,7 +279,7 @@ export async function getFileInfo(chat: ChatId, file: string): Promise<FileInfo>
 
 export function getFileUrl(chat: ChatId, file: string, download: boolean = false): string
 {
-    return connectUrl(Target.BACKEND, '/ai/chat/{chat}/file/{file}/data', { chat, file, token: useUser().getToken(), download });
+    return connectUrl(Target.BACKEND, '/ai/chat/{chat}/file/{file}/data', { chat, file, token: useUser().getToken() || undefined, download });
 }
 
 export function parseChatUrl(chat: ChatId, url: string): string
@@ -276,6 +287,68 @@ export function parseChatUrl(chat: ChatId, url: string): string
     if (url.startsWith('uuid:')) return getFileUrl(chat, url.substring(5));
     else return url;
 }
+
+const getLibFilesUrl = '/ai/chat/lib/files';
+/**
+ * 获取自定义ai知识库中的全部文件
+ * @returns 所有文件的path（例如：'a/b/c.txt'）
+ */
+export async function getLibFiles(): Promise<string[]>
+{
+    return checkResponse<string[]>(sendRequest({
+        target: Target.BACKEND,
+        url: getLibFilesUrl,
+        method: 'GET'
+    }));
+}
+
+const libFileUrl = '/ai/chat/lib/file';
+
+/**
+ * 获取自定义ai知识库中的文件
+ * @param path 文件路径（例如：'a/b/c.txt'）
+ * @returns 文件内容
+ */
+export async function getLibFile(path: string): Promise<string>
+{
+    return checkResponse<string>(sendRequest({
+        target: Target.BACKEND,
+        url: libFileUrl,
+        method: 'GET',
+        params: { path }
+    }));
+}
+
+/**
+ * 上传自定义ai知识库中的文件
+ * @param path 文件路径（例如：'a/b/c.txt'）
+ * @param file 文件内容
+ */
+export async function uploadLibFile(path: string, file: string): Promise<void>
+{
+    return checkResponse<void>(sendRequest({
+        target: Target.BACKEND,
+        url: libFileUrl,
+        method: 'POST',
+        params: { path },
+        data: file,
+    }));
+}
+
+/**
+ * 删除自定义ai知识库中的文件
+ * @param path 文件路径（例如：'a/b/c.txt'）
+ */
+export async function deleteLibFile(path: string): Promise<void>
+{
+    return checkResponse<void>(sendRequest({
+        target: Target.BACKEND,
+        url: libFileUrl,
+        method: 'DELETE',
+        params: { path }
+    }));
+}
+
 
 const translateSSEUrl = '/ai/translate';
 export async function translateSSE(
@@ -341,4 +414,41 @@ export async function imageToText(image: string, markdown: boolean, onMessage: (
             useNotification().addError(`Error parsing AI message`);
         }
     });
+}
+
+export interface EssayCorrection
+{
+    comment: string;
+    p: Part[];
+}
+
+export interface Part
+{
+    // 原始文本
+    original: string;
+    // 修正后的文本
+    result: string;
+    // 评论
+    comment: string;
+    // 子节点
+    children: Part[] | null;
+}
+
+const essayCorrectionUrl = '/ai/essayCorrection';
+export async function essayCorrection(
+    // 题目要求，支持文字或图片（base64，如data:image/png;base64,...）
+    requirement: string,
+    // 作文，支持文字或图片（base64，如data:image/png;base64,...）
+    essay: string,
+): Promise<{
+    comment: string;
+    p: Part[];
+}>
+{
+    return checkResponse(sendRequest({
+        target: Target.BACKEND,
+        url: essayCorrectionUrl,
+        method: 'POST',
+        data: { requirement, essay },
+    }));
 }

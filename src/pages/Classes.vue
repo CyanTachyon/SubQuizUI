@@ -16,7 +16,6 @@ import Image from "../components/Image.vue";
 import { getUserPermissionInGroup } from "../networks/backend/admin";
 import { isAdmin } from "../dataClasses/Permission";
 import { useUser } from "../stores/user";
-import { dialog, inputDialog } from "../utils/utils";
 import { phone } from "../main";
 import { addSidebar, removeSidebar } from "../stores/sidebar";
 import AccountMultipleIcon from "vue-material-design-icons/AccountMultiple.vue";
@@ -25,6 +24,7 @@ import { createPractice, getPractices } from "../networks/backend/practice";
 import type { Practice } from "../dataClasses/Practice";
 import Pagination from "../components/Pagination.vue";
 import type { Slice } from "../dataClasses/Slice";
+import { dialog, inputDialog } from "../utils/dialog";
 
 document.title = '班级 - SubQuiz';
 

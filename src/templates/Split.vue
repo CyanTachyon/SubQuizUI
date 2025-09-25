@@ -11,7 +11,7 @@ interface Props
     minRightWidth?: string;
     maxRightWidth?: string;
 
-    direction?: 'row' | 'column';
+    direction?: 'row' | 'column' | 'left-only' | 'right-only';
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -124,27 +124,41 @@ onUnmounted(() =>
 </script>
 <template>
     <div ref="splitContainer" class="split-container" :class="{ 'split-row': props.direction === 'row', 'split-column': props.direction === 'column' }">
-        <div class="split-left" :style="{ 
-            [props.direction === 'row' ? 'width' : 'height']: `${leftWidth}%`,
-            [props.direction === 'row' ? 'maxWidth' : 'maxHeight']: props.maxLeftWidth, 
-            [props.direction === 'row' ? 'minWidth' : 'minHeight']: props.minLeftWidth
+        <div v-if="props.direction === 'left-only'" class="split-left" :style="{
+            width: '100%',
+            height: '100%',
         }">
             <slot name="left"/>
         </div>
-        <Text 
-            class="split-divider"
-            @mousedown="startDrag"
-            @touchstart="startDrag"
-            >
-            <div/>
-        </Text>
-        <div class="split-right" :style="{ 
-            [props.direction === 'row' ? 'width' : 'height']: `${rightWidth}%`, 
-            [props.direction === 'row' ? 'maxWidth' : 'maxHeight']: props.maxRightWidth,
-            [props.direction === 'row' ? 'minWidth' : 'minHeight']: props.minRightWidth 
+        <div v-else-if="props.direction === 'right-only'" class="split-right" :style="{
+            width: '100%',
+            height: '100%',
         }">
             <slot name="right"/>
         </div>
+        <template v-else>
+            <div class="split-left" :style="{ 
+                [props.direction === 'row' ? 'width' : 'height']: `${leftWidth}%`,
+                [props.direction === 'row' ? 'maxWidth' : 'maxHeight']: props.maxLeftWidth, 
+                [props.direction === 'row' ? 'minWidth' : 'minHeight']: props.minLeftWidth
+            }">
+                <slot name="left"/>
+            </div>
+            <Text 
+                class="split-divider"
+                @mousedown="startDrag"
+                @touchstart="startDrag"
+                >
+                <div/>
+            </Text>
+            <div class="split-right" :style="{ 
+                [props.direction === 'row' ? 'width' : 'height']: `${rightWidth}%`, 
+                [props.direction === 'row' ? 'maxWidth' : 'maxHeight']: props.maxRightWidth,
+                [props.direction === 'row' ? 'minWidth' : 'minHeight']: props.minRightWidth 
+            }">
+                <slot name="right"/>
+            </div>
+        </template>
     </div>
 </template>
 <style lang="scss" scoped>

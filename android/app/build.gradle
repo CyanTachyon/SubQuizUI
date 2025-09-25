@@ -3,13 +3,19 @@ import groovy.json.JsonSlurper
 def versionFile = file('../../public/android_latest.json')
 def versionJson = new JsonSlurper().parse(versionFile)
 
+def appInfoFile = file('../../public/app_info.json')
+def appInfoJson = new JsonSlurper().parse(appInfoFile)
+def isAiMode = (appInfoJson.mode != null && appInfoJson.mode.toString().equalsIgnoreCase('ai'))
+def appIcon = isAiMode ? '@mipmap/ic_launcher_dark' : '@mipmap/ic_launcher'
+def appRoundIcon = isAiMode ? '@mipmap/ic_launcher_dark_round' : '@mipmap/ic_launcher_round'
+
 apply plugin: 'com.android.application'
 
 android {
-    namespace "cn.org.subit.quiz"
+    namespace appInfoJson.namespace
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "cn.org.subit.quiz"
+        applicationId appInfoJson.appId
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode versionJson.versionCode
@@ -20,6 +26,14 @@ android {
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
+
+        resValue "string", "app_name", appInfoJson.appName
+        resValue "string", "title_activity_main", appInfoJson.appName
+        resValue "string", "package_name", appInfoJson.appId
+        manifestPlaceholders = [
+                appIcon     : appIcon,
+                appRoundIcon: appRoundIcon
+        ]
     }
     buildTypes {
         release {

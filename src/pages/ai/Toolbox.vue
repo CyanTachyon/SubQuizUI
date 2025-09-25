@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import Card from "../../components/Card.vue";
-import { ChatBubbleLeftRightIcon, LanguageIcon, PhotoIcon } from "@heroicons/vue/16/solid";
+import { ChatBubbleLeftRightIcon, LanguageIcon, PhotoIcon, DocumentTextIcon } from "@heroicons/vue/16/solid";
 
 document.title = 'AI工具箱 - SubQuiz';
 
@@ -20,6 +20,10 @@ const router = useRouter();
             <Card class="tool" :max-tilt="10" @click="router.push('/ai/translate')">
                 <LanguageIcon style="height: 40px; width: 40px;"/>
                 <span>AI 翻译</span>
+            </Card>
+            <Card class="tool" :max-tilt="10" @click="router.push('/ai/essay-correction')">
+                <DocumentTextIcon style="height: 40px; width: 40px;"/>
+                <span>英语作文批改</span>
             </Card>
             <Card class="tool" :max-tilt="10" @click="router.push('/ai/image')">
                 <PhotoIcon style="height: 40px; width: 40px;"/>

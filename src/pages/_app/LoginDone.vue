@@ -5,7 +5,7 @@ import { useNotification } from '../../stores/notification';
 const route = useRoute();
 const code = route.query.code as string | undefined;
 
-document.title = '登陆成功... - SubQuiz';
+document.title = '登录成功... - SubQuiz';
 
 try
 {
