@@ -36,7 +36,7 @@ import AiEssayCorrection from './pages/ai/AiEssayCorrection.vue';
 import Practice from './pages/Practice.vue';
 import { useUser } from './stores/user';
 import { useTheme } from './stores/theme';
-import { storageGet, storageSet } from './utils/storage';
+import { storageGet } from './utils/storage';
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
 import debounce from './utils/debounce';
 import { $appearDuration, useTransitionActions } from './stores/transition';
@@ -183,7 +183,7 @@ export function getScale(): number
         console.error(error);
     }
     const appEle = (document.querySelector('quiz-app') as any);
-    scale = Number(await storageGet('scale')) || 0.8;
+    scale = Number(await storageGet('scale')) || (Capacitor.getPlatform() === 'web' ? 0.8 : 0.7);
     appEle.style = `
         --scale: ${scale};
         transform: scale(${scale});
@@ -211,20 +211,20 @@ export function getScale(): number
         .directive('section-content', vSectionContent)
         .mount('quiz-app');
 
-    if (Capacitor.getPlatform() === 'android') 
-    {
-        const route = await storageGet('route');
-        if (route) 
-        {
-            console.log(route);
-            router.push(route);
-        }
-        router.afterEach((to, __, failure) =>
-        {
-            if (isNavigationFailure(failure)) return;
-            return storageSet('route', to.path);
-        });
-    }
+    // if (Capacitor.getPlatform() === 'android') 
+    // {
+    //     const route = await storageGet('route');
+    //     if (route) 
+    //     {
+    //         console.log(route);
+    //         router.push(route);
+    //     }
+    //     router.afterEach((to, __, failure) =>
+    //     {
+    //         if (isNavigationFailure(failure)) return;
+    //         return storageSet('route', to.path);
+    //     });
+    // }
 
     checkClipboardAndHandle();
 })();

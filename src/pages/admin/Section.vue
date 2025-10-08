@@ -550,10 +550,10 @@ function deleteImage(name: string)
             </template>
         </Card>
     </div>
-    <template v-else>
+    <div v-else style="display: flex; flex-direction: column; overflow: hidden; max-height: 100%;">
         <Button @click="preview = false">返回编辑</Button>
         <QuizView :model-value="{ sections: [section], correct: null }" :editable="false" />
-    </template>
+    </div>
 </template>
 
 <style scoped lang="scss">

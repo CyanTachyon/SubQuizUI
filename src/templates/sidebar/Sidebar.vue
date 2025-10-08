@@ -201,7 +201,7 @@ quiz-main-content {
     width: 100%;
     height: 100%;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: hidden;
     scrollbar-width: none;
     position: relative;
     --transition: 'default';

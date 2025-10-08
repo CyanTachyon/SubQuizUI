@@ -35,9 +35,11 @@ import PencilIcon from "vue-material-design-icons/Pencil.vue";
 import FileDocumentOutlineIcon from "vue-material-design-icons/FileDocumentOutline.vue";
 import Switch from '../../components/Switch.vue';
 import { dialog } from '../../utils/dialog';
-import { connectUrl, Target } from '../../networks/utils/sendRequest';
+import { connectUrl } from '../../networks/utils/sendRequest';
 import { sleep } from '../../utils/sleep';
 import { router } from '../../main';
+import SendCircleOutlineIcon from 'vue-material-design-icons/SendCircleOutline.vue'
+import CloseCircleOutlineIcon from 'vue-material-design-icons/CloseCircleOutline.vue'
 
 export type DisplayMessage = AiMessage & {
     showReasoning: boolean;
@@ -104,77 +106,146 @@ const onNamed = (title: string) =>
     addChar();
 };
 
-const onMessage = (message: AiMessage & { finished: boolean, banned: boolean }) => 
+const messageQueue: (() => void)[] = [];
+let working = false;
+const waitTime = () =>
 {
-    if (info.value.histories[info.value.histories.length - 1].role !== 'assistant')
-    {
-        info.value.histories.push({
-            role: 'assistant',
-            messages: [],
-        });
-    }
+    const MIN_WAIT_TIME = 0;
+    const MAX_WAIT_TIME = 50;
 
-    const last = info.value.histories[info.value.histories.length - 1] as AiHistory & { messages: DisplayMessage[] };
+    if (!info.value.inAnswering || !info.value.showAnswering) return MIN_WAIT_TIME;
 
-    if (message.tool_call || message.type)
+    const queueSize = messageQueue.length;
+    if (queueSize <= 1) return MAX_WAIT_TIME;
+
+    const wait = MAX_WAIT_TIME - Math.log2(queueSize + 1) * 8;
+    return Math.max(MIN_WAIT_TIME, Math.round(wait));
+};
+function runTask()
+{
+    if (working) return;
+    working = true
+    const work = () => 
     {
-        if (last.messages.length) last.messages[last.messages.length - 1].showReasoning = false;
-        last.messages.push({
-            ...message,
-            showReasoning: true,
-        });
-        if (shouldAutoScroll.value) 
+        try
         {
-            scrollToBottom();
+            const task = messageQueue.shift();
+            if (task) task();
+            if (shouldAutoScroll.value) scrollToBottom();
         }
-        return;
-    }
-
-    let lastMessage: DisplayMessage;
-    if (last.messages.length <= 0 || last.messages[last.messages.length - 1].tool_call || last.messages[last.messages.length - 1].type)
+        catch (e)
+        {
+            console.error(e);
+        }
+    };
+    const doWork = async () =>
     {
-        // 新消息出现，收回上一个消息的思考过程
-        if (last.messages.length) last.messages[last.messages.length - 1].showReasoning = false;
-        lastMessage = {
-            content: '',
-            reasoning_content: '',
-            showReasoning: true,
-            type: null,
-        };
-        last.messages.push(lastMessage);
+        while (messageQueue.length)
+        {
+            const t = waitTime();
+            if (t) await sleep(t);
+            work();
+        }
+        working = false;
     }
-    else
-    {
-        lastMessage = last.messages[last.messages.length - 1];
-    }
+    doWork();
+}
+function addTask(task: () => void, force = false)
+{
+    if (force) messageQueue.length = 0;
+    messageQueue.push(task);
+    runTask();
+}
 
-    // 收到第一条正文时，收回思考过程
-    if (getContentText(message.content) && !(getContentText(lastMessage.content).trim()) && lastMessage.reasoning_content) lastMessage.showReasoning = false;
-    if (message.content) lastMessage.content = mergeContent(lastMessage.content, message.content);
-    if (message.reasoning_content) lastMessage.reasoning_content += message.reasoning_content;
-
-    if (message.banned) 
+const onMessage = (immediate: boolean) => (message: AiMessage & { finished: boolean, banned: boolean }) => 
+{
+    if (message.banned) return addTask(() =>
     {
+        const last = info.value.histories[info.value.histories.length - 1] as AiHistory & { messages: DisplayMessage[]; };
         last.messages = [
             {
                 content: "对不起，该聊天无法继续",
                 reasoning_content: '',
                 showReasoning: false,
             }
-        ]
+        ];
         info.value.showAnswering = false;
         info.value.banned = true;
-    }
-    else if (message.finished) 
+    }, true);
+    else if (message.finished) addTask(() =>
     {
         info.value.showAnswering = false;
+    });
+
+    addTask(() => 
+    {
+        if (info.value.histories[info.value.histories.length - 1].role !== 'assistant')
+        {
+            info.value.histories.push({
+                role: 'assistant',
+                messages: [],
+            });
+        }
+    });
+
+    if (message.tool_call || message.type) return addTask(() =>
+    {
+        const last = info.value.histories[info.value.histories.length - 1] as AiHistory & { messages: DisplayMessage[]; };
+        if (last.messages.length) last.messages[last.messages.length - 1].showReasoning = false;
+        last.messages.push({
+            ...message,
+            showReasoning: true,
+        });
+        if (shouldAutoScroll.value) scrollToBottom();
+    });
+
+    const messageSplit: {reasoning_content: string, content: Content}[] = [];
+
+    if (immediate) 
+    {
+        messageSplit.push({ reasoning_content: message.reasoning_content, content: message.content });
+        immediate = false;
+    }
+    else
+    {
+        for (const char of message.reasoning_content)
+            messageSplit.push({ reasoning_content: char, content: '' });
+        if (typeof message.content === 'string') for (const char of message.content)
+            messageSplit.push({ reasoning_content: '', content: char });
+        else for (const c of message.content)
+        {
+            if (c.type === 'text') for (const char of c.text) messageSplit.push({ reasoning_content: '', content: char });
+            else messageSplit.push({ reasoning_content: '', content: [c] });
+        }
     }
 
-    if (shouldAutoScroll.value) 
+    for (const item of messageSplit) addTask(() =>
     {
-        scrollToBottom();
-    }
-}
+        const last = info.value.histories[info.value.histories.length - 1] as AiHistory & { messages: DisplayMessage[]; };
+        let lastMessage: DisplayMessage;
+        if (last.messages.length <= 0 || last.messages[last.messages.length - 1].tool_call || last.messages[last.messages.length - 1].type)
+        {
+            // 新消息出现，收回上一个消息的思考过程
+            if (last.messages.length) last.messages[last.messages.length - 1].showReasoning = false;
+            lastMessage = {
+                content: '',
+                reasoning_content: '',
+                showReasoning: true,
+                type: null,
+            };
+            last.messages.push(lastMessage);
+        }
+        else
+        {
+            lastMessage = last.messages[last.messages.length - 1];
+        }
+
+        // 收到第一条正文时，收回思考过程
+        if (getContentText(item.content) && !(getContentText(lastMessage.content).trim()) && lastMessage.reasoning_content) lastMessage.showReasoning = false;
+        if (item.content) lastMessage.content = mergeContent(lastMessage.content, item.content);
+        if (item.reasoning_content) lastMessage.reasoning_content += item.reasoning_content;
+    });
+};
 
 const init = async () => 
 {
@@ -230,7 +301,7 @@ const init = async () =>
         const r = isShare.value || await chatSSE(
             info.value.id,
             info.value.hash,
-            onMessage,
+            onMessage(false),
             onNamed,
         );
         if (!r) throw new Error('sse close not expected');
@@ -298,10 +369,7 @@ function uploadFile(image: boolean, edit: boolean)
             type: image ? 'image' : 'file',
             data: file0.data,
         });
-    }).finally(() => 
-    {
-        uploadingFile.value = false;
-    });
+    }).finally(() => uploadingFile.value = false);
 }
 function deleteFile(file: string, edit: boolean)
 {
@@ -526,7 +594,7 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
         const r = await chatSSE(
             info.value.id,
             info.value.hash,  
-            onMessage,
+            onMessage(false),
             onNamed,
         )
         if (!r) throw new Error('sse close not expected');
@@ -772,7 +840,7 @@ async function showSettingDialog()
 
 async function shareChat()
 {
-    const shareUrl = connectUrl(Target.FRONTEND, "/ai/chat/" + await getShareHash(info.value.id))
+    const shareUrl = connectUrl(environment.aiShareBase, "/" + await getShareHash(info.value.id))
     const close = dialog(<>
         <p>分享对话</p>
         <p style="word-break: break-all; user-select: all;">{shareUrl}</p>
@@ -826,7 +894,7 @@ async function shareChat()
                                         <ChevronRightIcon v-else class="icon" />
                                         思考过程
                                     </Button>
-                                    <Text v-markdown="{ markdown: true, content: msg.reasoning_content, section: info.section?.id, parseHtml }" class="reasoning-content" v-if="msg.showReasoning" />
+                                    <Text v-markdown="{ markdown: true, content: msg.reasoning_content, section: info.section?.id, parseHtml, renderHtml: false }" class="reasoning-content" v-if="msg.showReasoning" />
                                 </div>
                                 <template v-if="msg.content && (typeof msg.content !== 'string')" v-for="c in msg.content">
                                     <Text class="content" v-if="c.type === 'text' && c.text.trim()" v-markdown="{ markdown: item.role === 'assistant', content: c.text, section: info.section?.id, parseHtml }" />
@@ -875,29 +943,29 @@ async function shareChat()
                 <Text class="bottom-bar">
                     <SelectMenu :model-value="model" :options="models.map(m => ({ label: m.displayName, value: m.model }))" class="model-name" :placeholder="'选择模型'" @update:model-value="changeModel" :direction="'up'"/>
                     <CogOutlineIcon class="intelligent-icon" @click="showSettingDialog()"/>
-                    <span class="upload-img" @click="uploadFile(false, editingLastMessage)" style="margin-left: auto;">
+                    <span class="bottom-bnt" @click="uploadFile(false, editingLastMessage)" style="margin-left: auto;">
                         <FileDocumentOutlineIcon class="icon" v-if="!uploadingFile"/>
                         <div class="loading-icon" v-else>
                             <LoadingIcon />
                         </div>
                     </span>
-                    <span class="upload-img" @click="uploadFile(true, editingLastMessage)">
+                    <span class="bottom-bnt" @click="uploadFile(true, editingLastMessage)">
                         <ImageOutlineIcon class="icon" v-if="!uploadingFile"/>
                         <div class="loading-icon" v-else>
                             <LoadingIcon />
                         </div>
                     </span>
-                    <span class="send" v-if="editingLastMessage" @click="cancelEditLastMessage()">
-                        <span>取消</span>
+                    <span class="bottom-bnt" v-if="editingLastMessage" @click="cancelEditLastMessage()">
+                        <CloseCircleOutlineIcon class="icon"/>
                     </span>
-                    <span class="send" @click="editingLastMessage ? confirmEditLastMessage() : onSubmit(null)">
+                    <span class="bottom-bnt" @click="editingLastMessage ? confirmEditLastMessage() : onSubmit(null)">
                         <div v-if="info.showAnswering">
                             <StopCircleOutlineIcon class="icon"/>
                         </div>
                         <div class="loading-icon" v-else-if="info.inAnswering">
                             <LoadingIcon />
                         </div>
-                        <span v-else>发送</span>
+                        <SendCircleOutlineIcon v-else class="icon">发送</SendCircleOutlineIcon>
                     </span>
                 </Text>
             </template>
@@ -1212,7 +1280,7 @@ async function shareChat()
         // color: rgba(86, 135, 247, 0.8);
         color: var(--button-highlight-border);
     }
-    span.upload-img {
+    span.bottom-bnt {
         width: 45px;
         min-width: 45px;
         max-width: 45px;
@@ -1224,24 +1292,6 @@ async function shareChat()
         padding: 0.5rem 1rem;
         border-radius: 1rem;
         margin: 10px;
-        right: 0;
-        background-color: rgba(76, 107, 190, 0.4);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    span.send {
-        width: 64px;
-        min-width: 64px;
-        max-width: 64px;
-        height: 37.33333px;
-        min-height: 37.33333px;
-        max-height: 37.33333px;
-        cursor: pointer;
-        bottom: 0;
-        padding: 0.5rem 1rem;
-        border-radius: 1rem;
-        margin: 10px 10px 10px 10px;
         right: 0;
         background-color: rgba(76, 107, 190, 0.4);
         display: flex;

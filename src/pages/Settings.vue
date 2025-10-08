@@ -135,9 +135,7 @@ const handleOverlayOpacityChange = (opacity: number) => {
 };
 
 // 检查是否为非纯色背景
-const isCustomBackground = () => {
-    return !getThemes().useSolidColor;
-};
+const hasBackground = () => getThemes().background != '#';
 
 const scale = ref(1);
 (async () => {
@@ -245,7 +243,7 @@ const handleScaleChange = (newScale: number) =>
             </Card>
 
             <!-- 背景增强设置 -->
-            <Card style="padding: 10px 20px 20px 20px" v-if="isCustomBackground()">
+            <Card style="padding: 10px 20px 20px 20px" v-if="hasBackground()">
                 <Text>
                     <h2 class="section-title">背景增强</h2>
                 </Text>

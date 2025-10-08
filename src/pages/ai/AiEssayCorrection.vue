@@ -336,7 +336,7 @@ const PartTree = defineComponent({
 <template>
     <Split :min-left-width="'500px'" :min-right-width="'460px'" :direction="phone ? (hasResult ? 'right-only' : 'left-only') : 'row'">
         <template #left>
-            <Card class="card" style="min-width: 300px;">
+            <Card class="card">
                 <div style="display: flex; gap: 8px; align-items: center;">
                     <div style="font-weight: bold; opacity: 0.8; margin-left: 6px;">题目要求</div>
                     <Button @click="onPickRequirementFile" style="margin-left: auto;">上传图片</Button>
@@ -373,21 +373,30 @@ const PartTree = defineComponent({
 
         <template #right>
             <Card class="card">
-                <div class="result-header">总体点评</div>
-                <div class="overall-comment" v-if="overallComment">{{ overallComment }}</div>
-                <div class="overall-comment empty" v-else>等待结果…</div>
-
-                <div class="result-header" style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
-                    <span>逐段批改</span>
-                    <div style="margin-left: auto; display: flex; gap: 6px;">
-                        <Button @click="expandAll">全部展开</Button>
-                        <Button @click="collapseAll">全部折叠</Button>
-                    </div>
-                </div>
-                <div class="parts-wrapper" v-if="parts.length > 0">
-                    <PartTree :items="parts" :expanded-set="expanded" :on-toggle="togglePath" />
-                </div>
-                <div class="overall-comment empty" v-else>暂无分段结果</div>
+                <Split direction="column" :min-left-width="'130px'" :min-right-width="'130px'">
+                    <template #left>
+                        <div style="height: 100%; width: 100%; display: flex; flex-direction: column; overflow-y: hidden; padding-bottom: 10px;">
+                            <div class="result-header">总体点评</div>
+                            <div class="overall-comment" v-if="overallComment">{{ overallComment }}</div>
+                            <div class="overall-comment empty" v-else>等待结果…</div>
+                        </div>
+                    </template>
+                    <template #right>
+                        <div style="height: 100%; width: 100%; display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: none;">
+                            <div class="result-header" style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                                <span>逐段批改</span>
+                                <div style="margin-left: auto; display: flex; gap: 6px;">
+                                    <Button @click="expandAll">全部展开</Button>
+                                    <Button @click="collapseAll">全部折叠</Button>
+                                </div>
+                            </div>
+                            <div class="parts-wrapper" v-if="parts.length > 0">
+                                <PartTree :items="parts" :expanded-set="expanded" :on-toggle="togglePath" />
+                            </div>
+                            <div class="overall-comment empty" v-else>暂无分段结果</div>
+                        </div>
+                    </template>
+                </Split>
             </Card>
         </template>
     </Split>
@@ -438,11 +447,12 @@ const PartTree = defineComponent({
 .overall-comment {
     margin: 8px 12px 2px 12px;
     line-height: 1.7;
+    background: var(--button-background);
     background: color-mix(in oklab, var(--button-background) 85%, transparent);
     border-left: 4px solid var(--button-highlight-border);
     padding: 10px 12px;
     border-radius: 8px;
-    max-height: 40%;
+    flex-grow: 1;
     overflow-y: auto;
     scrollbar-width: none;
 }
@@ -470,6 +480,7 @@ const PartTree = defineComponent({
     cursor: pointer;
     padding: 8px 10px;
     border-radius: 8px;
+    background: var(--button-background);
     background: linear-gradient(180deg, color-mix(in oklab, var(--button-background) 92%, transparent), color-mix(in oklab, var(--button-background) 82%, transparent));
     border: 1px solid var(--button-border);
     transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
@@ -512,12 +523,14 @@ const PartTree = defineComponent({
     opacity: 0.9;
     padding: 2px 6px;
     border-radius: 999px;
+    background: var(--button-background);
     background: color-mix(in oklab, var(--button-background) 90%, transparent);
     border: 1px solid var(--button-border);
 }
 
 .badge-info {
     border-color: var(--button-highlight-border);
+    background: var(--button-hover-background);
     background: color-mix(in oklab, var(--button-hover-background) 86%, transparent);
 }
 
@@ -528,7 +541,9 @@ const PartTree = defineComponent({
 }
 
 .part-col {
+    background: var(--button-background);
     background: color-mix(in oklab, var(--button-background) 95%, transparent);
+    border: 1px solid var(--button-border);
     border: 1px solid color-mix(in oklab, var(--button-border) 92%, transparent);
     border-radius: 8px;
     padding: 8px 10px;
@@ -537,7 +552,9 @@ const PartTree = defineComponent({
 .node-body {
     margin-top: 6px;
     padding: 10px;
+    background: var(--button-background);
     background: color-mix(in oklab, var(--button-background) 82%, transparent);
+    border: 1px dashed var(--button-border);
     border: 1px dashed color-mix(in oklab, var(--button-border) 92%, transparent);
     border-radius: 8px;
 }
@@ -549,7 +566,6 @@ const PartTree = defineComponent({
 }
 
 .mono {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     white-space: pre-wrap;
     word-break: break-word;
     margin: 0;
@@ -557,6 +573,7 @@ const PartTree = defineComponent({
 
 .mono.result {
     color: var(--highlight);
+    text-shadow: 0 0 1px var(--highlight);
     text-shadow: 0 0 1px color-mix(in oklab, var(--highlight) 35%, transparent);
 }
 
@@ -564,6 +581,7 @@ const PartTree = defineComponent({
     margin-top: 6px;
     padding: 8px 10px;
     border-left: 3px solid var(--button-hover-border);
+    background: var(--button-background);
     background: color-mix(in oklab, var(--button-background) 90%, transparent);
     border-radius: 6px;
 }
@@ -575,6 +593,7 @@ const PartTree = defineComponent({
 
 .divider {
     height: 1px;
+    background: var(--border);
     background: color-mix(in oklab, var(--border) 70%, transparent);
     opacity: 0.6;
     margin: 10px 0;
@@ -606,18 +625,22 @@ const PartTree = defineComponent({
         );
 
     .depth-#{$i}::before {
+        background: $accent;
         background: color-mix(in oklab, #{$accent} 45%, var(--border));
         opacity: 0.6;
     }
 
     .depth-#{$i}>.node-header {
+        border-color: $accent;
         border-color: color-mix(in oklab, #{$accent} 45%, var(--button-border));
+        background: $accent;
         background: linear-gradient(180deg,
             color-mix(in oklab, #{$accent} 10%, var(--button-background)),
             color-mix(in oklab, #{$accent} 18%, var(--button-background)));
     }
 
     .depth-#{$i}>.node-body {
+        border-left: 3px solid $accent;
         border-left: 3px solid color-mix(in oklab, #{$accent} 60%, var(--button-border));
     }
 }
@@ -629,15 +652,10 @@ const PartTree = defineComponent({
     cursor: pointer;
     padding: 8px 10px;
     border-radius: 8px;
+    background: var(--button-background);
     background: linear-gradient(180deg, color-mix(in oklab, var(--button-background) 92%, transparent), color-mix(in oklab, var(--button-background) 82%, transparent));
     border: 1px solid var(--button-border);
     transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-
-    &:hover {
-        background: color-mix(in oklab, var(--button-hover-background) 86%, transparent);
-        border-color: var(--button-hover-border);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    }
 }
 
 .chevron {
@@ -683,19 +701,23 @@ const PartTree = defineComponent({
     opacity: 0.9;
     padding: 2px 6px;
     border-radius: 999px;
+    background: var(--button-background);
     background: color-mix(in oklab, var(--button-background) 90%, transparent);
     border: 1px solid var(--button-border);
 }
 
 .badge-info {
     border-color: var(--button-highlight-border);
+    background: var(--button-hover-background);
     background: color-mix(in oklab, var(--button-hover-background) 86%, transparent);
 }
 
 .node-body {
     margin-top: 6px;
     padding: 10px;
+    background: var(--button-background);
     background: color-mix(in oklab, var(--button-background) 82%, transparent);
+    border: 1px dashed var(--button-border);
     border: 1px dashed color-mix(in oklab, var(--button-border) 92%, transparent);
     border-radius: 8px;
 }
@@ -707,7 +729,9 @@ const PartTree = defineComponent({
 }
 
 .part-col {
+    background: var(--button-background);
     background: color-mix(in oklab, var(--button-background) 95%, transparent);
+    border: 1px solid var(--button-border);
     border: 1px solid color-mix(in oklab, var(--button-border) 92%, transparent);
     border-radius: 8px;
     padding: 8px 10px;
@@ -720,7 +744,6 @@ const PartTree = defineComponent({
 }
 
 .mono {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     white-space: pre-wrap;
     word-break: break-word;
     margin: 0;
@@ -728,6 +751,7 @@ const PartTree = defineComponent({
 
 .mono.result {
     color: var(--highlight);
+    text-shadow: 0 0 1px var(--highlight);
     text-shadow: 0 0 1px color-mix(in oklab, var(--highlight) 35%, transparent);
 }
 
@@ -735,6 +759,7 @@ const PartTree = defineComponent({
     margin-top: 6px;
     padding: 8px 10px;
     border-left: 3px solid var(--button-hover-border);
+    background: var(--button-background);
     background: color-mix(in oklab, var(--button-background) 90%, transparent);
     border-radius: 6px;
 }
@@ -746,6 +771,7 @@ const PartTree = defineComponent({
 
 .divider {
     height: 1px;
+    background: var(--border);
     background: color-mix(in oklab, var(--border) 70%, transparent);
     opacity: 0.6;
     margin: 10px 0;
@@ -753,11 +779,13 @@ const PartTree = defineComponent({
 
   /* diff highlights */
   .diff-del {
+    background: rgba(239, 68, 68, 0.44);
     background: color-mix(in oklab, #ef4444 44%, transparent);
     border-radius: 4px;
     padding: 0 2px;
   }
   .diff-ins {
+    background: rgba(16, 185, 129, 0.44);
     background: color-mix(in oklab, #10b981 44%, transparent);
     border-radius: 4px;
     padding: 0 2px;

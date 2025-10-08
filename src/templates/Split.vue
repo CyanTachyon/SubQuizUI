@@ -227,6 +227,7 @@ onUnmounted(() =>
 
 .split-row .split-divider {
     width: 4px;
+    height: 100%;
     cursor: col-resize;
     div {
         cursor: col-resize;
@@ -240,6 +241,7 @@ onUnmounted(() =>
 .split-column .split-divider {
     height: 4px;
     cursor: row-resize;
+    width: 100%;
     div {
         cursor: row-resize;
         width: 100%;

@@ -8,7 +8,7 @@ import { useUser } from "../../stores/user";
 import { checkResponse } from "../utils/checkResponse";
 import { connectUrl, sendRequest, sseRequest, Target } from "../utils/sendRequest";
 
-export type ToolDataInfoType = 'MARKDOWN' | 'URL' | 'TEXT' | 'HTML' | 'FILE' | 'PAGE' | 'IMAGE' | 'MATH' | 'QUIZ';
+export type ToolDataInfoType = 'MARKDOWN' | 'URL' | 'TEXT' | 'HTML' | 'FILE' | 'PAGE' | 'IMAGE' | 'MATH' | 'QUIZ' | 'VIDEO';
 export type AiMessage = {
     content?: Content;
     reasoning_content?: string;

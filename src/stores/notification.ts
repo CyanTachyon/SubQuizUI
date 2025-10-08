@@ -14,19 +14,19 @@ const nextId = ref(1n);
 const actions = {
     addError: (message: string | Error) =>
     {
-        actions.add({ message: message instanceof Error ? message.message : message, type: 'error' });
+        return actions.add({ message: message instanceof Error ? message.message : message, type: 'error' });
     },
     addSuccess: (message: string) =>
     {
-        actions.add({ message, type: 'success' });
+        return actions.add({ message, type: 'success' });
     },
     addWarning: (message: string) =>
     {
-        actions.add({ message, type: 'warning' });
+        return actions.add({ message, type: 'warning' });
     },
     addInfo: (message: string) =>
     {
-        actions.add({ message, type: 'info' });
+        return actions.add({ message, type: 'info' });
     },
     add: (notification: Omit<Notification, 'id'>) =>
     {

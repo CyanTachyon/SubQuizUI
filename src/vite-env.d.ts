@@ -10,6 +10,8 @@ interface Environment
     ssoBackend: string;
     ssoFrontend: string;
     ssoServiceId: string;
+
+    aiShareBase: string;
 }
 
 declare var environment: Environment;

@@ -297,6 +297,10 @@ const htmlContent = computed(() =>
                 {{ quizShowAnswer ? '隐藏答案' : '显示答案' }}
             </Button>
         </div>
+        <div v-else-if="info.type === 'VIDEO'">
+            <video :src="parseChatUrl(chat, info.value)" controls style="max-width: 100%;"></video>
+            <Button @click="close(); safeRedirect(getFileUrl(chat, info.value.trim().replace(/^uuid:/, ''), true), true);">下载</Button>
+        </div>
         <div v-else-if="info.value">
             {{ info.value }}
         </div>

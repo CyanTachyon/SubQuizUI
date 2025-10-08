@@ -2,6 +2,8 @@ import type {ResponseBody} from "../../dataClasses/ResponseBody.ts";
 import clientVersion from "../../../public/android_latest.json";
 import { checkResponse } from "./checkResponse.ts";
 import { useUser } from "../../stores/user.ts";
+import { useNotification } from "../../stores/notification.ts";
+import { sleep } from "../../utils/sleep.ts";
 export enum Target
 {
     EMPTY = 0,
@@ -12,7 +14,7 @@ export enum Target
     FRONTEND = 5,
 }
 
-export function connectUrl(target: Target | undefined, url: string, params: Record<string, any> = {})
+export function connectUrl(target: Target | string | undefined, url: string, params: Record<string, any> = {})
 {
 
     let rUrl: string;
@@ -24,7 +26,8 @@ export function connectUrl(target: Target | undefined, url: string, params: Reco
         else if (target === Target.SSO_FRONTEND) rUrl = environment.ssoFrontend + url;
         else if (target === Target.CDN) rUrl = environment.cdn + url;
         else if (target === Target.BACKEND) rUrl = environment.backend + url;
-        else /*if (target === Target.FRONTEND)*/ rUrl = environment.frontend + url;
+        else if (target === Target.FRONTEND) rUrl = environment.frontend + url;
+        else rUrl = target + url;
     }
 
     if (Object.keys(params).length > 0)
@@ -131,6 +134,7 @@ export async function sseRequest(
     }    
 }
 
+let networkErrorId = 0n;
 export async function request(
     url: string,
     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
@@ -151,5 +155,25 @@ export async function request(
     data.headers['Accept'] = '*/*';
     data.headers['Authorization'] = withToken && useUser().getToken() ? `Bearer ${useUser().getToken()}` : '';
     data.headers['X-Client-Version'] = clientVersion.versionCode;
-    return fetch(url, data)
+    while (true)
+    {
+        try
+        {
+            return await fetch(url, data);
+        }
+        catch (e)
+        {
+            console.error(e);
+            let id = 0n;
+            if (networkErrorId === 0n) id = useNotification().add({
+                message: `网络错误，请检查网络连接`,
+                type: 'error',
+                timeout: 1200,
+            });
+            if (id) networkErrorId = id;
+            console.log(networkErrorId);
+            await sleep(1000);
+            if (networkErrorId === id) networkErrorId = 0n;
+        }
+    }
 }

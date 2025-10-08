@@ -143,6 +143,7 @@ function togglePin(sectionIndex: number)
 </script>
 
 <template>
+<div style="display: flex; flex-direction: column; overflow: scroll; max-height: 100%; scrollbar-width: none;">
     <Card v-for="(section, sectionIndex) in quiz.sections" class="section" :key="sectionIndex" :class="{'pinned': pin.includes(sectionIndex)}">
         <span v-if="section.id > 0" style="position: absolute; left: 22px; top: 3px">ID: {{ section.id }}</span>
         <div v-if="richtextToString(section.description)" style="display: inline;" class="wrapper1">
@@ -248,6 +249,7 @@ function togglePin(sectionIndex: number)
         </div>
     </Card>
     <Button v-if="editable && submit" class="submit" @click="trySubmit">Submit</Button>
+</div>
 </template>
 
 <style scoped lang="scss">

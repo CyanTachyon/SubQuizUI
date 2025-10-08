@@ -31,9 +31,9 @@ if (!arrayProto.at) arrayProto.at = function (index: number)
     return this[index < 0 ? this.length + index : index];
 };
 
-function sectionMarkdownToHtml(section: SectionId, markdown: string): string
+function sectionMarkdownToHtml(section: SectionId, markdown: string, renderHtml?: boolean): string
 {
-    return markdownToHtml(markdown, connectUrl(Target.CDN, '/section_images/' + section + '/'));
+    return markdownToHtml(markdown, connectUrl(Target.CDN, '/section_images/' + section + '/'), renderHtml);
 }
 
 function supportsMathML()
@@ -55,7 +55,7 @@ function supportsMathML()
     }
 }
 
-function markdownToHtml(markdown: string, imgBaseUrl?: string): string 
+function markdownToHtml(markdown: string, imgBaseUrl?: string, renderHtml?: boolean): string 
 {
     const renderer = new marked.Renderer();
     if (imgBaseUrl) renderer.image = function (info) 
@@ -71,6 +71,12 @@ function markdownToHtml(markdown: string, imgBaseUrl?: string): string
             if (size[1]) size_ += ' height=' + size[1];
         }
         return `<img src="${href}" alt="${text || ''}" ${size_} />`;
+    };
+    if (renderHtml === false) renderer.html = function (info): string
+    {
+        const tmpDiv = document.createElement('div');
+        tmpDiv.innerText = info.text;
+        return tmpDiv.innerHTML;
     };
     renderer.code = function (info)
     {
@@ -114,6 +120,71 @@ function markdownToHtml(markdown: string, imgBaseUrl?: string): string
     return tempDiv.innerHTML;
 }
 
+/**
+ * 增量更新元素的子节点，保留公共前缀以提高性能
+ * @param parent 父元素
+ * @param newParent 包含新子节点的临时父元素
+ */
+function incrementalUpdateChildren(parent: HTMLElement, newParent: HTMLElement)
+{
+    const allowedTags = ['quiz-markdown-body', 'code', 'div', 'p', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre', 'span', 'strong', 'em', 'hr', 'br', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th'];
+    const newChildren = Array.from(newParent.childNodes);
+    const oldChildren = Array.from(parent.childNodes);
+
+    const syncAttributes = (target: HTMLElement, source: HTMLElement) =>
+    {
+        if (target.attributes && source.attributes)
+        {
+            Array.from(target.attributes).forEach(({ name }) => 
+            {
+                if (!source.hasAttribute(name)) target.removeAttribute(name);
+            });
+            Array.from(source.attributes).forEach(({ name, value }) => 
+            {
+                if (target.getAttribute(name) !== value) target.setAttribute(name, value);
+            });
+        }
+        for (const key in source)
+        {
+            if (!key.startsWith('on')) continue;
+            (target as any)[key] = (source as any)[key] ?? null;
+        }
+    };
+
+    const minLength = Math.min(newChildren.length, oldChildren.length);
+    let commonPrefixLength = minLength;
+    for (let i = 0; i < minLength; i++)
+    {
+        const oldChild = oldChildren[i];
+        const newChild = newChildren[i];
+
+        if (oldChild.nodeType === Node.TEXT_NODE && newChild.nodeType === Node.TEXT_NODE)
+        {
+            if (oldChild.textContent !== newChild.textContent) oldChild.textContent = newChild.textContent ?? '';
+            syncAttributes(oldChild as HTMLElement, newChild as HTMLElement);
+            continue;
+        }
+
+        if (oldChild.nodeType === Node.ELEMENT_NODE && newChild.nodeType === Node.ELEMENT_NODE)
+        {
+            const oldElem = oldChild as HTMLElement;
+            const newElem = newChild as HTMLElement;
+            if (oldElem.tagName === newElem.tagName && allowedTags.includes(oldElem.tagName.toLowerCase()))
+            {
+                syncAttributes(oldElem, newElem);
+                incrementalUpdateChildren(oldElem, newElem);
+                continue;
+            }
+        }
+
+        commonPrefixLength = i;
+        break;
+    }
+
+    while (parent.childNodes.length > commonPrefixLength) parent.removeChild(parent.lastChild!);
+    for (let i = commonPrefixLength; i < newChildren.length; i++) parent.appendChild(newChildren[i]);
+}
+
 export interface MarkdownContent
 {
     markdown?: boolean;
@@ -121,6 +192,7 @@ export interface MarkdownContent
     content: string;
     parseHtml?: (ele: HTMLElement) => void;
     codeHeader?: boolean;
+    renderHtml?: boolean;
 }
 
 export const vMarkdown: Directive<any, MarkdownContent> = {
@@ -136,18 +208,18 @@ export const vMarkdown: Directive<any, MarkdownContent> = {
 
 function updateMarkdown(el: HTMLElement, binding: MarkdownContent) 
 {
-    const { markdown, content, section, parseHtml, codeHeader } = binding;
+    const { markdown, content, section, parseHtml, codeHeader, renderHtml } = binding;
     if (markdown !== false)
     {
         const tmpDiv = document.createElement('div');
         tmpDiv.className = 'quiz-markdown-tmp-div';
-        if (section) tmpDiv.innerHTML = sectionMarkdownToHtml(section, content);
-        else tmpDiv.innerHTML = markdownToHtml(content);
-        tmpDiv.querySelectorAll('.code-copy').forEach((ele) => 
+        if (section) tmpDiv.innerHTML = sectionMarkdownToHtml(section, content, renderHtml);
+        else tmpDiv.innerHTML = markdownToHtml(content, undefined, renderHtml);
+        tmpDiv.querySelectorAll('.code-copy').forEach((ele: HTMLElement) => 
         {
             const code = ele.getAttribute('code');
             if (!code) return;
-            ele.addEventListener('click', () => copyToClipboard(code));
+            ele.onclick = () => copyToClipboard(code);
             ele.removeAttribute('code');
         });
         tmpDiv.querySelectorAll('.katex-display').forEach((ele: HTMLElement) => 
@@ -164,18 +236,20 @@ function updateMarkdown(el: HTMLElement, binding: MarkdownContent)
         });
         if (codeHeader === false) tmpDiv.querySelectorAll('.code-header').forEach((ele) => ele.remove());
         if (parseHtml) parseHtml(tmpDiv.firstElementChild as HTMLElement);
-        el.innerHTML = '';
-        el.appendChild(tmpDiv.firstElementChild as HTMLElement);
+        // 使用增量更新，保留公共前缀以提高性能
+        incrementalUpdateChildren(el, tmpDiv);
     }
     else 
     {
+        const tmpDiv = document.createElement('div');
         const markdownBody = document.createElement('quiz-markdown-body');
         markdownBody.className = 'markdown-body';
         const p = document.createElement('p');
         p.innerText = content;
         markdownBody.appendChild(p);
-        el.innerHTML = '';
-        el.appendChild(markdownBody);
+        tmpDiv.appendChild(markdownBody);
+        // 使用增量更新，保留公共前缀以提高性能
+        incrementalUpdateChildren(el, tmpDiv);
     }
 }
 

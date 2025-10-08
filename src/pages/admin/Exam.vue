@@ -221,20 +221,19 @@ function openSection(section: SectionId)
 
 <template>
     <Loading v-if="!exam || !clazz || loading" class="loading" />
-    <div v-else-if="preview">
+    <div v-else-if="preview" style="display: flex; flex-direction: column; overflow: hidden; max-height: 100%;">
         <Button @click="preview = false;" style="margin: 13px;">
             返回编辑
         </Button>
-        <QuizView :model-value="{ correct: null, sections: exam.sections.map(section => getSectionInfo(section)) }"
-            :editable="false" />
+        <QuizView :model-value="{ correct: null, sections: exam.sections.map(section => getSectionInfo(section)) }" :editable="false" />
     </div>
-    <div v-else-if="showSection" class="section-view">
+    <div v-else-if="showSection" style="display: flex; flex-direction: column; overflow: hidden; max-height: 100%;">
         <Button @click="showSection = 0;" style="margin: 13px;">
             返回考试
         </Button>
         <QuizView :model-value="{ correct: null, sections: [getSectionInfo(showSection)] }" :editable="false" />
     </div>
-    <div v-else-if="showStudentExam">
+    <div v-else-if="showStudentExam" style="display: flex; flex-direction: column; overflow: hidden; max-height: 100%;">
         <Button @click="showStudentExam = '';" style="margin: 13px;">
             返回考试
         </Button>

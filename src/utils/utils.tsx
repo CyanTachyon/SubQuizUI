@@ -30,6 +30,23 @@ export function ssoLogin()
     tryOpenSSO('/oauth?needAuthorize=' + environment.ssoServiceId);
 }
 
+export function forceSeiueLogin()
+{
+    let callbackUrl: string;
+    if (Capacitor.getPlatform() === "web") callbackUrl = connectUrl(Target.FRONTEND, "/login", { from: location.pathname });
+    else 
+    {
+        const doneUrl = connectUrl(Target.FRONTEND, '/_app/login');
+        callbackUrl = connectUrl(Target.EMPTY, doneUrl, { from: location.pathname });
+    }
+
+    const from1 = connectUrl(Target.EMPTY, '/oauth', { needAuthorize: environment.ssoServiceId, from: callbackUrl });
+    const from2 = "login:" + connectUrl(Target.SSO_FRONTEND, "/login", { from: from1, redirectWithToken: true })
+    const redirect_uri = connectUrl(Target.SSO_FRONTEND, "/seiue", { from: from2 })
+    const url = connectUrl(Target.SSO_BACKEND, '/seiue/bind', { redirect_uri })
+    openSsoUrl(url);
+}
+
 
 let isSeiueDialogOpen = false;
 export function tryBindSeiue()
@@ -60,22 +77,27 @@ export function tryOpenSSO(url: string)
     {
         const callbackUrl = connectUrl(Target.FRONTEND, "/login", { from: location.pathname });
         const target = connectUrl(Target.SSO_FRONTEND, url, { from: callbackUrl });
-        safeRedirect(target);
+        openSsoUrl(target);
     }
     else 
     {
         const doneUrl = connectUrl(Target.FRONTEND, '/_app/login');
         const callbackUrl = connectUrl(Target.EMPTY, doneUrl, { from: location.pathname });
         const target = connectUrl(Target.SSO_FRONTEND, url, { from: callbackUrl });
-        (async () =>
-        {
-            // await ScreenOrientation.unlock();
-            await InAppBrowser.openWebView({ 
-                url: target,
-                toolbarType: ToolBarType.BLANK,
-            });
-        })();
+        openSsoUrl(target);
     }
+}
+
+function openSsoUrl(url: string)
+{
+    if (Capacitor.getPlatform() === "web") safeRedirect(url);
+    else (async () =>
+    {
+        await InAppBrowser.openWebView({
+            url: url,
+            toolbarType: ToolBarType.BLANK,
+        });
+    })();
 }
 
 export function getUrlSearchParams(): Record<string, string>
@@ -223,13 +245,17 @@ export function copyToClipboard(text: string)
     }
 }
 
-export async function pickFile(accept?: string): Promise<{name: string,data: string,} | null>
+export async function pickFile(accept?: string, customProps?: Record<string, string>): Promise<{name: string,data: string,} | null>
 {
     return new Promise<{name: string, data: string} | null>(async (resolve) =>
     {
         const input = document.createElement('input');
         input.type = 'file';
         if (accept) input.accept = accept;
+        for (const [key, value] of Object.entries(customProps || {}))
+        {
+            input.setAttribute(key, value);
+        }
         input.addEventListener("cancel", () => resolve(null), { once: true });
         input.addEventListener("change", (event) =>
         {
@@ -247,43 +273,38 @@ export async function pickFile(accept?: string): Promise<{name: string,data: str
 
 export async function pickImage(maxBytes?: number): Promise<{name: string,data: string} | null>
 {
-    let dataUrl: string | null = null;
     let fileName: string | null = null;
-    if (false && Capacitor.getPlatform() === 'web') // web也支持拍照，因此暂时禁用
+    const source = await new Promise<CameraSource | null>((resolve) =>
     {
-        const file = await pickFile('image/*');
-        if (!file) return null;
-        dataUrl = file.data;
-        fileName = file.name;
-    }
-    else
-    {
-        const source = await new Promise<CameraSource | null>((resolve) =>
-        {
-            const close = dialog(
-                <div style="margin: 20px 50px;">
-                    <h2 style="display: flex; justify-content: center;">选择图片</h2>
-                    <Button onClick={() => {
-                        resolve(CameraSource.Camera);
-                        close();
-                    }}>
-                        拍摄新照片
-                    </Button>
-                    <Button onClick={() => {
-                        resolve(CameraSource.Photos);
-                        close();
-                    }}>
-                        从相册选择
-                    </Button>
-                </div>,
-                () => 
-                {
-                    resolve(null);
+        const close = dialog(
+            <div style="margin: 20px 50px;">
+                <h2 style="display: flex; justify-content: center;">选择图片</h2>
+                <Button onClick={() => {
+                    resolve(CameraSource.Camera);
                     close();
-                }
-            );
-        });
-        if (!source) return null;
+                }} style="min-width: max-content;">
+                    拍摄新照片
+                </Button>
+                <Button onClick={() => {
+                    resolve(CameraSource.Photos);
+                    close();
+                }} style="min-width: max-content;">
+                    从相册选择
+                </Button>
+            </div>,
+            () => 
+            {
+                resolve(null);
+                close();
+            }
+        );
+    });
+    if (!source) return null;
+
+    let dataUrl: string | null = null;
+
+    if (Capacitor.getPlatform() === 'android')
+    {
         const img = await Camera.getPhoto({
             resultType: CameraResultType.DataUrl,
             promptLabelHeader: '选择图片',
@@ -294,6 +315,44 @@ export async function pickImage(maxBytes?: number): Promise<{name: string,data: 
         });
         dataUrl = img.dataUrl;
     }
+    else 
+    {
+        if (source === CameraSource.Photos)
+        {
+            const img = await pickFile('image/*');
+            if (!img) return null;
+            dataUrl = img.data;
+            fileName = img.name;
+        }
+        else
+        {
+            let supportCapture = true;
+            supportCapture &&= /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const tmp = document.createElement('input')
+            tmp.capture = 'camera';
+            supportCapture &&= tmp.capture === 'camera';
+            if (!supportCapture) 
+            {
+                const img = await Camera.getPhoto({
+                    resultType: CameraResultType.DataUrl,
+                    promptLabelHeader: '选择图片',
+                    promptLabelCancel: '取消',
+                    promptLabelPhoto: '从相册选择',
+                    promptLabelPicture: '拍照',
+                    source: CameraSource.Camera,
+                });
+                dataUrl = img.dataUrl;
+            }
+            else
+            {
+                const img = await pickFile('image/*', { capture: 'c' });
+                if (!img) return null;
+                dataUrl = img.data;
+                fileName = img.name;
+            }
+        }
+    }
+
     if (!dataUrl) return null;
     if (!fileName)
     {
