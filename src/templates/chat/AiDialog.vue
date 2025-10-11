@@ -2,7 +2,7 @@
 import { ref, nextTick, computed } from 'vue';
 import type { AnswerType } from '../../dataClasses/Question';
 import type { Section } from '../../dataClasses/Section';
-import { cancelChat, chatSSE, createChat, deleteChat, getChat, getContentText, getCustomModel, getShareHash, mergeContent, parseChatUrl, sendContent, setCustomModel, type AiHistory, type AiMessage, type Content, type CustomModelInfo, type Model, type ModelInfo, type ToolDataInfo, } from '../../networks/backend/ai';
+import { cancelChat, chatSSE, createChat, deleteChat, getAiOptions, getChat, getContentText, getCustomModel, getShareHash, mergeContent, parseChatUrl, sendContent, setCustomModel, type AiHistory, type AiMessage, type Content, type CustomModelInfo, type Model, type ModelInfo, type ToolDataInfo, } from '../../networks/backend/ai';
 import Input from '../../components/Input.vue';
 import { useNotification } from '../../stores/notification';
 import LoadingIcon from 'vue-material-design-icons/Loading.vue';
@@ -167,6 +167,7 @@ const onMessage = (immediate: boolean) => (message: AiMessage & { finished: bool
                 content: "对不起，该聊天无法继续",
                 reasoning_content: '',
                 showReasoning: false,
+                mark: { showingType: null, id: '', label: '' },
             }
         ];
         info.value.showAnswering = false;
@@ -188,7 +189,7 @@ const onMessage = (immediate: boolean) => (message: AiMessage & { finished: bool
         }
     });
 
-    if (message.tool_call || message.type) return addTask(() =>
+    if (message.mark?.showingType) return addTask(() =>
     {
         const last = info.value.histories[info.value.histories.length - 1] as AiHistory & { messages: DisplayMessage[]; };
         if (last.messages.length) last.messages[last.messages.length - 1].showReasoning = false;
@@ -222,28 +223,32 @@ const onMessage = (immediate: boolean) => (message: AiMessage & { finished: bool
     for (const item of messageSplit) addTask(() =>
     {
         const last = info.value.histories[info.value.histories.length - 1] as AiHistory & { messages: DisplayMessage[]; };
-        let lastMessage: DisplayMessage;
-        if (last.messages.length <= 0 || last.messages[last.messages.length - 1].tool_call || last.messages[last.messages.length - 1].type)
+        let lastMessage: DisplayMessage = last.messages.find(m => m.mark?.id === message.mark?.id && m.mark?.id) as DisplayMessage;
+        
+        if (
+            !lastMessage && 
+            last.messages.length && 
+            message.mark?.id === last.messages[last.messages.length - 1].mark?.id && 
+            !last.messages[last.messages.length - 1].mark?.showingType
+        ) lastMessage = last.messages[last.messages.length - 1];
+
+        else if (!lastMessage)
         {
-            // 新消息出现，收回上一个消息的思考过程
             if (last.messages.length) last.messages[last.messages.length - 1].showReasoning = false;
             lastMessage = {
                 content: '',
                 reasoning_content: '',
                 showReasoning: true,
-                type: null,
+                mark: { showingType: null, id: '', label: '' },
             };
             last.messages.push(lastMessage);
-        }
-        else
-        {
-            lastMessage = last.messages[last.messages.length - 1];
         }
 
         // 收到第一条正文时，收回思考过程
         if (getContentText(item.content) && !(getContentText(lastMessage.content).trim()) && lastMessage.reasoning_content) lastMessage.showReasoning = false;
         if (item.content) lastMessage.content = mergeContent(lastMessage.content, item.content);
         if (item.reasoning_content) lastMessage.reasoning_content += item.reasoning_content;
+        lastMessage.mark = message.mark;
     });
 };
 
@@ -385,6 +390,8 @@ const models = ref<ModelInfo[]>([
         toolable: false,
     }
 ]);
+const options = ref<string[]>([]);
+const choosedOptions = ref<string[]>([]);
 
 const updateModels = (async () =>
 {
@@ -399,16 +406,23 @@ const updateModels = (async () =>
         model.value = models.value[0].model;
     }
 });
-if (!isShare.value) updateModels().catch(async () => { await sleep(1000); updateModels(); })
+if (!isShare.value) updateModels().then(updateOptions);
 
 function changeModel(newModel: Model)
 {
     model.value = newModel;
     storageSet('quiz-ai-model', newModel);
     if (models.value.some(m => m.model === newModel && !m.toolable))
-    {
-        useNotification().addWarning('该模型不支持工具调用，多数功能将无法使用');  
-    }
+        useNotification().addWarning('该模型不支持工具调用，多数功能将无法使用');
+    updateOptions();
+}
+
+function updateOptions()
+{
+    if (!model.value) return;
+    options.value = [];
+    choosedOptions.value = [];
+    getAiOptions(model.value).then(ops => options.value = ops);
 }
 
 function isMobileDevice()
@@ -477,6 +491,12 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
         useNotification().addError('模型加载中');
         return;
     }
+
+    if (options.value === undefined)
+    {
+        useNotification().addError('选项加载中');
+        return;
+    }
     
     // 编辑模式下关闭编辑界面
     if (editMode)
@@ -490,7 +510,12 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
     
     if (!info.value.id)
     {
-        const id = await createChat(info.value.section, makeUploadContent(input.value, inputFiles.value), model.value)
+        const id = await createChat({
+            section: info.value.section, 
+            content: makeUploadContent(input.value, inputFiles.value), 
+            model: model.value,
+            options: choosedOptions.value,
+        })
         props.onNewChat(id);
         return;
     }
@@ -560,6 +585,7 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
         model: model.value, 
         hash: info.value.hash,
         regenerate: regenerate,
+        options: choosedOptions.value,
     })
     
     if (newInfo) 
@@ -636,7 +662,7 @@ function copy(messages: DisplayMessage[])
 {
     const content = messages.map(m => 
     {
-        if (m.type) return '';
+        if (m.mark?.showingType) return '';
         if (m.content) return getContentText(m.content).trim();
     }).filter(m => m).join('\n\n');
     const dataTagReg = /<(tool_)?data[^>]*>/g;
@@ -874,27 +900,19 @@ async function shareChat()
                 <div class="message-box" :class="item.role" v-for="(item, index) in info.histories" :key="index" >
                     <Text class="message" :class="[item.role, index === info.histories.length - 1 && info.showAnswering ? 'answering' : 'done']">
                         <template v-for="msg in item.messages">
-                            
-                            <template v-if="msg.tool_call">
-                                <Button class="header" :disabled="!msg.content" @click="msg.showReasoning = !msg.showReasoning">
-                                    <ToolsIcon class="icon" :size="20" style="margin-right: 4px;"/>
-                                    {{ msg.tool_call }}
-                                </Button>
-                                <Text v-if="msg.content && msg.showReasoning" class="tool-call-parm" v-markdown="{ markdown: true, content: msg.content, section: info.section?.id }"/>
-                            </template>
-
-                            <template v-else-if="msg.type">
-                                <ToolDataShower :chat="isShare ? props.info as ChatId : info.id" :inline="true" :custom-info="{ type: msg.type, value: getContentText(msg.content) }"/>
+                            <template v-if="msg.mark?.showingType">
+                                <ToolDataShower :chat="isShare ? props.info as ChatId : info.id" :inline="true" :custom-info="{ type: msg.mark.showingType, value: getContentText(msg.content) }"/>
                             </template>
 
                             <template v-else>
-                                <div class="reasoning" v-if="msg.reasoning_content && msg.reasoning_content.trim()">
+                                <div class="reasoning" v-if="msg.mark.label || msg.reasoning_content?.trim()">
                                     <Button class="header" style="cursor: pointer;" @click="msg.showReasoning = !msg.showReasoning">
-                                        <ChevronDownIcon v-if="msg.showReasoning" class="icon" />
+                                        <ToolsIcon v-if="msg.mark?.label" class="icon" :size="20" style="margin-right: 4px;"/>
+                                        <ChevronDownIcon v-else-if="msg.showReasoning" class="icon" />
                                         <ChevronRightIcon v-else class="icon" />
-                                        思考过程
+                                        {{ msg.mark?.label ?? '思考过程' }}
                                     </Button>
-                                    <Text v-markdown="{ markdown: true, content: msg.reasoning_content, section: info.section?.id, parseHtml, renderHtml: false }" class="reasoning-content" v-if="msg.showReasoning" />
+                                    <Text v-markdown="{ markdown: true, content: msg.reasoning_content, section: info.section?.id, parseHtml, renderHtml: false }" :class="msg?.mark.label ? 'tool-call-parm' : 'reasoning-content'" v-if="msg.showReasoning && msg.reasoning_content?.trim()" />
                                 </div>
                                 <template v-if="msg.content && (typeof msg.content !== 'string')" v-for="c in msg.content">
                                     <Text class="content" v-if="c.type === 'text' && c.text.trim()" v-markdown="{ markdown: item.role === 'assistant', content: c.text, section: info.section?.id, parseHtml }" />
@@ -942,6 +960,7 @@ async function shareChat()
                 
                 <Text class="bottom-bar">
                     <SelectMenu :model-value="model" :options="models.map(m => ({ label: m.displayName, value: m.model }))" class="model-name" :placeholder="'选择模型'" @update:model-value="changeModel" :direction="'up'"/>
+                    <SelectMenu v-model="options" :options="options.map(o => ({ label: o, value: o }))" class="model-name" :placeholder="'模型工具'" :direction="'up'" :displayText="'模型工具'"/>
                     <CogOutlineIcon class="intelligent-icon" @click="showSettingDialog()"/>
                     <span class="bottom-bnt" @click="uploadFile(false, editingLastMessage)" style="margin-left: auto;">
                         <FileDocumentOutlineIcon class="icon" v-if="!uploadingFile"/>

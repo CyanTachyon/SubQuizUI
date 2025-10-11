@@ -12,7 +12,7 @@ interface Option
 }
 
 const model = defineModel<any>({ required: false });
-const { options, placeholder, disappear, disabled, direction } = defineProps({
+const { options, placeholder, disappear, disabled, direction, multiple, displayText } = defineProps({
     options: {
         type: Array as () => Option[],
         default: () => []
@@ -37,6 +37,14 @@ const { options, placeholder, disappear, disabled, direction } = defineProps({
     width: {
         type: String,
         default: '200px'
+    },
+    multiple: {
+        type: Boolean,
+        default: false
+    },
+    displayText: {
+        type: String,
+        default: undefined
     }
 });
 
@@ -47,8 +55,25 @@ let controller = createAnimationsController();
 
 const selectedLabel = computed(() =>
 {
-    const selected = options.find(option => option.value === model.value);
-    return selected ? selected.label : placeholder;
+    // 如果指定了自定义显示文本，优先使用
+    if (displayText !== undefined)
+    {
+        return displayText;
+    }
+    
+    if (multiple)
+    {
+        const selectedValues = Array.isArray(model.value) ? model.value : [];
+        if (selectedValues.length === 0) return placeholder;
+        
+        const selectedOptions = options.filter(option => selectedValues.includes(option.value));
+        return selectedOptions.map(opt => opt.label).join(', ');
+    }
+    else
+    {
+        const selected = options.find(option => option.value === model.value);
+        return selected ? selected.label : placeholder;
+    }
 });
 
 function toggleDropdown()
@@ -59,8 +84,28 @@ function toggleDropdown()
 
 function selectOption(option: Option)
 {
-    model.value = option.value;
-    isOpen.value = false;
+    if (multiple)
+    {
+        const currentValue = Array.isArray(model.value) ? model.value : [];
+        const index = currentValue.indexOf(option.value);
+        
+        if (index > -1)
+        {
+            // Remove from selection
+            model.value = currentValue.filter((v: any) => v !== option.value);
+        }
+        else
+        {
+            // Add to selection
+            model.value = [...currentValue, option.value];
+        }
+        // Keep dropdown open in multiple mode
+    }
+    else
+    {
+        model.value = option.value;
+        isOpen.value = false;
+    }
 }
 
 function handleClickOutside(event: Event)
@@ -68,6 +113,19 @@ function handleClickOutside(event: Event)
     if (selectContainer.value && !selectContainer.value.contains(event.target as Node))
     {
         isOpen.value = false;
+    }
+}
+
+function isOptionSelected(option: Option)
+{
+    if (multiple)
+    {
+        const selectedValues = Array.isArray(model.value) ? model.value : [];
+        return selectedValues.includes(option.value);
+    }
+    else
+    {
+        return model.value === option.value;
     }
 }
 
@@ -110,7 +168,7 @@ onUnmounted(() =>
 <template>
     <div class="select-container" :class="[className, getThemes().useBlur ? 'use-blur' : '', disabled ? 'disabled' : '', `direction-${direction}`]" ref="selectContainer">
         <div class="select-trigger" @click="toggleDropdown" :class="{ 'open': isOpen }">
-            <span class="select-text" :class="{ 'placeholder': model === undefined || model === null }">
+            <span class="select-text" :class="{ 'placeholder': displayText === undefined && (multiple ? (!model || model.length === 0) : (model === undefined || model === null)) }">
                 {{ selectedLabel }}
             </span>
             <div class="select-arrow" :class="{ 'rotated': isOpen !== (direction === 'up') }">
@@ -123,7 +181,12 @@ onUnmounted(() =>
         <Transition name="dropdown">
             <div v-if="isOpen" class="select-dropdown">
                 <div v-for="option in options" :key="option.value" class="select-option"
-                    :class="{ 'selected': option.value === model }" @click="selectOption(option)">
+                    :class="{ 'selected': isOptionSelected(option) }" @click="selectOption(option)">
+                    <span v-if="multiple" class="checkbox" :class="{ 'checked': isOptionSelected(option) }">
+                        <svg v-if="isOptionSelected(option)" width="12" height="10" viewBox="0 0 12 10" fill="none">
+                            <path d="M1 5L4.5 8.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </span>
                     {{ option.label }}
                 </div>
             </div>
@@ -243,6 +306,9 @@ onUnmounted(() =>
     cursor: pointer;
     color: var(--color);
     transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 
     &:hover {
         background: var(--button-background);
@@ -261,6 +327,27 @@ onUnmounted(() =>
     &:last-child {
         border-bottom-left-radius: 8px;
         border-bottom-right-radius: 8px;
+    }
+}
+
+.checkbox {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--button-border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+
+    &.checked {
+        background: var(--button-highlight-border);
+        border-color: var(--button-highlight-border);
+
+        svg {
+            color: white;
+        }
     }
 }
 

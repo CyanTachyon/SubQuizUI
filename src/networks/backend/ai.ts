@@ -12,8 +12,11 @@ export type ToolDataInfoType = 'MARKDOWN' | 'URL' | 'TEXT' | 'HTML' | 'FILE' | '
 export type AiMessage = {
     content?: Content;
     reasoning_content?: string;
-    tool_call?: string;
-    type?: null | ToolDataInfoType;
+    mark?: {
+        showingType: ToolDataInfoType | null;
+        id: string;
+        label: string;
+    };
 }
 export type Content = (({
     type: 'text';
@@ -108,21 +111,17 @@ export async function getChatList(begin: number, count: number): Promise<Slice<C
     }));
 }
 
-export async function createChat(section: Section<AnswerType, AnswerType, string> | null, content: Content, model: Model)
+export async function createChat(data: {section: Section<AnswerType, AnswerType, string> | null, content: Content, model: Model, options: string[]})
 {
     return checkResponse<ChatId>(sendRequest({
         target: Target.BACKEND,
         url: chatUrl,
         method: 'POST',
-        data: {
-            section,
-            content,
-            model,
-        }
+        data,
     }));
 }
 
-export async function sendContent(data: {chatId: ChatId, content: Content, regenerate: boolean, model: Model, hash: string}): Promise<{hash: string, content: Content} | null>
+export async function sendContent(data: {chatId: ChatId, content: Content, regenerate: boolean, model: Model, hash: string, options: string[]}): Promise<{hash: string, content: Content} | null>
 {
     return checkResponse<{hash: string, content: Content} | null>(
         sendRequest({
@@ -199,6 +198,16 @@ export async function getAiModels(): Promise<ModelInfo[]>
     }));
 }
 
+const aiOptionsUrl = '/ai/chat/options';
+export async function getAiOptions(model: Model): Promise<string[]>
+{
+    return checkResponse<string[]>(sendRequest({
+        target: Target.BACKEND,
+        url: aiOptionsUrl,
+        method: 'GET',
+        params: { model }
+    }));
+}
 export interface ModelInfo
 {
     model: Model;
@@ -232,9 +241,9 @@ export async function chatSSE(
             useNotification().addError(`Error parsing AI message`);
         }
         else if (event === 'finished')
-            onMessage({ content: '', reasoning_content: '', type: null, finished: true, banned: false });
+            onMessage({ content: '', reasoning_content: '', finished: true, banned: false });
         else if (event === 'banned')
-            onMessage({ content: '', reasoning_content: '', type: null, finished: true, banned: true });
+            onMessage({ content: '', reasoning_content: '', finished: true, banned: true });
         else if (event === 'name')
             onChatNamed(JSON.parse(data).name);
         else if (event === 'end')
