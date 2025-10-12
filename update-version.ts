@@ -1,10 +1,9 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { copyFileSync, existsSync, mkdirSync, writeFileSync } from "fs";
 import path from "path";
 import packageJson from "./package.json" with { type: "json" };
 
 const androidLatestVersionJson = path.resolve('public', 'android_latest.json');
 const androidAppInfoJson = path.resolve('public', 'app_info.json');
-const indexHtml = path.resolve('index.html');
 
 function updateAndroidVersion(versionName: string, versionId: number, minVersionId: number, url: string, aiUrl: string)
 {
@@ -37,10 +36,7 @@ function setAppInfo(mode: string, namespace: string, appId: string, appName: str
             appName,
         })
     )
-    writeFileSync(
-        indexHtml,
-        readFileSync(indexHtml, 'utf-8').replace(/\/src\/assets\/SubQuiz-icon-(light|dark).png/g, `/src/assets/SubQuiz-icon-${mode === 'AI' ? 'dark' : 'light'}.png`)
-    )
+    copyFileSync(path.resolve(`src/assets/SubQuiz-icon-${mode === 'AI' ? 'dark' : 'light'}.png`), path.resolve(`src/assets/SubQuiz-icon-default.png`));
 }
 
 updateAndroidVersion(packageJson.version, packageJson.versionId, packageJson.minVersionId, packageJson.downloadUrl, packageJson.aiDownloadUrl);

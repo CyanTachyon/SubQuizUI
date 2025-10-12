@@ -180,8 +180,7 @@ onUnmounted(() =>
 
         <Transition name="dropdown">
             <div v-if="isOpen" class="select-dropdown">
-                <div v-for="option in options" :key="option.value" class="select-option"
-                    :class="{ 'selected': isOptionSelected(option) }" @click="selectOption(option)">
+                <div v-for="option in options" :key="option.value" class="select-option" :class="{ 'selected': !multiple && isOptionSelected(option) }" @click="selectOption(option)">
                     <span v-if="multiple" class="checkbox" :class="{ 'checked': isOptionSelected(option) }">
                         <svg v-if="isOptionSelected(option)" width="12" height="10" viewBox="0 0 12 10" fill="none">
                             <path d="M1 5L4.5 8.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -232,6 +231,7 @@ onUnmounted(() =>
     cursor: pointer;
     transition: background, box-shadow, transform 0.3s ease;
     font-size: 100%;
+    overflow: hidden;
 
     &:hover:not(.disabled) {
         background: var(--button-hover-background);
@@ -248,6 +248,9 @@ onUnmounted(() =>
 .select-text {
     flex: 1;
     text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
     &.placeholder {
         opacity: 0.7;
@@ -273,6 +276,8 @@ onUnmounted(() =>
     position: absolute;
     left: 0;
     right: 0;
+    width: max-content;
+    min-width: 100%;
     z-index: 1000;
     background: var(--background);
     border: solid 2px var(--border);

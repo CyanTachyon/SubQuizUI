@@ -245,6 +245,12 @@ export function copyToClipboard(text: string)
     }
 }
 
+export function isMobileDevice()
+{
+    if (Capacitor.getPlatform() !== 'web') return true;
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
 export async function pickFile(accept?: string, customProps?: Record<string, string>): Promise<{name: string,data: string,} | null>
 {
     return new Promise<{name: string, data: string} | null>(async (resolve) =>
@@ -327,7 +333,7 @@ export async function pickImage(maxBytes?: number): Promise<{name: string,data: 
         else
         {
             let supportCapture = true;
-            supportCapture &&= /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            supportCapture &&= isMobileDevice();
             const tmp = document.createElement('input')
             tmp.capture = 'camera';
             supportCapture &&= tmp.capture === 'camera';

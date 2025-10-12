@@ -6,7 +6,7 @@ import { cancelChat, chatSSE, createChat, deleteChat, getAiOptions, getChat, get
 import Input from '../../components/Input.vue';
 import { useNotification } from '../../stores/notification';
 import LoadingIcon from 'vue-material-design-icons/Loading.vue';
-import { copyToClipboard, pickFile, pickImage } from '../../utils/utils';
+import { copyToClipboard, isMobileDevice, pickFile, pickImage } from '../../utils/utils';
 import ChevronRightIcon from 'vue-material-design-icons/ChevronRight.vue';
 import ChevronDownIcon from 'vue-material-design-icons/ChevronDown.vue';
 import type { Chat } from '../../dataClasses/Chat';
@@ -18,7 +18,6 @@ import Card from '../../components/Card.vue';
 import { getAiModels } from '../../networks/backend/ai';
 import SelectMenu from '../../components/SelectMenu.vue';
 import { storageGet, storageSet } from '../../utils/storage';
-import { Capacitor } from '@capacitor/core';
 import { TrashIcon, ShareIcon } from '@heroicons/vue/16/solid';
 import ImageOutlineIcon from 'vue-material-design-icons/ImageOutline.vue';
 import ContentCopyIcon from 'vue-material-design-icons/ContentCopy.vue';
@@ -74,17 +73,11 @@ const isScrolledToBottom = () =>
 const scrollToBottom = () => 
 {
     if (!historiesContainer.value) return;
-    nextTick(() => 
-    {
-        historiesContainer.value!.scrollTop = historiesContainer.value!.scrollHeight;
-    });
+    nextTick(() => historiesContainer.value!.scrollTop = historiesContainer.value!.scrollHeight);
 };
 
 // 处理滚动事件
-const handleScroll = () => 
-{
-    shouldAutoScroll.value = isScrolledToBottom();
-};
+const handleScroll = () => shouldAutoScroll.value = isScrolledToBottom()
 
 const onNamed = (title: string) => 
 {
@@ -159,8 +152,20 @@ function addTask(task: () => void, force = false)
 
 const onMessage = (immediate: boolean) => (message: AiMessage & { finished: boolean, banned: boolean }) => 
 {
+    const check = () => 
+    {
+        if (info.value.histories[info.value.histories.length - 1].role !== 'assistant')
+        {
+            info.value.histories.push({
+                role: 'assistant',
+                messages: [],
+            });
+        }
+    };
+
     if (message.banned) return addTask(() =>
     {
+        check();
         const last = info.value.histories[info.value.histories.length - 1] as AiHistory & { messages: DisplayMessage[]; };
         last.messages = [
             {
@@ -175,22 +180,13 @@ const onMessage = (immediate: boolean) => (message: AiMessage & { finished: bool
     }, true);
     else if (message.finished) addTask(() =>
     {
+        check();
         info.value.showAnswering = false;
-    });
-
-    addTask(() => 
-    {
-        if (info.value.histories[info.value.histories.length - 1].role !== 'assistant')
-        {
-            info.value.histories.push({
-                role: 'assistant',
-                messages: [],
-            });
-        }
     });
 
     if (message.mark?.showingType) return addTask(() =>
     {
+        check();
         const last = info.value.histories[info.value.histories.length - 1] as AiHistory & { messages: DisplayMessage[]; };
         if (last.messages.length) last.messages[last.messages.length - 1].showReasoning = false;
         last.messages.push({
@@ -218,10 +214,12 @@ const onMessage = (immediate: boolean) => (message: AiMessage & { finished: bool
             if (c.type === 'text') for (const char of c.text) messageSplit.push({ reasoning_content: '', content: char });
             else messageSplit.push({ reasoning_content: '', content: [c] });
         }
+        if (!messageSplit.length) messageSplit.push({ reasoning_content: '', content: '' });
     }
 
     for (const item of messageSplit) addTask(() =>
     {
+        check();
         const last = info.value.histories[info.value.histories.length - 1] as AiHistory & { messages: DisplayMessage[]; };
         let lastMessage: DisplayMessage = last.messages.find(m => m.mark?.id === message.mark?.id && m.mark?.id) as DisplayMessage;
         
@@ -239,16 +237,16 @@ const onMessage = (immediate: boolean) => (message: AiMessage & { finished: bool
                 content: '',
                 reasoning_content: '',
                 showReasoning: true,
-                mark: { showingType: null, id: '', label: '' },
+                mark: message.mark,
             };
             last.messages.push(lastMessage);
+            lastMessage = last.messages[last.messages.length - 1];
         }
 
         // 收到第一条正文时，收回思考过程
         if (getContentText(item.content) && !(getContentText(lastMessage.content).trim()) && lastMessage.reasoning_content) lastMessage.showReasoning = false;
         if (item.content) lastMessage.content = mergeContent(lastMessage.content, item.content);
         if (item.reasoning_content) lastMessage.reasoning_content += item.reasoning_content;
-        lastMessage.mark = message.mark;
     });
 };
 
@@ -391,20 +389,14 @@ const models = ref<ModelInfo[]>([
     }
 ]);
 const options = ref<string[]>([]);
-const choosedOptions = ref<string[]>([]);
+const selectedOptions = ref<string[]>(undefined);
 
 const updateModels = (async () =>
 {
     models.value = await getAiModels();
     const savedModel = await storageGet('quiz-ai-model') as Model;
-    if (models.value.some(m => m.model === savedModel))
-    {
-        model.value = savedModel;
-    } 
-    else
-    {
-        model.value = models.value[0].model;
-    }
+    if (models.value.some(m => m.model === savedModel)) model.value = savedModel;
+    else model.value = models.value[0].model;
 });
 if (!isShare.value) updateModels().then(updateOptions);
 
@@ -421,14 +413,19 @@ function updateOptions()
 {
     if (!model.value) return;
     options.value = [];
-    choosedOptions.value = [];
-    getAiOptions(model.value).then(ops => options.value = ops);
+    selectedOptions.value = [];
+    getAiOptions(model.value).then(ops => options.value = ops).then(async (ops) =>
+    {
+        const saved = await storageGet('quiz-ai-options');
+        const savedOptions = saved ? JSON.parse(saved) as string[] : ops;
+        selectedOptions.value = savedOptions.filter(o => ops.includes(o));
+    });
 }
 
-function isMobileDevice()
+function changeOptions(options: string[])
 {
-    if (Capacitor.getPlatform() !== 'web') return true;
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    selectedOptions.value = options;
+    storageSet('quiz-ai-options', JSON.stringify(options));
 }
 
 function makeUploadContent(text: string, files: {
@@ -514,7 +511,7 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
             section: info.value.section, 
             content: makeUploadContent(input.value, inputFiles.value), 
             model: model.value,
-            options: choosedOptions.value,
+            options: selectedOptions.value,
         })
         props.onNewChat(id);
         return;
@@ -585,7 +582,7 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
         model: model.value, 
         hash: info.value.hash,
         regenerate: regenerate,
-        options: choosedOptions.value,
+        options: selectedOptions.value,
     })
     
     if (newInfo) 
@@ -905,14 +902,14 @@ async function shareChat()
                             </template>
 
                             <template v-else>
-                                <div class="reasoning" v-if="msg.mark.label || msg.reasoning_content?.trim()">
-                                    <Button class="header" style="cursor: pointer;" @click="msg.showReasoning = !msg.showReasoning">
+                                <div class="reasoning" v-if="msg.mark?.label || msg.reasoning_content?.trim()">
+                                    <Button class="header" style="cursor: pointer;" @click="msg.showReasoning = !msg.showReasoning" :disabled="!msg.reasoning_content">
                                         <ToolsIcon v-if="msg.mark?.label" class="icon" :size="20" style="margin-right: 4px;"/>
                                         <ChevronDownIcon v-else-if="msg.showReasoning" class="icon" />
                                         <ChevronRightIcon v-else class="icon" />
-                                        {{ msg.mark?.label ?? '思考过程' }}
+                                        {{ msg.mark?.label || '思考过程' }}
                                     </Button>
-                                    <Text v-markdown="{ markdown: true, content: msg.reasoning_content, section: info.section?.id, parseHtml, renderHtml: false }" :class="msg?.mark.label ? 'tool-call-parm' : 'reasoning-content'" v-if="msg.showReasoning && msg.reasoning_content?.trim()" />
+                                    <Text v-markdown="{ markdown: true, content: msg.reasoning_content, section: info.section?.id, parseHtml, renderHtml: !!msg.mark?.label }" :class="msg?.mark.label ? 'tool-call-parm' : 'reasoning-content'" v-if="msg.showReasoning && msg.reasoning_content?.trim()" />
                                 </div>
                                 <template v-if="msg.content && (typeof msg.content !== 'string')" v-for="c in msg.content">
                                     <Text class="content" v-if="c.type === 'text' && c.text.trim()" v-markdown="{ markdown: item.role === 'assistant', content: c.text, section: info.section?.id, parseHtml }" />
@@ -960,31 +957,31 @@ async function shareChat()
                 
                 <Text class="bottom-bar">
                     <SelectMenu :model-value="model" :options="models.map(m => ({ label: m.displayName, value: m.model }))" class="model-name" :placeholder="'选择模型'" @update:model-value="changeModel" :direction="'up'"/>
-                    <SelectMenu v-model="options" :options="options.map(o => ({ label: o, value: o }))" class="model-name" :placeholder="'模型工具'" :direction="'up'" :displayText="'模型工具'"/>
+                    <SelectMenu :model-value="selectedOptions || []" :options="options?.map(o => ({ label: o, value: o }))" class="model-options" :direction="'up'" :displayText="options !== undefined ? '工具(' + (selectedOptions || []).length + ')' : '加载中...'" :disabled="options === undefined" multiple @update:model-value="changeOptions"/>
                     <CogOutlineIcon class="intelligent-icon" @click="showSettingDialog()"/>
-                    <span class="bottom-bnt" @click="uploadFile(false, editingLastMessage)" style="margin-left: auto;">
-                        <FileDocumentOutlineIcon class="icon" v-if="!uploadingFile"/>
+                    <span class="bottom-bnt" style="margin-left: auto;">
+                        <FileDocumentOutlineIcon class="icon" v-if="!uploadingFile" @click="uploadFile(false, editingLastMessage)"/>
                         <div class="loading-icon" v-else>
                             <LoadingIcon />
                         </div>
-                    </span>
-                    <span class="bottom-bnt" @click="uploadFile(true, editingLastMessage)">
-                        <ImageOutlineIcon class="icon" v-if="!uploadingFile"/>
+                        
+                        <div style="width: 2px; height: 100%; background-color: var(--color); margin: 0 8px;"/>
+                        
+                        <ImageOutlineIcon class="icon" v-if="!uploadingFile" @click="uploadFile(true, editingLastMessage)"/>
                         <div class="loading-icon" v-else>
                             <LoadingIcon />
                         </div>
-                    </span>
-                    <span class="bottom-bnt" v-if="editingLastMessage" @click="cancelEditLastMessage()">
-                        <CloseCircleOutlineIcon class="icon"/>
-                    </span>
-                    <span class="bottom-bnt" @click="editingLastMessage ? confirmEditLastMessage() : onSubmit(null)">
-                        <div v-if="info.showAnswering">
-                            <StopCircleOutlineIcon class="icon"/>
-                        </div>
-                        <div class="loading-icon" v-else-if="info.inAnswering">
+                        
+                        <div style="width: 2px; height: 100%; background-color: var(--color); margin: 0 8px;"/>
+                        
+                        <CloseCircleOutlineIcon v-if="editingLastMessage" @click="cancelEditLastMessage()" class="icon"/>
+                        <div v-if="editingLastMessage" style="width: 2px; height: 100%; background-color: var(--color); margin: 0 8px;"/>
+                        
+                        <StopCircleOutlineIcon v-if="info.showAnswering" class="icon" @click="editingLastMessage ? confirmEditLastMessage() : onSubmit(null)"/>
+                        <div class="loading-icon" v-else-if="info.inAnswering" @click="editingLastMessage ? confirmEditLastMessage() : onSubmit(null)">
                             <LoadingIcon />
                         </div>
-                        <SendCircleOutlineIcon v-else class="icon">发送</SendCircleOutlineIcon>
+                        <SendCircleOutlineIcon v-else class="icon" @click="editingLastMessage ? confirmEditLastMessage() : onSubmit(null)">发送</SendCircleOutlineIcon>
                     </span>
                 </Text>
             </template>
@@ -1290,9 +1287,12 @@ async function shareChat()
     max-height: 60px;
 
     .model-name {
-        width: 181px;
-        min-width: 181px;
-        max-width: 181px;
+        width: 130px;
+        min-width: 130px;
+        max-width: 130px;
+    }
+    .model-options {
+        min-width: max-content;
     }
     .intelligent-icon {
         cursor: pointer;
@@ -1300,15 +1300,15 @@ async function shareChat()
         color: var(--button-highlight-border);
     }
     span.bottom-bnt {
-        width: 45px;
-        min-width: 45px;
-        max-width: 45px;
+        width: max-content;
+        min-width: max-content;
+        max-width: max-content;
         height: 37.33333px;
         min-height: 37.33333px;
         max-height: 37.33333px;
         cursor: pointer;
         bottom: 0;
-        padding: 0.5rem 1rem;
+        padding: 0.5rem 0.7rem;
         border-radius: 1rem;
         margin: 10px;
         right: 0;
