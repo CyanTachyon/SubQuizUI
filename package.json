@@ -1,21 +1,24 @@
 {
     "name": "subquiz",
     "private": true,
-    "version": "3.4.0.1",
-    "versionId": 30400001,
+    "version": "3.4.0.2",
+    "versionId": 30400002,
     "minVersionId": 30400000,
     "downloadUrl": "https://quiz.bdfzscc.com/SubQuiz.apk",
     "aiDownloadUrl": "https://quiz.bdfzscc.com/SubQuizAI.apk",
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build-web": "ts-node update-version.ts && rm -rf dist/* && vue-tsc -b && vite build",
-        "typecheck:react": "tsc -p tsconfig.react.json --noEmit",
+
+        "clean": "rm -rf dist/* && rm -rf build/* && mkdir -p build",
+        "set-default-mode": "ts-node update-version.ts",
+        "set-ai-mode": "ts-node update-version.ts ai",
+    
+        "build-web": "vue-tsc -b && vite build",
         "build-android": "npx cap sync && npx cap build android && cp ./android/app/build/outputs/apk/release/app-release-signed.apk ./dist/SubQuiz.apk",
         "build": "npm run build-web && npm run build-android && rm -rf dist/assets/*.woff2 dist/assets/*.woff dist/assets/*.ttf",
-        "build-ai": "ts-node update-version.ts ai && rm -rf dist/* && vue-tsc -b && vite build && npm run build-android && rm -rf dist/assets/*.woff2 dist/assets/*.woff dist/assets/*.ttf",
 
-        "build-all": "npm run build && mv ./dist ./tmp_dist && npm run build-ai && mv ./dist/SubQuiz.apk ./tmp_dist/SubQuizAI.apk && rm -rf ./dist && mv ./tmp_dist ./dist",
+        "build-all": "npm run clean && npm run set-default-mode && npm run build && mv ./dist ./build/default && npm run set-ai-mode && npm run build && mv ./dist ./build/ai && mv ./build/ai/SubQuiz.apk ./build/default/SubQuizAI.apk && cp ./build/default/*.apk ./build/ai/",
         "preview": "vite preview"
     },
     "dependencies": {

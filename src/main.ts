@@ -41,7 +41,7 @@ import { defineCustomElements } from '@ionic/pwa-elements/loader';
 import debounce from './utils/debounce';
 import { $appearDuration, useTransitionActions } from './stores/transition';
 import AiLibrary from './templates/chat/AiLibrary.vue';
-import { isAiApp } from './utils/utils';
+import { isAiApp, isMobileDevice } from './utils/utils';
 import { checkClipboardAndHandle } from './utils/clipboard.tsx';
 defineCustomElements(window);
 
@@ -183,7 +183,7 @@ export function getScale(): number
         console.error(error);
     }
     const appEle = (document.querySelector('quiz-app') as any);
-    scale = Number(await storageGet('scale')) || (Capacitor.getPlatform() === 'web' ? 0.8 : 0.7);
+    scale = Number(await storageGet('scale')) || (Capacitor.getPlatform() === 'web' && !isMobileDevice() ? 0.8 : 0.7);
     appEle.style = `
         --scale: ${scale};
         transform: scale(${scale});

@@ -24,6 +24,7 @@ dist-ssr
 *.sw?
 
 # 项目配置文件
+.env
 .env.development
 capacitor.config.ts
 subquiz.jks
@@ -31,3 +32,4 @@ public/android_latest.json
 public/app_info.json
 package-lock.json
 src/assets/SubQuiz-icon-default*
+build
