@@ -363,28 +363,22 @@ function onStartPractice()
             </div>
             <ResizableWrapper class="field" height-resizable s>
                 <label>描述</label>
-                <Input :area="true" :model-value="uiDescription" @update:model-value="onChangeDescription"
-                    style="resize: none; flex-grow: 1;" />
+                <Input :area="true" :model-value="uiDescription" @update:model-value="onChangeDescription" style="resize: none; flex-grow: 1;" />
             </ResizableWrapper>
             <div class="field-row">
                 <div class="field">
                     <label>截止时间</label>
-                    <input class="native-input" type="datetime-local" :value="uiDueDate"
-                        @change="(e: any) => onChangeDueDate(e.target.value)" />
+                    <input class="native-input" type="datetime-local" :value="uiDueDate" @change="(e: any) => onChangeDueDate(e.target.value)" />
                 </div>
                 <div class="field">
                     <label>目标正确率(%)</label>
                     <Input :area="false" type="number" :model-value="uiAccuracyPercent"
                         @update:model-value="(v: number) => onChangeAccuracyPercent(Number(v))" />
-                    <Slider :min-value="0" :max-value="100" :step="1" :model-value="uiAccuracyPercent"
-                        @update:model-value="onChangeAccuracyPercent" />
+                    <Slider :min-value="0" :max-value="100" :step="1" :model-value="uiAccuracyPercent" @update:model-value="onChangeAccuracyPercent" />
                 </div>
                 <div class="field">
                     <label>题目数量</label>
-                    <Input :area="false" type="number" :model-value="uiSectionCount"
-                        @update:model-value="(v: number) => onChangeSectionCount(Number(v))" />
-                    <Slider :min-value="1" :max-value="100" :step="1" :model-value="uiSectionCount"
-                        @update:model-value="onChangeSectionCount" />
+                    <Input :area="false" type="number" :model-value="uiSectionCount" @update:model-value="(v: number) => onChangeSectionCount(Number(v))" />
                 </div>
             </div>
         </div>

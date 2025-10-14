@@ -58,7 +58,7 @@ function selectImage()
             <Button @click="toText(true)">识别为富文本</Button>
         </div>
         <div v-if="res" style="max-width: calc(min(1024px, 100%)); height: 100%; display: flex; flex-direction: column; overflow: hidden;">
-            <div style="display: flex; min-width: 512px;">
+            <div style="display: flex; max-width: 100%; min-width: max-content;">
                 <Button @click="res = ''"  style="height: 44px; width: 44px; left: 0; margin-right: auto; display: flex; align-items: center; text-align: center; justify-content: center;">
                     <ArrowLeftIcon v-if="!loading"/>
                     <div class="loading-icon" v-else>

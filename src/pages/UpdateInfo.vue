@@ -230,6 +230,12 @@ const updateInfo: UpdateInfo[] = ([
             '- 修复已知问题\n'
     },
     {
+        date: '2025-10-11',
+        version: '3.4.0',
+        description: '' +
+            '- AI答疑支持选择工具\n'
+    },
+    {
         version: 'TODO LIST',
         description: '以下是预计添加的新功能，但我开发速度有限，所以别急^v^\n' +
             "1. 简答/填空允许提交图片\n" +

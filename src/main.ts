@@ -71,7 +71,12 @@ else
 }
 
 const routes: Readonly<RouteRecordRaw[]> = [
-    !isAiApp() ? { path: '/', name: 'Home', component: Home, meta: { sidebar: true } } : { path: '/', name: 'Home', component: AiChats, meta: { sidebar: true } },
+    ...(!isAiApp() ? 
+        [{ path: '/', name: 'Home', component: Home, meta: { sidebar: true } }] : 
+        [
+            { path: '/', name: 'Home', component: AiChats, meta: { sidebar: true } },
+            { path: '/:id', name: 'HomeShare', component: AiChatShare, meta: { sidebar: true } }
+        ]),
     { path: '/about', name: 'About', component: About, meta: { sidebar: true } },
     { path: '/update-info', name: 'UpdateInfo', component: UpdateInfo, meta: { sidebar: true } },
     { path: '/analysis/:id', name: 'Analysis', component: Analysis, meta: { sidebar: true } },
