@@ -94,17 +94,17 @@ const sidebar = defineComponent({
         return () => (
         <Card class="ai-chat-sidebar">
             <div class="menu-title-box box">
-                <div class="menu-title">Quiz AI</div>
+                <div class="menu-title">SubQuizAI</div>
             </div>
 
-            <SidebarItem title="新建对话" icon={PlusIcon} onClick={() => { itemClick(); info.value = 0 }} />
+            <SidebarItem title="新建对话" icon={PlusIcon} onClick={() => { itemClick(); info.value = 0 }} down={!info.value}/>
             <Spacer style="margin-top: 10px; margin-bottom: 10px;" />
             {chats.value.length == 0 && <Text class="sidebar-empty">
                 还没有对话记录
             </Text>}
             {chats.value.length > 0 && <div class="chats" onScroll={ handleScroll }>
                 {chats.value.map(chat => (
-                    <Button class="item" key={chat.id} onClick={() => { itemClick(); info.value = chat.id }}>
+                    <Button class="item" key={chat.id} onClick={() => { itemClick(); info.value = chat.id }} down={info.value === chat.id}>
                         { chat.title }
                     </Button> 
                 ))}
@@ -140,8 +140,7 @@ onUnmounted(() =>
     <quiz-ai-chats>
         <sidebar v-if="!phone"/>
         <div class="main-content">
-            <AiDialog :key="typeof info === 'object' ? info.id : info" :info="info" @newChat="onNewChat"
-                @chatNamed="onChatNamed" />
+            <AiDialog :key="typeof info === 'object' ? info.id : info" :info="info" @newChat="onNewChat" @chatNamed="onChatNamed" />
         </div>
     </quiz-ai-chats>
 </template>
@@ -244,6 +243,8 @@ onUnmounted(() =>
             display: flex;
             align-items: center;
             justify-content: center;
+            font-family: 'Maple Mono NF CN';
+            font-style: italic;
         }
     }
 }

@@ -224,24 +224,28 @@ onUnmounted(() =>
     padding: 0.5rem 1rem;
     height: 100%;
     width: 100%;
-    border: solid 2px var(--button-border);
+    border: solid 1px var(--button-border);
     border-radius: 10px;
     background: var(--button-background);
     color: var(--color);
     cursor: pointer;
-    transition: background, box-shadow, transform 0.3s ease;
+    transition: all 0.3s ease;
     font-size: 100%;
     overflow: hidden;
 
-    &:hover:not(.disabled) {
+    &:hover {
         background: var(--button-hover-background);
-        border: solid 2px var(--button-hover-border);
         transform: translateY(-2px);
+        border-color: var(--button-hover-border);
     }
 
-    &.open {
+    &:active {
+        transform: translateY(0);
+    }
+
+    &.open, &.open:hover {
         border-color: var(--button-highlight-border);
-        background: var(--button-hover-background);
+        background: var(--button-highlight-background);
     }
 }
 
@@ -280,7 +284,7 @@ onUnmounted(() =>
     min-width: 100%;
     z-index: 1000;
     background: var(--background);
-    border: solid 2px var(--border);
+    border: solid 1px var(--border);
     border-radius: 10px;
     margin-top: 4px;
     overflow-y: auto;
@@ -310,7 +314,7 @@ onUnmounted(() =>
     padding: 0.5rem 1rem;
     cursor: pointer;
     color: var(--color);
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -320,8 +324,7 @@ onUnmounted(() =>
     }
 
     &.selected {
-        background: var(--button-highlight-border);
-        color: white;
+        background: var(--button-highlight-background);
     }
 
     &:first-child {

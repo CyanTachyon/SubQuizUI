@@ -320,12 +320,20 @@ async function init()
 {
     loading.value = true;
     const res = await _getPractice(id);
-    data.value = res;
     const clazz = await getClass(res.practice.clazz);
     clazzName.value = clazz.name;
     const user = useUser();
     if (user.hasAdmin()) admin.value = true;
     else admin.value = isAdmin(await getUserPermissionInGroup(clazz.group, user.userId()));
+    
+    /**
+     * TODO                
+     * 临时解决方案，由于政治问题，将屏蔽备课组12中的所有联系的人名。
+     */
+    if (clazz.group === 12 && !admin.value)
+        res.users = []
+    data.value = res;
+
     knowledgePoints.value = await getKnowledgePointList(clazz.group);
     buildTreeSelected();
     uiName.value = res.practice.name;

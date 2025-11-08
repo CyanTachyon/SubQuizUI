@@ -52,8 +52,8 @@ VITE_APP_SUB_QUIZ_AI_SHARE_BASE=https://bdfz.chat
             :
             `
 VITE_APP_SUB_QUIZ_CDN=https://cdn.bdfzscc.com
-VITE_APP_SUB_QUIZ_BACKEND=https://bdfz.chat/api
-VITE_APP_SUB_QUIZ_FRONTEND=https://bdfz.chat
+VITE_APP_SUB_QUIZ_BACKEND=https://quizai.pkuschool.edu.cn/api
+VITE_APP_SUB_QUIZ_FRONTEND=https://quizai.pkuschool.edu.cn
 VITE_APP_SUB_QUIZ_SSO_FRONTEND=https://pkus.sso.subit.org.cn
 VITE_APP_SUB_QUIZ_SSO_BACKEND=https://pkus.sso.subit.org.cn/api
 VITE_APP_SUB_QUIZ_SSO_SERVICE_ID=3

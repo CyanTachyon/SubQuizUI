@@ -1,8 +1,12 @@
+// maple mono cdn
 @import url("https://fontsapi.zeoseven.com/442/main/result.css");
+// noto sans cdn
+@import url("https://fontsapi.zeoseven.com/69/main/result.css");
+
 
 /*! purgecss ignore */
 * {
-    font-family: 'SubQuiz font english', 'SubQuiz font chinese', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    font-family: 'Noto Sans CJK', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     box-sizing: border-box;
     tab-size: 4;
 }
@@ -108,10 +112,9 @@ svg {
 }
 
 :root {
-    font-weight: 800;
+    font-weight: 350;
     strong {
         font-weight: 1000;
-        font-size: 1.1em;
     }
     --color: #{$light-color};
     color: var(--color);
@@ -126,6 +129,9 @@ svg {
     --button-hover-border: #{$light-glass-button-hover-border};
     --button-hover-background: #{$light-glass-button-hover-background};
     --button-highlight-border: #{$light-glass-button-highlight-border};
+    --button-highlight-background: #{$light-glass-button-highlight-background};
+    --input-background: #{$light-glass-input-background};
+    --input-focus-background: #{$light-glass-input-focus-background};
 
     -webkit-tap-highlight-color: transparent;
 
@@ -150,6 +156,9 @@ svg {
     --button-hover-border: #{$light-solid-button-hover-border};
     --button-hover-background: #{$light-solid-button-hover-background};
     --button-highlight-border: #{$light-solid-button-highlight-border};
+    --button-highlight-background: #{$light-solid-button-highlight-background};
+    --input-background: #{$light-solid-input-background};
+    --input-focus-background: #{$light-solid-input-focus-background};
 }
 
 [quiz-theme='dark'] {
@@ -165,6 +174,9 @@ svg {
     --button-hover-border: #{$dark-glass-button-hover-border};
     --button-hover-background: #{$dark-glass-button-hover-background};
     --button-highlight-border: #{$dark-glass-button-highlight-border};
+    --button-highlight-background: #{$dark-glass-button-highlight-background};
+    --input-background: #{$dark-glass-input-background};
+    --input-focus-background: #{$dark-glass-input-focus-background};
 
     body {
         background-image: url('/src/assets/dark-background.png');
@@ -185,6 +197,9 @@ svg {
     --button-hover-border: #{$dark-solid-button-hover-border};
     --button-hover-background: #{$dark-solid-button-hover-background};
     --button-highlight-border: #{$dark-solid-button-highlight-border};
+    --button-highlight-background: #{$dark-solid-button-highlight-background};
+    --input-background: #{$dark-solid-input-background};
+    --input-focus-background: #{$dark-solid-input-focus-background};
 }
 
 quiz-markdown-body {

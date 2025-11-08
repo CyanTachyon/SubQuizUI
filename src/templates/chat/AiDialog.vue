@@ -903,7 +903,7 @@ async function shareChat()
 
                             <template v-else>
                                 <div class="reasoning" v-if="msg.mark?.label || msg.reasoning_content?.trim()">
-                                    <Button class="header" style="cursor: pointer;" @click="msg.showReasoning = !msg.showReasoning" :disabled="!msg.reasoning_content">
+                                    <Button class="header" style="cursor: pointer;" @click="msg.showReasoning = !msg.showReasoning" :disabled="!msg.reasoning_content" :down="msg.showReasoning">
                                         <ToolsIcon v-if="msg.mark?.label" class="icon" :size="20" style="margin-right: 4px;"/>
                                         <ChevronDownIcon v-else-if="msg.showReasoning" class="icon" />
                                         <ChevronRightIcon v-else class="icon" />
@@ -1350,6 +1350,7 @@ async function shareChat()
     user-select: none;
     margin-left: 5px;
     margin-right: 5px;
+    font-weight: bolder;
 }
 
 .edit-input {

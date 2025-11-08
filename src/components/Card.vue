@@ -75,7 +75,7 @@ function handleMouseLeave()
 <template>
     <quiz-card :class="className" ref="card" @mousemove="handleMouseMove" @mouseleave="handleMouseLeave">
         <div class="glass-effect" :class="{'use-blur': getThemes().useBlur, 'use-glass': getThemes().useGlass}"/>
-        <div class="glass-tint"></div>
+        <div class="glass-tint" v-if="!getThemes().useSolidColor"></div>
         <div class="border" :class="getThemes().useGlass ? 'glass-shine' : ''"></div>
         <div v-if="scroll" class="scroll-content">
             <slot />

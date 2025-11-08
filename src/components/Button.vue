@@ -78,7 +78,7 @@ function click()
 quiz-button {
     display: block;
     padding: 0.5rem 1rem;
-    border: solid 2px var(--button-border);
+    border: solid 1px var(--button-border);
     border-radius: 10px;
     margin: 10px;
     font-size: 100%;
@@ -89,7 +89,7 @@ quiz-button {
     align-items: center;
     text-align: center;
     max-width: fit-content;
-    transition: background,box-shadow,transform 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 quiz-button.enabled {
@@ -97,7 +97,7 @@ quiz-button.enabled {
     &:hover {
         background: var(--button-hover-background);
         transform: translateY(-2px);
-        border: solid 2px var(--button-hover-border);
+        border-color: var(--button-hover-border);
     }
 
     &:active {
@@ -105,9 +105,9 @@ quiz-button.enabled {
     }
 }
 
-quiz-button.enabled:is(.down, .down:hover) {
-    border: solid 2px var(--button-highlight-border);
-    transition: background, box-shadow, transform 0.3s ease;
+quiz-button.down, quiz-button.down:hover {
+    border-color: var(--button-highlight-border);
+    background: var(--button-highlight-background);
 }
 
 .blur-button {

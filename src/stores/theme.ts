@@ -93,9 +93,10 @@ const actions = {
         if (themeInfo.value.background === '#') 
         {
             if (themeInfo.value.isDark)
-                document.body.style.backgroundColor = '#151517';
+                document.body.style.backgroundColor = '#0A0A0B';
             else
-                document.body.style.backgroundColor = '#C9CACB';
+                document.body.style.backgroundColor = '#EBEDEF';
+
             document.body.style.backgroundImage = 'none';
             document.body.style.removeProperty('--background-blur');
             document.body.classList.remove('has-background-blur');

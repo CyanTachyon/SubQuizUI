@@ -10,7 +10,7 @@ const router = useRouter();
 
 <template>
     <Card class="toolbox">
-        <h1>SubQuiz AI 工具箱</h1>
+        <h1><span style="font-family: 'Maple Mono NF CN'; font-style: italic;">SubQuizAI</span> 工具箱</h1>
         <p>这里是一些 AI 相关的工具和功能。</p>
         <div class="tools">
             <Card class="tool" :max-tilt="10" @click="router.push('/ai/chat')">

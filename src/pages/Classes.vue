@@ -57,7 +57,11 @@ function loadClasses(reload: boolean)
     getClassList(0, null, classes.value.length, 20).then((result) =>
     {
         const { list } = result;
-        classes.value.push(...list);
+        classes.value.push(...list.map(c => 
+        {
+            if (c.group === 12 && !admin.value) return { ...c, members: [] } as ClassWithMembers;
+            return c;
+        }));
         if (list.length < 20) hasMore.value = false;
         isLoading.value = false;
     }).catch(() =>
@@ -168,7 +172,7 @@ const sidebar = defineComponent({
                 <Spacer style="margin-bottom: 10px;" />
                 {classes.value.length > 0 && <div class="classes" onScroll={handleScroll}>
                     {classes.value.map((clazz) => (
-                        <Button class="item" onClick={() => { itemClick(); changeClass(clazz) }}>
+                        <Button class="item" onClick={() => { itemClick(); changeClass(clazz) }} down={info.value?.id === clazz.id}>
                             {clazz.name}
                         </Button>
                     ))}

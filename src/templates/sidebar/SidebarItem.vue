@@ -2,7 +2,7 @@
 
 import Button from "../../components/Button.vue";
 
-const { onClick, icon, title, iconLocation } = defineProps({
+const { onClick, icon, title, iconLocation, down } = defineProps({
     onClick: {
         type: Function,
         default: () => {}
@@ -19,13 +19,17 @@ const { onClick, icon, title, iconLocation } = defineProps({
     iconLocation: { // left, right
         type: String,
         default: 'left'
+    },
+    down: {
+        type: Boolean,
+        default: false
     }
 })
 
 </script>
 
 <template>
-    <Button class="item" @click="onClick()">
+    <Button class="item" @click="onClick()" :down="down">
         <quiz-sidebar-item-wrapper :style="{ 'flex-direction': iconLocation === 'left' ? 'row' : 'row-reverse' }">
             <quiz-sidebar-item-icon-wrapper><component :is="icon" :size="36" style="height: 36px; width: 36px;"/></quiz-sidebar-item-icon-wrapper>
             <quiz-sidebar-item-content-wrapper>{{ title }}</quiz-sidebar-item-content-wrapper>
@@ -38,7 +42,7 @@ $close-width: 69px;
 
 .item {
     overflow: hidden;
-    padding: 0 0 0 0;
+    padding: 0 1px;
     margin: 5px;
     min-height: 51px;
     max-height: 51px;

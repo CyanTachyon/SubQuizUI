@@ -16,7 +16,7 @@ import Button from "../../components/Button.vue";
 import Image from "../../components/Image.vue";
 import { useUser } from "../../stores/user.ts";
 import { isAiApp, tryLogin, tryOpenSSO } from "../../utils/utils.tsx";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import SidebarItem from "./SidebarItem.vue";
 import SettingIcon from "vue-material-design-icons/CogOutline.vue";
 import Spacer from "../../components/Spacer.vue";
@@ -33,6 +33,7 @@ const open = ref(!phone.value);
     if (!phone.value) open.value = await storageGet('sidebar-open') !== 'false';
 })();
 const router = useRouter();
+const route = useRoute();
 
 function changeSidebarState()
 {
@@ -137,22 +138,22 @@ function onSettingClick()
 
             <div class="sidebar-items">
                 <template v-if="!isAiApp()">
-                    <SidebarItem @click="itemClick(); goto('/admin/subject/list')" :icon="BookshelfIcon" title="学科列表" />
-                    <SidebarItem @click="itemClick(); goto('/class')" :icon="AccountMultipleIcon" title="我的班级" />
-                    <SidebarItem @click="itemClick(); goto('/history')" :icon="HistoryIcon" title="答题记录" />
-                    <SidebarItem @click="itemClick(); goto('/ai')" :icon="RobotExcitedOutlineIcon" title="AI 助手" />
+                    <SidebarItem @click="itemClick(); goto('/admin/subject/list')" :icon="BookshelfIcon" title="学科列表" :down="route.path.startsWith('/admin/subject') || route.path.startsWith('/admin/group')"/>
+                    <SidebarItem @click="itemClick(); goto('/class')" :icon="AccountMultipleIcon" title="我的班级" :down="route.path === '/class'"/>
+                    <SidebarItem @click="itemClick(); goto('/history')" :icon="HistoryIcon" title="答题记录" :down="route.path === '/history'"/>
+                    <SidebarItem @click="itemClick(); goto('/ai')" :icon="RobotExcitedOutlineIcon" title="AI 助手" :down="route.path.startsWith('/ai')"/>
                 </template>
                 <template v-else>
-                    <SidebarItem @click="itemClick(); goto('/')" :icon="ChatBubbleLeftRightIcon" title="AI 聊天" />
-                    <SidebarItem @click="itemClick(); goto('/ai/translate')" :icon="LanguageIcon" title="AI 翻译" />
-                    <SidebarItem @click="itemClick(); goto('/ai/essay-correction')" :icon="DocumentTextIcon" title="作文批改" />
-                    <SidebarItem @click="itemClick(); goto('/ai/image')" :icon="PhotoIcon" title="文字识别" />
+                    <SidebarItem @click="itemClick(); goto('/')" :icon="ChatBubbleLeftRightIcon" title="AI 聊天" :down="route.path === '/' || route.path === '/ai/chat'"/>
+                    <SidebarItem @click="itemClick(); goto('/ai/translate')" :icon="LanguageIcon" title="AI 翻译" :down="route.path === '/ai/translate'" />
+                    <SidebarItem @click="itemClick(); goto('/ai/essay-correction')" :icon="DocumentTextIcon" title="作文批改" :down="route.path === '/ai/essay-correction'" />
+                    <SidebarItem @click="itemClick(); goto('/ai/image')" :icon="PhotoIcon" title="文字识别" :down="route.path === '/ai/image'" />
                 </template>
 
-                <SidebarItem v-if="user.hasAdmin()" @click="itemClick(); goto('/admin/admins')" :icon="ShieldCrownOutlineIcon" title="全局管理" />
-                <SidebarItem v-if="user.isRoot()" @click="itemClick(); goto('/terminal')" :icon="ConsoleIcon" title="控制台" />
-                <SidebarItem @click="itemClick(); onSettingClick()" :icon="SettingIcon" title="系统设置" />
-                <SidebarItem @click="itemClick(); goto('/about')" :icon="InfoMationOutlineIcon" title="关于项目" />
+                <SidebarItem v-if="user.hasAdmin()" @click="itemClick(); goto('/admin/admins')" :icon="ShieldCrownOutlineIcon" title="全局管理" :down="route.path === '/admin/admins'" />
+                <SidebarItem v-if="user.isRoot()" @click="itemClick(); goto('/terminal')" :icon="ConsoleIcon" title="控制台" :down="route.path === '/terminal'" />
+                <SidebarItem @click="itemClick(); onSettingClick()" :icon="SettingIcon" title="系统设置" :down="route.path === '/setting'" />
+                <SidebarItem @click="itemClick(); goto('/about')" :icon="InfoMationOutlineIcon" title="关于项目" :down="route.path === '/about' || route.path === '/update-info'" />
             </div>
 
             <Spacer />
@@ -315,7 +316,7 @@ quiz-menu-title-box {
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        padding-left: 1.4rem;
+        padding-left: 20px;
     }
 
     quiz-menu-title {
@@ -329,6 +330,8 @@ quiz-menu-title-box {
         align-items: center;
         justify-content: center;
         cursor: pointer;
+        font-family: 'Maple Mono NF CN';
+        font-style: italic;
     }
 }
 

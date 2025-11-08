@@ -168,13 +168,13 @@ defineExpose({
     font-weight: bold;
     border: none;
     border-radius: 10px;
-    background: var(--button-background);
+    background: var(--input-background);
     color: var(--color);
     transition: background 0.3s ease;
 
     &:focus {
         outline: none;
-        background: var(--button-hover-background);
+        background: var(--input-focus-background);
         box-shadow: 0 0 8px -5px var(--color);
     }
 

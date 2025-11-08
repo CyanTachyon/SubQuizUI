@@ -73,7 +73,7 @@ watch(data, () => autoSave(), { deep: true })
 
 <template>
     <Loading v-if="data === null"/>
-    <QuizView v-else v-model="data" :editable="true" :submit="save"/>
+    <QuizView v-else v-model="data" :editable="true" :submit="save" show-answer-status/>
 </template>
 
 <style scoped lang="scss">

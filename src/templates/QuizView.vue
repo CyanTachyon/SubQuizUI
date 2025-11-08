@@ -16,13 +16,16 @@ import ResizableWrapper from "../components/ResizableWrapper.vue";
 import { ref } from "vue";
 import PinOutline from "vue-material-design-icons/PinOutline.vue";
 import PinOffOutline from "vue-material-design-icons/PinOffOutline.vue";
+import { dialog } from "../utils/dialog.tsx";
+import { ArrowLeftIcon } from "@heroicons/vue/16/solid";
 
 const router = useRouter();
 
 const { editable, ai, submit } = defineProps<{  
     editable: boolean, 
     ai?: boolean, 
-    submit?: () => void; 
+    submit?: () => void;
+    showAnswerStatus?: boolean;
 }>();
 
 const quiz = defineModel<Pick<Quiz<any, any, any>, 'sections' | 'correct'>>();
@@ -95,7 +98,7 @@ function trySubmit()
                 if (questionElement) 
                 {
                     // 平滑滚动到未完成的题目
-                    questionElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    questionElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     
                     useNotification().add({
                         message: '请完成所有题目后再提交',
@@ -140,12 +143,59 @@ function togglePin(sectionIndex: number)
     else pin.value.splice(currentIndex, 1);
 }
 
+function onShowAnswerStatus()
+{
+    const correctRate = quiz.value.correct?.reduce((x, y) => x + y.filter((z) => z).length, 0) / quiz.value.correct?.reduce((x, y) => x + y.length, 0);
+    const close = dialog(<>
+        {quiz.value.correct ? "总正确率: " + (correctRate * 100).toFixed(2) + "%" : "未批改"}
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
+            {quiz.value.sections.map((section, sectionIndex) => (
+                <div style={{
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    borderRadius: '50%', 
+                    width: '50px', 
+                    height: '50px', 
+                    cursor: 'pointer',
+                    backgroundColor: 
+                        !quiz.value.correct && section.questions.every((it) => it.userAnswer === null) ? 'gray' : 
+                        !quiz.value.correct && section.questions.every((it) => it.userAnswer !== null) ? 'var(--button-highlight-border)' : 
+                        !quiz.value.correct ? 'rgb(191, 190, 22)' : 
+                        quiz.value.correct?.[sectionIndex].every((it) => it) ? 'green' : 
+                        quiz.value.correct?.[sectionIndex].some((it) => it) ? 'rgb(191, 190, 22)' : 
+                        'red',
+                }} onClick={() => {
+                    close();
+                    document.getElementById(`section-${sectionIndex}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }}>
+                    {sectionIndex + 1}
+                </div>
+            ))}
+        </div>
+    </>, () => close());
+}
+
 </script>
 
 <template>
 <div style="display: flex; flex-direction: column; overflow: scroll; max-height: 100%; scrollbar-width: none;">
-    <Card v-for="(section, sectionIndex) in quiz.sections" class="section" :key="sectionIndex" :class="{'pinned': pin.includes(sectionIndex)}">
-        <span v-if="section.id > 0" style="position: absolute; left: 22px; top: 3px">ID: {{ section.id }}</span>
+    <Card style="top: 0; position: sticky; z-index: 100; display: flex; flex-wrap: wrap;">
+        <Button @click="router.back()" down>
+            <ArrowLeftIcon style="width: 24px; height: 24px;"/>
+        </Button>
+        <Button v-if="showAnswerStatus" @click="onShowAnswerStatus" down> 
+            显示作答情况 
+        </Button>
+        <Button v-if="submit" @click="trySubmit" down> 
+            提交 
+        </Button>
+    </Card>
+    
+    <Card v-for="(section, sectionIndex) in quiz.sections" class="section" :key="sectionIndex" :class="{'pinned': pin.includes(sectionIndex)}" :id="`section-${sectionIndex}`">
+        <span v-if="section.id > 0" style="position: absolute; left: 22px; top: 17px;">
+            <span style="font-weight: bolder;">第{{ sectionIndex + 1 }}大题</span>（ID: {{ section.id }}）
+        </span>
         <div v-if="richtextToString(section.description)" style="display: inline;" class="wrapper1">
             <div class="pin-icon" @click="togglePin(sectionIndex)">
                 <PinOutline v-if="!pin.includes(sectionIndex)"/>
@@ -176,6 +226,7 @@ function togglePin(sectionIndex: number)
                                 'choice-answer': question.userAnswer === optionIndex || (question.userAnswer?.length && question.userAnswer.includes(optionIndex)),
                                 'default-answer': !(question.userAnswer === optionIndex || (question.userAnswer?.length && question.userAnswer.includes(optionIndex)))
                             }"
+                            :disabled="!editable"
                         >
                             <div class="option-title" style="height: 100%;">
                                 {{ getOptionName(optionIndex) }}
@@ -204,6 +255,7 @@ function togglePin(sectionIndex: number)
                         :down="question.userAnswer === false" 
                         :class="{ 'choice-answer': question.userAnswer === false }"
                         @click="onOptionClick(sectionIndex, questionIndex, 0)"
+                        :disabled="!editable"
                     >
                         <CloseIcon/>
                     </Button>
@@ -212,6 +264,7 @@ function togglePin(sectionIndex: number)
                         :down="question.userAnswer === true" 
                         :class="{ 'choice-answer': question.userAnswer === true }"
                         @click="onOptionClick(sectionIndex, questionIndex, 1)"
+                        :disabled="!editable"
                     >
                         <CheckIcon/>
                     </Button>
@@ -245,17 +298,24 @@ function togglePin(sectionIndex: number)
                 </Text>
                 <br v-if="questionIndex < section.questions.length - 1"/>
             </div>
-            <Button v-if="ai" class="ai" @click="gotoAI(sectionIndex)">AI</Button>
+            <Button v-if="ai" class="ai" @click="gotoAI(sectionIndex)" down>AI</Button>
         </div>
     </Card>
-    <Button v-if="editable && submit" class="submit" @click="trySubmit">Submit</Button>
+    <Button v-if="editable && submit" class="submit" @click="trySubmit" down>Submit</Button>
 </div>
 </template>
 
 <style scoped lang="scss">
 .section {
     margin-top: 20px;
+    padding-top: 17px;
 }
+
+.section * {
+    font-family: 'SubQuiz font english', 'SubQuiz font chinese';
+    font-weight: normal;
+}
+
 .section.pinned {
     display: flex;
     flex-grow: row;
@@ -343,23 +403,19 @@ $answer-color-duration: 0.4s;
 
 .right-answer {
     color: green;
-    transition: color $answer-color-duration ease;
 }
 
 .wrong-answer {
     color: #EF3040;
-    transition: color $answer-color-duration ease;
 }
 
-.choice-answer {
-    color: #0170D2;
-    transition: color $answer-color-duration ease;
-}
+// .choice-answer {
+    // color: #0170D2;
+// }
 
-.default-answer {
-    color: var(--color);
-    transition: color $answer-color-duration ease;
-}
+// .default-answer {
+    // color: var(--color);
+// }
 
 .options-wrapper {
     display: flex;
