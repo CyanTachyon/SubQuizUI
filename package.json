@@ -1,9 +1,9 @@
 {
     "name": "subquiz",
     "private": true,
-    "version": "3.4.0.7",
-    "versionId": 30400007,
-    "minVersionId": 30400007,
+    "version": "3.4.0.8",
+    "versionId": 30400008,
+    "minVersionId": 30400008,
     "downloadUrl": "https://quiz.bdfzscc.com/SubQuiz.apk",
     "aiDownloadUrl": "https://quiz.bdfzscc.com/SubQuizAI.apk",
     "type": "module",
@@ -13,7 +13,7 @@
         "clean": "rm -rf dist/* && rm -rf build/* && mkdir -p build",
         "set-default-mode": "ts-node update-version.ts",
         "set-ai-mode": "ts-node update-version.ts ai",
-    
+
         "build-web": "vue-tsc -b && vite build",
         "build-android": "npx cap sync && npx cap build android && cp ./android/app/build/outputs/apk/release/app-release-signed.apk ./dist/SubQuiz.apk",
         "build": "npm run build-web && npm run build-android && rm -rf dist/assets/*.woff2 dist/assets/*.woff dist/assets/*.ttf",
@@ -47,7 +47,7 @@
         "hast-util-to-html": "^9.0.5",
         "html2canvas": "^1.4.1",
         "katex": "^0.16.22",
-        "marked": "^15.0.7",
+        "marked": "^17.0.0",
         "mathjax": "^3.2.2",
         "spark-md5": "^3.0.2",
         "vite-plugin-babel": "^1.3.2",

@@ -165,7 +165,6 @@ defineExpose({
     backdrop-filter: blur(5px);
 }
 .input {
-    font-weight: bold;
     border: none;
     border-radius: 10px;
     background: var(--input-background);

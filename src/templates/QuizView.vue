@@ -313,7 +313,6 @@ function onShowAnswerStatus()
 
 .section * {
     font-family: 'SubQuiz font english', 'SubQuiz font chinese';
-    font-weight: normal;
 }
 
 .section.pinned {

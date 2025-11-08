@@ -1186,7 +1186,7 @@ async function shareChat()
     max-width: 100%;
     right: 0;
     &::before {
-        content: 'SubQuiz AI';
+        content: 'SubQuizAI';
         font-size: 1.5rem;
         font-weight: bolder;
         margin: 18px;
