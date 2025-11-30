@@ -11,11 +11,10 @@ import { connectUrl, sendRequest, sseRequest, Target } from "../utils/sendReques
 export type ToolDataInfoType = 'MARKDOWN' | 'URL' | 'TEXT' | 'HTML' | 'FILE' | 'PAGE' | 'IMAGE' | 'MATH' | 'QUIZ' | 'VIDEO';
 export type AiMessage = {
     content?: Content;
-    reasoning_content?: string;
     mark?: {
-        showingType: ToolDataInfoType | null;
         id: string;
-        label: string;
+        label: string | null;
+        showingType: ToolDataInfoType | null;
     };
 }
 export type Content = (({
@@ -74,6 +73,13 @@ export function getContentText(content: Content)
 {
     if (typeof content === 'string') return content;
     return content.map(c => c.type === 'text' ? c.text : '').join('');
+}
+
+export function isContentEmpty(content: Content): boolean
+{
+    if (!content) return true;
+    if (typeof content === 'string') return !content.trim();
+    return content.every(c => c.type === 'text' && !c.text.trim());
 }
 
 const getChatUrl = '/ai/chat/{chat}';
@@ -241,9 +247,9 @@ export async function chatSSE(
             useNotification().addError(`Error parsing AI message`);
         }
         else if (event === 'finished')
-            onMessage({ content: '', reasoning_content: '', finished: true, banned: false });
+            onMessage({ content: '', finished: true, banned: false });
         else if (event === 'banned')
-            onMessage({ content: '', reasoning_content: '', finished: true, banned: true });
+            onMessage({ content: '', finished: true, banned: true });
         else if (event === 'name')
             onChatNamed(JSON.parse(data).name);
         else if (event === 'end')

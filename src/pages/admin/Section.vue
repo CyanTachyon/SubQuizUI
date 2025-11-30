@@ -551,8 +551,7 @@ function deleteImage(name: string)
         </Card>
     </div>
     <div v-else style="display: flex; flex-direction: column; overflow: hidden; max-height: 100%;">
-        <Button @click="preview = false">返回编辑</Button>
-        <QuizView :model-value="{ sections: [section], correct: null }" :editable="false" />
+        <QuizView :model-value="{ sections: [section], correct: null }" :editable="false" @back="preview = false" />
     </div>
 </template>
 

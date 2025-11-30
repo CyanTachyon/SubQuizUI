@@ -7,8 +7,7 @@ const tips = [
     '稍等片刻',
     '加载好无聊啊',
     '易控好烦人',
-    '你知道吗？\nSubQuiz不由SubIT维护',
-    '你知道吗？\nSubQuiz完全由一位北大附中学生开发',
+    '你知道吗？\nSubQuiz由一位北大附中学生开发',
     '你知道吗？\n“关于项目”中可以找到作者的联系方式',
     '你知道吗？\nSubQuiz的代码托管在GitHub上',
     '你知道吗？\nSubQuiz使用了Vue3+Kotlin',
@@ -139,7 +138,7 @@ const tip = tips[Math.floor(Math.random() * tips.length)];
         height: 28px;
         margin: 2px;
         border-radius: 0px;
-        background: white;
+        background: var(--color);
         background-size: cover;
         background-position: center;
         background-attachment: fixed;

@@ -19,10 +19,15 @@ import LoginCard from "../templates/LoginCard.vue";
 import { dialog } from "./dialog.tsx";
 import appInfo from "../../public/app_info.json";
 
+let loginDialogOpened = false;
 export function tryLogin()
 {
     useUser().logout();
-    const close = dialog(<LoginCard onLogin={ () => { close(); } }></LoginCard>);
+    if (!loginDialogOpened) 
+    {
+        loginDialogOpened = true;
+        const close = dialog(<LoginCard onLogin={ () => { loginDialogOpened = false; close(); } }></LoginCard>);
+    }
 }
 
 export function ssoLogin()
@@ -65,10 +70,6 @@ if (Capacitor.getPlatform() !== 'web')
         if (!code) return;
         await login(code);
     });
-    // InAppBrowser.addListener("closeEvent", async () =>
-    // {
-    //     await ScreenOrientation.lock({ orientation: 'landscape' });
-    // });
 }
 
 export function tryOpenSSO(url: string)
@@ -410,5 +411,5 @@ export async function pickImageToFile(maxBytes?: number): Promise<File | null>
 
 export function isAiApp() 
 {
-    return appInfo.mode === 'AI';
+    return appInfo.mode.toLowerCase() === 'ai';
 }

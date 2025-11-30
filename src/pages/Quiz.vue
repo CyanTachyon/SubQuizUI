@@ -33,7 +33,7 @@ const id = Number(route.query.id);
 
 const setData = (quiz: Quiz<null, AnswerType | null, null>) =>
 {
-    if (quiz.finished) router.replace('/analysis/' + quiz.id);
+    if (!quiz || quiz.finished) router.replace('/analysis/' + (quiz?.id || id));
     else 
     {
         replaceUrl('/quiz', { id: quiz.id });

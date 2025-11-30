@@ -57,11 +57,7 @@ function loadClasses(reload: boolean)
     getClassList(0, null, classes.value.length, 20).then((result) =>
     {
         const { list } = result;
-        classes.value.push(...list.map(c => 
-        {
-            if (c.group === 12 && !admin.value) return { ...c, members: [] } as ClassWithMembers;
-            return c;
-        }));
+        classes.value.push(...list);
         if (list.length < 20) hasMore.value = false;
         isLoading.value = false;
     }).catch(() =>

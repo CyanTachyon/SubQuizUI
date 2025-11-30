@@ -2,7 +2,7 @@
 import { ref, nextTick, computed } from 'vue';
 import type { AnswerType } from '../../dataClasses/Question';
 import type { Section } from '../../dataClasses/Section';
-import { cancelChat, chatSSE, createChat, deleteChat, getAiOptions, getChat, getContentText, getCustomModel, getShareHash, mergeContent, parseChatUrl, sendContent, setCustomModel, type AiHistory, type AiMessage, type Content, type CustomModelInfo, type Model, type ModelInfo, type ToolDataInfo, } from '../../networks/backend/ai';
+import { cancelChat, chatSSE, createChat, deleteChat, getAiOptions, getChat, getContentText, getCustomModel, getShareHash, isContentEmpty, mergeContent, parseChatUrl, sendContent, setCustomModel, type AiHistory, type AiMessage, type Content, type CustomModelInfo, type Model, type ModelInfo, type ToolDataInfo, } from '../../networks/backend/ai';
 import Input from '../../components/Input.vue';
 import { useNotification } from '../../stores/notification';
 import LoadingIcon from 'vue-material-design-icons/Loading.vue';
@@ -39,6 +39,7 @@ import { sleep } from '../../utils/sleep';
 import { router } from '../../main';
 import SendCircleOutlineIcon from 'vue-material-design-icons/SendCircleOutline.vue'
 import CloseCircleOutlineIcon from 'vue-material-design-icons/CloseCircleOutline.vue'
+import AiGenerating from '../../components/AiGenerating.vue';
 
 export type DisplayMessage = AiMessage & {
     showReasoning: boolean;
@@ -170,9 +171,8 @@ const onMessage = (immediate: boolean) => (message: AiMessage & { finished: bool
         last.messages = [
             {
                 content: "对不起，该聊天无法继续",
-                reasoning_content: '',
                 showReasoning: false,
-                mark: { showingType: null, id: '', label: '' },
+                mark: { showingType: null, id: '', label: null },
             }
         ];
         info.value.showAnswering = false;
@@ -196,25 +196,24 @@ const onMessage = (immediate: boolean) => (message: AiMessage & { finished: bool
         if (shouldAutoScroll.value) scrollToBottom();
     });
 
-    const messageSplit: {reasoning_content: string, content: Content}[] = [];
+    const messageSplit: {content: Content}[] = [];
 
     if (immediate) 
     {
-        messageSplit.push({ reasoning_content: message.reasoning_content, content: message.content });
+        messageSplit.push({ content: message.content });
         immediate = false;
     }
     else
     {
-        for (const char of message.reasoning_content)
-            messageSplit.push({ reasoning_content: char, content: '' });
         if (typeof message.content === 'string') for (const char of message.content)
-            messageSplit.push({ reasoning_content: '', content: char });
+            messageSplit.push({ content: char });
         else for (const c of message.content)
         {
-            if (c.type === 'text') for (const char of c.text) messageSplit.push({ reasoning_content: '', content: char });
-            else messageSplit.push({ reasoning_content: '', content: [c] });
+            if (c.type === 'text') for (const char of c.text) messageSplit.push({ content: char });
+            else messageSplit.push({ content: [c] });
         }
-        if (!messageSplit.length) messageSplit.push({ reasoning_content: '', content: '' });
+
+        if (!messageSplit.length) messageSplit.push({ content: '' });
     }
 
     for (const item of messageSplit) addTask(() =>
@@ -223,11 +222,14 @@ const onMessage = (immediate: boolean) => (message: AiMessage & { finished: bool
         const last = info.value.histories[info.value.histories.length - 1] as AiHistory & { messages: DisplayMessage[]; };
         let lastMessage: DisplayMessage = last.messages.find(m => m.mark?.id === message.mark?.id && m.mark?.id) as DisplayMessage;
         
+        console.log(last.messages[last.messages.length - 1]?.mark?.label, message.mark?.label)
+
         if (
             !lastMessage && 
             last.messages.length && 
             message.mark?.id === last.messages[last.messages.length - 1].mark?.id && 
-            !last.messages[last.messages.length - 1].mark?.showingType
+            !last.messages[last.messages.length - 1].mark?.showingType &&
+            last.messages[last.messages.length - 1].mark?.label === message.mark?.label
         ) lastMessage = last.messages[last.messages.length - 1];
 
         else if (!lastMessage)
@@ -235,7 +237,6 @@ const onMessage = (immediate: boolean) => (message: AiMessage & { finished: bool
             if (last.messages.length) last.messages[last.messages.length - 1].showReasoning = false;
             lastMessage = {
                 content: '',
-                reasoning_content: '',
                 showReasoning: true,
                 mark: message.mark,
             };
@@ -243,10 +244,7 @@ const onMessage = (immediate: boolean) => (message: AiMessage & { finished: bool
             lastMessage = last.messages[last.messages.length - 1];
         }
 
-        // 收到第一条正文时，收回思考过程
-        if (getContentText(item.content) && !(getContentText(lastMessage.content).trim()) && lastMessage.reasoning_content) lastMessage.showReasoning = false;
         if (item.content) lastMessage.content = mergeContent(lastMessage.content, item.content);
-        if (item.reasoning_content) lastMessage.reasoning_content += item.reasoning_content;
     });
 };
 
@@ -625,7 +623,7 @@ function onSubmit(event: KeyboardEvent | null, regenerate = false, editMode = fa
     }
     catch(e)
     {
-        setTimeout(init, 0);
+        nextTick(init);
     }
 })().finally(() => info.value.inAnswering = false);
 }
@@ -634,7 +632,7 @@ function openSection()
 {
     if (!info.value.section) return;
     const close = dialog(<div style="overflow: auto; scrollbar-width: none; height: 85vh; width: 85vw;">
-    <QuizView editable={false} modelValue={({sections: [info.value.section], correct: null})}></QuizView>
+    <QuizView editable={false} modelValue={({sections: [info.value.section], correct: null})} onBack={() => close()} />
     </div>, () => {close();});
 }
 
@@ -902,16 +900,23 @@ async function shareChat()
                             </template>
 
                             <template v-else>
-                                <div class="reasoning" v-if="msg.mark?.label || msg.reasoning_content?.trim()">
-                                    <Button class="header" style="cursor: pointer;" @click="msg.showReasoning = !msg.showReasoning" :disabled="!msg.reasoning_content" :down="msg.showReasoning">
+                                <div class="reasoning" v-if="typeof msg.mark?.label === 'string' && (msg.mark?.label || !isContentEmpty(msg.content))">
+                                    <Button class="header" @click="msg.showReasoning = !msg.showReasoning" :disabled="isContentEmpty(msg.content)" :down="msg.showReasoning && !isContentEmpty(msg.content)">
                                         <ToolsIcon v-if="msg.mark?.label" class="icon" :size="20" style="margin-right: 4px;"/>
                                         <ChevronDownIcon v-else-if="msg.showReasoning" class="icon" />
                                         <ChevronRightIcon v-else class="icon" />
                                         {{ msg.mark?.label || '思考过程' }}
                                     </Button>
-                                    <Text v-markdown="{ markdown: true, content: msg.reasoning_content, section: info.section?.id, parseHtml, renderHtml: !!msg.mark?.label }" :class="msg?.mark.label ? 'tool-call-parm' : 'reasoning-content'" v-if="msg.showReasoning && msg.reasoning_content?.trim()" />
+                                    <div v-if="msg.showReasoning && !isContentEmpty(msg.content)" :class="msg?.mark.label ? 'tool-call-parm' : 'reasoning-content'">
+                                        <template v-if="msg.content && (typeof msg.content !== 'string')" v-for="c in msg.content">
+                                            <Text class="content" v-if="c.type === 'text' && c.text.trim()" v-markdown="{ markdown: item.role === 'assistant', content: c.text, section: info.section?.id, parseHtml }" />
+                                            <ToolDataShower v-else-if="c.type === 'image_url'" :chat="isShare ? props.info as ChatId : info.id" :inline="true" :custom-info="{ type: 'IMAGE', value: c.image_url.url }" />
+                                            <ToolDataShower v-else-if="c.type === 'file'" :chat="isShare ? props.info as ChatId : info.id" :inline="true" :custom-info="{ type: 'FILE', value: c.file.file_data }" />
+                                        </template>
+                                        <Text v-else-if="msg.content && (msg.content as string).trim()" v-markdown="{ markdown: item.role === 'assistant', content: msg.content, section: info.section?.id, parseHtml, renderHtml: !!msg.mark?.label  }" class="content"/>
+                                    </div>
                                 </div>
-                                <template v-if="msg.content && (typeof msg.content !== 'string')" v-for="c in msg.content">
+                                <template v-else-if="msg.content && (typeof msg.content !== 'string')" v-for="c in msg.content">
                                     <Text class="content" v-if="c.type === 'text' && c.text.trim()" v-markdown="{ markdown: item.role === 'assistant', content: c.text, section: info.section?.id, parseHtml }" />
                                     <ToolDataShower v-else-if="c.type === 'image_url'" :chat="isShare ? props.info as ChatId : info.id" :inline="true" :custom-info="{ type: 'IMAGE', value: c.image_url.url }" />
                                     <ToolDataShower v-else-if="c.type === 'file'" :chat="isShare ? props.info as ChatId : info.id" :inline="true" :custom-info="{ type: 'FILE', value: c.file.file_data }" />
@@ -920,9 +925,7 @@ async function shareChat()
                             </template>
                             
                         </template>
-                        <div class="loading-icon" style="margin: 0 10px;" v-if="index === info.histories.length - 1 && info.showAnswering" :key="index">
-                            <LoadingIcon />
-                        </div>
+                        <AiGenerating style="" v-if="index === info.histories.length - 1 && info.showAnswering" :key="index"/>
                     </Text>
                     <div v-if="index !== info.histories.length - 1 || !info.showAnswering" class="buttons"> 
                         <PencilIcon v-if="item.role === 'user' && isLastUserMessage(index) && !info.inAnswering && !editingLastMessage" :size="20" class="icon" @click="startEditLastMessage"/>
@@ -1278,6 +1281,9 @@ async function shareChat()
     }
 }
 
+.bottom-bar * {
+    font-family: 'SubQuiz font english';
+}
 .bottom-bar {
     display: flex;
     justify-content: start;

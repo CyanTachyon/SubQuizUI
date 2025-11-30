@@ -24,8 +24,8 @@ import { storageGet } from "../../utils/storage.ts";
 import MenuIcon from "vue-material-design-icons/Menu.vue";
 import { phone } from "../../main.ts";
 import { getSidebars } from "../../stores/sidebar.ts";
-import { inputDialog } from "../../utils/dialog.tsx";
 import { ChatBubbleLeftRightIcon, LanguageIcon, PhotoIcon, DocumentTextIcon } from "@heroicons/vue/16/solid";
+import { Capacitor } from "@capacitor/core";
 
 const open = ref(!phone.value);
 (async () => 
@@ -96,21 +96,16 @@ let count = 0;
 
 function onSettingClick()
 {
-    if (count < 3)
+    if (count < 3 || Capacitor.getPlatform() === 'web')
     {
         count++;
-        setTimeout(() => count = 0, 500);
+        setTimeout(() => count--, 500);
         goto('/setting');
     }
     else
     {
-        inputDialog(
-            <div>请输入url</div>,
-            (url) => 
-            {
-                document.body.querySelector('quiz-app').innerHTML = `<iframe src="${url}" style="width: 100%; height: 100%;"/>`;
-            }
-        )
+        document.body.querySelector('quiz-app').innerHTML = `<iframe style="width: 100%; height: 100%;"></iframe>`;
+        (document.body.querySelector('quiz-app iframe')! as any).srcdoc = "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>SubQuiz \u7B80\u6613\u6D4F\u89C8\u5668\u6A21\u62DF<\/title>\n    <style>\n        \/* 1. \u91CD\u7F6E\u9ED8\u8BA4\u6837\u5F0F\uFF0C\u786E\u4FDD\u5360\u6EE1\u5168\u5C4F *\/\n        * {\n            margin: 0;\n            padding: 0;\n            box-sizing: border-box;\n        }\n\n        html, body {\n            width: 100%;\n            height: 100%;\n            overflow: hidden; \/* \u9632\u6B62\u51FA\u73B0\u53CC\u91CD\u6EDA\u52A8\u6761 *\/\n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n        }\n\n        \/* 2. \u6D4F\u89C8\u5668\u9876\u90E8\u5BFC\u822A\u680F\u6837\u5F0F *\/\n        .browser-header {\n            height: 50px;\n            background-color: #f0f0f0;\n            display: flex;\n            align-items: center;\n            padding: 0 10px;\n            border-bottom: 1px solid #ccc;\n        }\n\n        \/* \u6309\u94AE\u6837\u5F0F *\/\n        .nav-btn {\n            width: 30px;\n            height: 30px;\n            border: none;\n            background: transparent;\n            cursor: pointer;\n            font-size: 18px;\n            color: #555;\n            border-radius: 50%;\n            margin-right: 5px;\n        }\n        .nav-btn:hover {\n            background-color: #e0e0e0;\n        }\n\n        \/* \u5730\u5740\u680F\u6837\u5F0F *\/\n        .address-bar {\n            flex-grow: 1; \/* \u5360\u636E\u5269\u4F59\u7A7A\u95F4 *\/\n            margin: 0 10px;\n        }\n\n        .address-input {\n            width: 100%;\n            padding: 8px 15px;\n            border-radius: 20px;\n            border: 1px solid #ccc;\n            outline: none;\n            font-size: 14px;\n            background-color: white;\n        }\n        \n        .address-input:focus {\n            border-color: #0078d4; \/* \u84DD\u8272\u9AD8\u4EAE *\/\n        }\n\n        \/* 3. \u6838\u5FC3\u5185\u5BB9\u533A\u57DF\uFF1Aiframe *\/\n        .browser-content {\n            \/* \u8BA1\u7B97\u9AD8\u5EA6\uFF1A\u603B\u9AD8\u5EA6 - \u9876\u90E8\u5BFC\u822A\u680F\u9AD8\u5EA6 *\/\n            height: calc(100% - 50px); \n            width: 100%;\n            border: none;\n            background-color: white;\n        }\n    <\/style>\n<\/head>\n<body>\n\n    <!-- \u6A21\u62DF\u6D4F\u89C8\u5668\u9876\u90E8 -->\n    <div class=\"browser-header\">\n        <button class=\"nav-btn\" onclick=\"goBack()\">\u2190<\/button>\n        <button class=\"nav-btn\" onclick=\"goForward()\">\u2192<\/button>\n        <button class=\"nav-btn\" onclick=\"refreshPage()\">\u21BB<\/button>\n        \n        <div class=\"address-bar\">\n            <!-- \u9ED8\u8BA4\u52A0\u8F7D\u5FC5\u5E94\u641C\u7D22\uFF0C\u56E0\u4E3A\u5F88\u591A\u5927\u7F51\u7AD9\u7981\u6B62iframe\u5D4C\u5957 -->\n            <input type=\"text\" id=\"urlInput\" class=\"address-input\" value=\"https:\/\/www.tachyon.moe\/posts\/SubQuiz\/\" onkeypress=\"handleEnter(event)\">\n        <\/div>\n        \n        <button class=\"nav-btn\" onclick=\"loadUrl()\" style=\"width:auto; padding:0 10px; border-radius:4px; font-size:14px;\">\u8DF3\u8F6C<\/button>\n    <\/div>\n\n    <!-- \u7F51\u9875\u663E\u793A\u533A\u57DF -->\n    <iframe id=\"webFrame\" class=\"browser-content\" src=\"https:\/\/www.tachyon.moe\/posts\/SubQuiz\/\"><\/iframe>\n\n    <script>\n        const iframe = document.getElementById('webFrame');\n        const input = document.getElementById('urlInput');\n\n        \/\/ \u52A0\u8F7D\u8F93\u5165\u7684URL\n        function loadUrl() {\n            let url = input.value;\n            \/\/ \u7B80\u5355\u7684\u534F\u8BAE\u8865\u5168\n            if (!url.startsWith('http:\/\/') && !url.startsWith('https:\/\/')) {\n                url = 'https:\/\/' + url;\n            }\n            iframe.src = url;\n            input.value = url; \/\/ \u66F4\u65B0\u8F93\u5165\u6846\n        }\n\n        \/\/ \u5904\u7406\u56DE\u8F66\u952E\n        function handleEnter(e) {\n            if (e.key === 'Enter') {\n                loadUrl();\n            }\n        }\n\n        \/\/ \u5237\u65B0\n        function refreshPage() {\n            iframe.src = iframe.src;\n        }\n\n        \/\/ \u540E\u9000 (\u4EC5\u5728\u540C\u6E90\u7B56\u7565\u5141\u8BB8\u65F6\u6709\u6548\uFF0C\u8DE8\u57DF\u4F1A\u6709\u9650\u5236)\n        function goBack() {\n            try {\n                iframe.contentWindow.history.back();\n            } catch (e) {\n                alert(\"\u7531\u4E8E\u5B89\u5168\u9650\u5236\uFF08\u8DE8\u57DF\uFF09\uFF0C\u65E0\u6CD5\u901A\u8FC7\u811A\u672C\u63A7\u5236iframe\u540E\u9000\u3002\");\n            }\n        }\n\n        \/\/ \u524D\u8FDB\n        function goForward() {\n            try {\n                iframe.contentWindow.history.forward();\n            } catch (e) {\n                console.log(\"\u8DE8\u57DF\u9650\u5236\");\n            }\n        }\n    <\/script>\n<\/body>\n<\/html>";
     }
 }
 

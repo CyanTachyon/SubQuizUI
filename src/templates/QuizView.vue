@@ -21,8 +21,9 @@ import { ArrowLeftIcon } from "@heroicons/vue/16/solid";
 
 const router = useRouter();
 
-const { editable, ai, submit } = defineProps<{  
+const { editable, ai, submit, onBack } = defineProps<{  
     editable: boolean, 
+    onBack?: () => void,
     ai?: boolean, 
     submit?: () => void;
     showAnswerStatus?: boolean;
@@ -181,7 +182,7 @@ function onShowAnswerStatus()
 <template>
 <div style="display: flex; flex-direction: column; overflow: scroll; max-height: 100%; scrollbar-width: none;">
     <Card style="top: 0; position: sticky; z-index: 100; display: flex; flex-wrap: wrap;">
-        <Button @click="router.back()" down>
+        <Button @click="(onBack||router.back)()" down>
             <ArrowLeftIcon style="width: 24px; height: 24px;"/>
         </Button>
         <Button v-if="showAnswerStatus" @click="onShowAnswerStatus" down> 
@@ -500,5 +501,7 @@ $answer-color-duration: 0.4s;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-family: 'Maple Mono NF CN';
+    font-weight: bolder;
 }
 </style>

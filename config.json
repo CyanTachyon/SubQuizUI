@@ -1,0 +1,32 @@
+{
+    "ai": {
+        "cdn": "https://cdn.bdfzscc.com",
+        "backend": "https://quiz.pkuschool.edu.cn/api",
+        "frontend": "https://quiz.pkuschool.edu.cn",
+        "ssoFrontend": "https://pkus.sso.subit.org.cn",
+        "ssoBackend": "https://pkus.sso.subit.org.cn/api",
+        "ssoServiceId": 3,
+        "aiShareBase": "https://bdfz.chat",
+        
+        "darkIcon": true,
+        
+        "namespace": "cn.org.subit.quiz.ai",
+        "appId": "cn.org.subit.quiz.ai",
+        "appName": "SubQuizAI"
+    },
+    "default": {
+        "cdn": "https://cdn.bdfzscc.com",
+        "backend": "https://quizai.pkuschool.edu.cn/api",
+        "frontend": "https://quizai.pkuschool.edu.cn",
+        "ssoFrontend": "https://pkus.sso.subit.org.cn",
+        "ssoBackend": "https://pkus.sso.subit.org.cn/api",
+        "ssoServiceId": 3,
+        "aiShareBase": "https://bdfz.chat",
+        
+        "darkIcon": false,
+        
+        "namespace": "cn.org.subit.quiz",
+        "appId": "cn.org.subit.quiz",
+        "appName": "SubQuiz"
+    }
+}

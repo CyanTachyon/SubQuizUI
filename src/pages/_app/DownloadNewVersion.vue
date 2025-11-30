@@ -24,9 +24,7 @@ const download = async () => {
             downloadProgress.value = progress;
         };
         
-        await Filesystem.addListener('progress', (progress) => {
-            updateProgress(progress.bytes / progress.contentLength);
-        });
+        await Filesystem.addListener('progress', progress => updateProgress(progress.bytes / progress.contentLength));
 
         const download = Filesystem.downloadFile({
             url: url.value,

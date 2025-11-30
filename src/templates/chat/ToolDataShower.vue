@@ -292,7 +292,7 @@ const htmlContent = computed(() =>
             </ResizableWrapper>
         </div>
         <div v-else-if="info.type === 'QUIZ'" style="width: 100%;">
-            <QuizView v-model="quiz" :editable="true" :ai="false"/>
+            <QuizView v-model="quiz" :editable="true" :ai="false" @back="close()"/>
             <Button @click="switchQuizShowAnswer" :down="quizShowAnswer" style="margin-left: auto; margin-right: auto;">
                 {{ quizShowAnswer ? '隐藏答案' : '显示答案' }}
             </Button>

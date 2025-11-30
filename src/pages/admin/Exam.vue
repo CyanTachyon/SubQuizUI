@@ -222,22 +222,13 @@ function openSection(section: SectionId)
 <template>
     <Loading v-if="!exam || !clazz || loading" class="loading" />
     <div v-else-if="preview" style="display: flex; flex-direction: column; overflow: hidden; max-height: 100%;">
-        <Button @click="preview = false;" style="margin: 13px;">
-            返回编辑
-        </Button>
-        <QuizView :model-value="{ correct: null, sections: exam.sections.map(section => getSectionInfo(section)) }" :editable="false" />
+        <QuizView :model-value="{ correct: null, sections: exam.sections.map(section => getSectionInfo(section)) }" :editable="false" @back="preview = false" />
     </div>
     <div v-else-if="showSection" style="display: flex; flex-direction: column; overflow: hidden; max-height: 100%;">
-        <Button @click="showSection = 0;" style="margin: 13px;">
-            返回考试
-        </Button>
-        <QuizView :model-value="{ correct: null, sections: [getSectionInfo(showSection)] }" :editable="false" />
+        <QuizView :model-value="{ correct: null, sections: [getSectionInfo(showSection)] }" :editable="false" @back="showSection = 0" />
     </div>
     <div v-else-if="showStudentExam" style="display: flex; flex-direction: column; overflow: hidden; max-height: 100%;">
-        <Button @click="showStudentExam = '';" style="margin: 13px;">
-            返回考试
-        </Button>
-        <QuizView :model-value="getStudentExam(showStudentExam)" :editable="false" />
+        <QuizView :model-value="getStudentExam(showStudentExam)" :editable="false" @back="showStudentExam = ''" />
     </div>
     <Split v-else-if="edit" class="split" min-right-width="433px" min-left-width="623px">
         <template #left>

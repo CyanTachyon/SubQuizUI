@@ -4,6 +4,7 @@ import { checkResponse } from "./checkResponse.ts";
 import { useUser } from "../../stores/user.ts";
 import { useNotification } from "../../stores/notification.ts";
 import { sleep } from "../../utils/sleep.ts";
+import { Capacitor } from "@capacitor/core";
 export enum Target
 {
     EMPTY = 0,
@@ -26,7 +27,11 @@ export function connectUrl(target: Target | string | undefined, url: string, par
         else if (target === Target.SSO_FRONTEND) rUrl = environment.ssoFrontend + url;
         else if (target === Target.CDN) rUrl = environment.cdn + url;
         else if (target === Target.BACKEND) rUrl = environment.backend + url;
-        else if (target === Target.FRONTEND) rUrl = environment.frontend + url;
+        else if (target === Target.FRONTEND) 
+        {
+            if (Capacitor.getPlatform() === 'web') rUrl = location.origin + url;
+            else rUrl = environment.frontend + url;
+        }
         else rUrl = target + url;
     }
 

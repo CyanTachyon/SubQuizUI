@@ -72,9 +72,11 @@ else
 
 const routes: Readonly<RouteRecordRaw[]> = [
     ...(!isAiApp() ? 
-        [{ path: '/', name: 'Home', component: Home, meta: { sidebar: true } }] : 
         [
-            { path: '/', name: 'Home', component: AiChats, meta: { sidebar: true } },
+            { path: '/', name: 'Home', component: Home, meta: { sidebar: true } },
+        ] : 
+        [
+            { path: '/', redirect: '/ai/chat' },
             { path: '/:id', name: 'HomeShare', component: AiChatShare, meta: { sidebar: true } }
         ]),
     { path: '/about', name: 'About', component: About, meta: { sidebar: true } },
@@ -168,10 +170,7 @@ router.afterEach((_, __, failure) =>
 export const phone = ref(true);
 
 let scale = 1;
-export function getScale(): number
-{
-    return scale;
-}
+export const getScale = () => scale;
 
 (async () =>
 {
@@ -202,11 +201,7 @@ export function getScale(): number
         overflow: hidden;
     `;
 
-    const update = debounce(() =>
-    {
-        // phone.value = window.innerWidth <= window.innerHeight * 4 / 3;
-        phone.value = window.innerWidth <= 1300 * scale;
-    }, 100);
+    const update = debounce(() => phone.value = window.innerWidth <= 1300 * scale, 100);
     update();
     window.onresize = update;
 
@@ -215,21 +210,6 @@ export function getScale(): number
         .directive('markdown', vMarkdown)
         .directive('section-content', vSectionContent)
         .mount('quiz-app');
-
-    // if (Capacitor.getPlatform() === 'android') 
-    // {
-    //     const route = await storageGet('route');
-    //     if (route) 
-    //     {
-    //         console.log(route);
-    //         router.push(route);
-    //     }
-    //     router.afterEach((to, __, failure) =>
-    //     {
-    //         if (isNavigationFailure(failure)) return;
-    //         return storageSet('route', to.path);
-    //     });
-    // }
 
     checkClipboardAndHandle();
 })();

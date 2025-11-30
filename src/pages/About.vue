@@ -56,8 +56,8 @@ function goto(url: string)
             </Button>
         </quiz-about-button-container>
         <Card :max-tilt="5">
-            <h1 v-if="!isAiApp()">SubQuiz</h1>
-            <h1 v-else>SubQuizAI</h1>
+            <h1 v-if="!isAiApp()" style="font-style: italic;">SubQuiz</h1>
+            <h1 v-else style="font-style: italic;">SubQuizAI</h1>
             <p>Version: {{ version }}</p>
             <p class="clickable" @click="goto(author.website)"> Author: {{ author.name }} </p>
             <p class="clickable" @click="goto(author.website)"> Website: {{ author.website }} </p>
@@ -75,6 +75,9 @@ quiz-about-main {
     left: 50%;
     transform: translate(-50%, -50%);
     width: 500px;
+}
+quiz-about-main * {
+    font-family: 'Maple Mono NF CN';
 }
 
 quiz-button {

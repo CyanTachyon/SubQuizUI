@@ -259,6 +259,9 @@ const updateInfo: UpdateInfo[] = ([
 
 <style scoped lang="scss">
 quiz-update-info-container {
+    & * {
+        font-family: 'Maple Mono NF CN';
+    }
     overflow-y: auto;
     scrollbar-width: none;
     width: 100%;

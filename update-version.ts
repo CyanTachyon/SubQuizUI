@@ -1,6 +1,7 @@
 import { copyFileSync, existsSync, mkdirSync, writeFileSync } from "fs";
 import path from "path";
 import packageJson from "./package.json" with { type: "json" };
+import configJson from "./config.json" with { type: "json" };
 
 const androidLatestVersionJson = path.resolve('public', 'android_latest.json');
 const androidAppInfoJson = path.resolve('public', 'app_info.json');
@@ -24,45 +25,35 @@ function updateAndroidVersion(versionName: string, versionId: number, minVersion
 
 function setAppInfo(mode: string)
 {
+    mode = mode || 'default';
     console.log(`Updating app info to ${mode}`);
+    let config = configJson[mode] || configJson.default;
     if (!existsSync(path.resolve('public'))) 
         mkdirSync(path.resolve('public'), { recursive: true });    
     writeFileSync(
         androidAppInfoJson, 
         JSON.stringify({
             mode,
-            namespace: mode === 'AI' ? 'cn.org.subit.quiz.ai' : 'cn.org.subit.quiz',
-            appId: mode === 'AI' ? 'cn.org.subit.quiz.ai' : 'cn.org.subit.quiz',
-            appName: mode === 'AI' ? 'SubQuizAI' : 'SubQuiz',
+            namespace: config.namespace,
+            appId: config.appId,
+            appName: config.appName,
         })
     )
-    copyFileSync(path.resolve(`src/assets/SubQuiz-icon-${mode === 'AI' ? 'dark' : 'light'}.png`), path.resolve(`src/assets/SubQuiz-icon-default.png`));
+    copyFileSync(path.resolve(`src/assets/SubQuiz-icon-${config.darkIcon ? 'dark' : 'light'}.png`), path.resolve(`src/assets/SubQuiz-icon-default.png`));
     writeFileSync(
         path.resolve('.env'),
-        mode !== 'AI' ? 
-            `
-VITE_APP_SUB_QUIZ_CDN=https://cdn.bdfzscc.com
-VITE_APP_SUB_QUIZ_BACKEND=https://quiz.pkuschool.edu.cn/api
-VITE_APP_SUB_QUIZ_FRONTEND=https://quiz.pkuschool.edu.cn
-VITE_APP_SUB_QUIZ_SSO_FRONTEND=https://pkus.sso.subit.org.cn
-VITE_APP_SUB_QUIZ_SSO_BACKEND=https://pkus.sso.subit.org.cn/api
-VITE_APP_SUB_QUIZ_SSO_SERVICE_ID=3
-VITE_APP_SUB_QUIZ_AI_SHARE_BASE=https://bdfz.chat
-            `.trim()
-            :
-            `
-VITE_APP_SUB_QUIZ_CDN=https://cdn.bdfzscc.com
-VITE_APP_SUB_QUIZ_BACKEND=https://quizai.pkuschool.edu.cn/api
-VITE_APP_SUB_QUIZ_FRONTEND=https://quizai.pkuschool.edu.cn
-VITE_APP_SUB_QUIZ_SSO_FRONTEND=https://pkus.sso.subit.org.cn
-VITE_APP_SUB_QUIZ_SSO_BACKEND=https://pkus.sso.subit.org.cn/api
-VITE_APP_SUB_QUIZ_SSO_SERVICE_ID=3
-VITE_APP_SUB_QUIZ_AI_SHARE_BASE=https://bdfz.chat
+        `
+VITE_APP_SUB_QUIZ_CDN=${config.cdn}
+VITE_APP_SUB_QUIZ_BACKEND=${config.backend}
+VITE_APP_SUB_QUIZ_FRONTEND=${config.frontend}
+VITE_APP_SUB_QUIZ_SSO_FRONTEND=${config.ssoFrontend}
+VITE_APP_SUB_QUIZ_SSO_BACKEND=${config.ssoBackend}
+VITE_APP_SUB_QUIZ_SSO_SERVICE_ID=${config.ssoServiceId}
+VITE_APP_SUB_QUIZ_AI_SHARE_BASE=${config.aiShareBase}
             `.trim()
     )
 }
 
 updateAndroidVersion(packageJson.version, packageJson.versionId, packageJson.minVersionId, packageJson.downloadUrl, packageJson.aiDownloadUrl);
 
-if (process.argv.includes('ai')) setAppInfo('AI');
-else setAppInfo('normal');
+setAppInfo(process.argv[2]);
