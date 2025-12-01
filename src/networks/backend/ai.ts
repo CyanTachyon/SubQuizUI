@@ -364,6 +364,29 @@ export async function deleteLibFile(path: string): Promise<void>
     }));
 }
 
+const globalMemoryUrl = '/ai/chat/globalMemory';
+/**
+ * 获取AI的全局记忆
+ */
+export async function getGlobalMemory(): Promise<Record<string, string>>
+{
+    return checkResponse<Record<string, string>>(sendRequest({
+        target: Target.BACKEND,
+        url: globalMemoryUrl,
+        method: 'GET'
+    }));
+}
+
+export async function setGlobalMemory(memory: Record<string, string>): Promise<void>
+{
+    return checkResponse<void>(sendRequest({
+        target: Target.BACKEND,
+        url: globalMemoryUrl,
+        method: 'PUT',
+        data: memory
+    }));
+}
+
 
 const translateSSEUrl = '/ai/translate';
 export async function translateSSE(

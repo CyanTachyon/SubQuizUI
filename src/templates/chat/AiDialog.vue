@@ -2,7 +2,7 @@
 import { ref, nextTick, computed } from 'vue';
 import type { AnswerType } from '../../dataClasses/Question';
 import type { Section } from '../../dataClasses/Section';
-import { cancelChat, chatSSE, createChat, deleteChat, getAiOptions, getChat, getContentText, getCustomModel, getShareHash, isContentEmpty, mergeContent, parseChatUrl, sendContent, setCustomModel, type AiHistory, type AiMessage, type Content, type CustomModelInfo, type Model, type ModelInfo, type ToolDataInfo, } from '../../networks/backend/ai';
+import { cancelChat, chatSSE, createChat, deleteChat, getAiOptions, getChat, getContentText, getCustomModel, getGlobalMemory, getShareHash, isContentEmpty, mergeContent, parseChatUrl, sendContent, setCustomModel, setGlobalMemory, type AiHistory, type AiMessage, type Content, type CustomModelInfo, type Model, type ModelInfo, type ToolDataInfo, } from '../../networks/backend/ai';
 import Input from '../../components/Input.vue';
 import { useNotification } from '../../stores/notification';
 import LoadingIcon from 'vue-material-design-icons/Loading.vue';
@@ -848,11 +848,100 @@ async function showCustomModelDialog()
     }
 }
 
+async function showGlobalMemoryDialog()
+{
+    try
+    {
+        const memory = await getGlobalMemory();
+        const memoryList = ref<{key: string, value: string}[]>(
+            Object.entries(memory).map(([key, value]) => ({ key, value }))
+        );
+
+        const MemoryList = () => (
+            <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-right: 5px;" class="scrollbar">
+                {memoryList.value.map((item, index) => (
+                    <div style="display: flex; gap: 10px; align-items: start; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 8px;">
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+                            <Input 
+                                modelValue={item.key} 
+                                onUpdate:modelValue={(v: string) => item.key = v}
+                                placeholder="键 (Key)"
+                                style="width: 100%; font-weight: bold;"
+                            />
+                            <Input 
+                                modelValue={item.value} 
+                                onUpdate:modelValue={(v: string) => item.value = v}
+                                placeholder="值 (Value)"
+                                area={true}
+                                style="width: 100%; min-height: 60px;resize:none;"
+                            />
+                        </div>
+                        <Button onClick={() => memoryList.value.splice(index, 1)} style="height: fit-content; margin-top: 5px;">
+                            <TrashCanIcon />
+                        </Button>
+                    </div>
+                ))}
+                
+                <Button onClick={() => memoryList.value.push({ key: '', value: '' })} style="align-self: center; margin-top: 10px;">
+                    + 添加记忆条目
+                </Button>
+            </div>
+        );
+
+        const close = dialog(
+            <div style="padding: 20px; width: 600px; max-width: 90vw; max-height: 80vh; display: flex; flex-direction: column;">
+                <Text><h2 style="margin-bottom: 20px; text-align: center;">AI全局记忆设置</h2></Text>
+                <Text style="margin-bottom: 10px; opacity: 0.7; font-size: 0.9em;">
+                    全局记忆是AI在所有对话中都能访问的信息。您可以添加一些关于您的个人偏好、常用指令或其他长期有效的信息。
+                </Text>
+
+                <MemoryList />
+
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 25px;">
+                    <Button onClick={() => close()}>
+                        取消
+                    </Button>
+                    <Button onClick={async () =>
+                    {
+                        try
+                        {
+                            const newMemory: Record<string, string> = {};
+                            for (const item of memoryList.value)
+                            {
+                                if (item.key.trim())
+                                {
+                                    newMemory[item.key.trim()] = item.value;
+                                }
+                            }
+                            await setGlobalMemory(newMemory);
+                            useNotification().addSuccess('全局记忆已保存');
+                            close();
+                        }
+                        catch (error)
+                        {
+                            useNotification().addError('保存失败: ' + (error as Error).message);
+                        }
+                    }}>
+                        保存
+                    </Button>
+                </div>
+            </div>
+            ,
+            () => close()
+        );
+    }
+    catch (error)
+    {
+        useNotification().addError('获取全局记忆失败: ' + (error as Error).message);
+    }
+}
+
 async function showSettingDialog()
 {
     const close = dialog(
         <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
-            <Button onClick={() => {close(); router.push("/ai/chat/lib")}}>AI知识库设置</Button>
+            <Button onClick={() => { close(); router.push("/ai/chat/lib"); }}>AI知识库设置</Button>
+            <Button onClick={() => { close(); showGlobalMemoryDialog(); }}>AI全局记忆设置</Button>
             <Button onClick={() => {close(); showCustomModelDialog()}}>自定义AI模型设置</Button>
         </div>,
         () => close()
