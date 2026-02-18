@@ -104,10 +104,7 @@ async function openSocket(): Promise<WebSocket>
         router.push('/');
         return;
     }
-    timer = setTimeout(() =>
-    {
-        timer = null;
-    }, 1000);
+    timer = setTimeout(() => timer = null, 1000);
     const socket_ = new WebSocket(url, ['Bearer', useUser().getToken()]);
     socket_.addEventListener('message', socketListener);
     socket_.addEventListener('close', socketCloseListener);

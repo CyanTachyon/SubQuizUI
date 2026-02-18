@@ -17,7 +17,7 @@ import Text from '../../components/Text.vue';
 import Card from '../../components/Card.vue';
 import { getAiModels } from '../../networks/backend/ai';
 import SelectMenu from '../../components/SelectMenu.vue';
-import { storageGet, storageSet } from '../../utils/storage';
+import { storageGet, storageRemove, storageSet } from '../../utils/storage';
 import { TrashIcon, ShareIcon } from '@heroicons/vue/16/solid';
 import ImageOutlineIcon from 'vue-material-design-icons/ImageOutline.vue';
 import ContentCopyIcon from 'vue-material-design-icons/ContentCopy.vue';
@@ -410,9 +410,15 @@ function changeModel(newModel: Model)
 function updateOptions()
 {
     if (!model.value) return;
-    options.value = [];
+    options.value = undefined;
     selectedOptions.value = [];
-    getAiOptions(model.value).then(ops => options.value = ops).then(async (ops) =>
+    getAiOptions(model.value).then(async ops => 
+    {
+        options.value = ops;
+        if (await storageGet('quiz-ai-options-skip-check'))
+            options.value.push('跳过内容审查');
+        return ops;
+    }).then(async (ops) =>
     {
         const saved = await storageGet('quiz-ai-options');
         const savedOptions = saved ? JSON.parse(saved) as string[] : ops;
@@ -958,6 +964,24 @@ async function shareChat()
     </>, () => close());
 }
 
+
+let count = 0;
+let coolDown = false;
+async function onMenuClick()
+{
+    count++;
+    setTimeout(() => count--, 1000);
+    if (count > 3 && !coolDown)
+    {
+        const s = await storageGet('quiz-ai-options-skip-check') === 'true'
+        if (s) storageRemove('quiz-ai-options-skip-check');
+        else storageSet('quiz-ai-options-skip-check', 'true');
+        updateOptions();
+        coolDown = true;
+        setTimeout(() => coolDown = false, 5000);
+    }
+}
+
 </script>
 
 <template>
@@ -1049,7 +1073,7 @@ async function shareChat()
                 
                 <Text class="bottom-bar">
                     <SelectMenu :model-value="model" :options="models.map(m => ({ label: m.displayName, value: m.model }))" class="model-name" :placeholder="'选择模型'" @update:model-value="changeModel" :direction="'up'"/>
-                    <SelectMenu :model-value="selectedOptions || []" :options="options?.map(o => ({ label: o, value: o }))" class="model-options" :direction="'up'" :displayText="options !== undefined ? '工具(' + (selectedOptions || []).length + ')' : '加载中...'" :disabled="options === undefined" multiple @update:model-value="changeOptions"/>
+                    <SelectMenu :model-value="selectedOptions || []" :options="options?.map(o => ({ label: o, value: o }))" class="model-options" :direction="'up'" :displayText="options !== undefined ? '工具(' + (selectedOptions || []).length + ')' : '加载中...'" :disabled="options === undefined" multiple @update:model-value="changeOptions" @menu-open="onMenuClick" @menu-close="onMenuClick"/>
                     <CogOutlineIcon class="intelligent-icon" @click="showSettingDialog()"/>
                     <span class="bottom-bnt" style="margin-left: auto;">
                         <FileDocumentOutlineIcon class="icon" v-if="!uploadingFile" @click="uploadFile(false, editingLastMessage)"/>

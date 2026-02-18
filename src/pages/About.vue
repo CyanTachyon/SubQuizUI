@@ -8,6 +8,8 @@ import { type Author, getAuthorInfo } from "../networks/backend/user.ts";
 import { ref } from "vue";
 import ChevronRightIcon from "vue-material-design-icons/ChevronRight.vue";
 import { isAiApp } from "../utils/utils.tsx";
+import type { AndroidVersion } from "../dataClasses/AndroidVersion.ts";
+import { useNotification } from "../stores/notification.ts";
 
 document.title = '关于 - SubQuiz';
 
@@ -41,6 +43,22 @@ function goto(url: string)
     safeRedirect(url, true);
 }
 
+async function downloadApk(ai: boolean)
+{
+    try
+    {
+        let r1 = await fetch(environment.frontend + '/android_latest.json' + `?timestamp=${Date.now()}`, { cache: "reload", });
+        let res = (await r1.json()) as AndroidVersion;
+        let url = ai ? res.aiUrl : res.url;
+        console.log(url);
+        safeRedirect(url, true);
+    }
+    catch (e)
+    {
+        console.error(e);
+        useNotification().addError("无法获取APK信息");
+    }
+}
 
 </script>
 
@@ -63,6 +81,14 @@ function goto(url: string)
             <p class="clickable" @click="goto(author.website)"> Website: {{ author.website }} </p>
             <p class="clickable" @click="goto(author.github)"> Github: {{ author.github }} </p>
             <p class="clickable" @click="goto('mailto:' + author.email)"> Email: {{ author.email }} </p>
+            <div style="display: flex; gap: 15px;">
+                <Button @click="downloadApk(false)">
+                    下载SubQuiz.apk
+                </Button>
+                <Button @click="downloadApk(true)">
+                    下载SubQuizAI.apk
+                </Button>
+            </div>
         </Card>
     </quiz-about-main>
 </template>
@@ -74,7 +100,7 @@ quiz-about-main {
     top: 45%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 500px;
+    width: 550px;
 }
 quiz-about-main * {
     font-family: 'Maple Mono NF CN';

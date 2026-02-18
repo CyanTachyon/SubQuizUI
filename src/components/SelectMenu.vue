@@ -12,7 +12,7 @@ interface Option
 }
 
 const model = defineModel<any>({ required: false });
-const { options, placeholder, disappear, disabled, direction, multiple, displayText } = defineProps({
+const { options, placeholder, disappear, disabled, direction, multiple, displayText, onMenuOpen, onMenuClose } = defineProps({
     options: {
         type: Array as () => Option[],
         default: () => []
@@ -45,6 +45,14 @@ const { options, placeholder, disappear, disabled, direction, multiple, displayT
     displayText: {
         type: String,
         default: undefined
+    },
+    onMenuOpen: {
+        type: Function,
+        default: () => {}
+    },
+    onMenuClose: {
+        type: Function,
+        default: () => {}
     }
 });
 
@@ -60,12 +68,12 @@ const selectedLabel = computed(() =>
     {
         return displayText;
     }
-    
+
     if (multiple)
     {
         const selectedValues = Array.isArray(model.value) ? model.value : [];
         if (selectedValues.length === 0) return placeholder;
-        
+
         const selectedOptions = options.filter(option => selectedValues.includes(option.value));
         return selectedOptions.map(opt => opt.label).join(', ');
     }
@@ -80,6 +88,8 @@ function toggleDropdown()
 {
     if (disabled || disappear) return;
     isOpen.value = !isOpen.value;
+    if (isOpen.value) onMenuOpen();
+    else onMenuClose();
 }
 
 function selectOption(option: Option)
@@ -88,7 +98,7 @@ function selectOption(option: Option)
     {
         const currentValue = Array.isArray(model.value) ? model.value : [];
         const index = currentValue.indexOf(option.value);
-        
+
         if (index > -1)
         {
             // Remove from selection
@@ -166,24 +176,30 @@ onUnmounted(() =>
 </script>
 
 <template>
-    <div class="select-container" :class="[className, getThemes().useBlur ? 'use-blur' : '', disabled ? 'disabled' : '', `direction-${direction}`]" ref="selectContainer">
+    <div class="select-container"
+        :class="[className, getThemes().useBlur ? 'use-blur' : '', disabled ? 'disabled' : '', `direction-${direction}`]"
+        ref="selectContainer">
         <div class="select-trigger" @click="toggleDropdown" :class="{ 'open': isOpen }">
-            <span class="select-text" :class="{ 'placeholder': displayText === undefined && (multiple ? (!model || model.length === 0) : (model === undefined || model === null)) }">
+            <span class="select-text"
+                :class="{ 'placeholder': displayText === undefined && (multiple ? (!model || model.length === 0) : (model === undefined || model === null)) }">
                 {{ selectedLabel }}
             </span>
             <div class="select-arrow" :class="{ 'rotated': isOpen !== (direction === 'up') }">
                 <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-                    <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
                 </svg>
             </div>
         </div>
 
         <Transition name="dropdown">
             <div v-if="isOpen" class="select-dropdown">
-                <div v-for="option in options" :key="option.value" class="select-option" :class="{ 'selected': !multiple && isOptionSelected(option) }" @click="selectOption(option)">
+                <div v-for="option in options" :key="option.value" class="select-option"
+                    :class="{ 'selected': !multiple && isOptionSelected(option) }" @click="selectOption(option)">
                     <span v-if="multiple" class="checkbox" :class="{ 'checked': isOptionSelected(option) }">
                         <svg v-if="isOptionSelected(option)" width="12" height="10" viewBox="0 0 12 10" fill="none">
-                            <path d="M1 5L4.5 8.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M1 5L4.5 8.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
                         </svg>
                     </span>
                     {{ option.label }}
@@ -243,7 +259,8 @@ onUnmounted(() =>
         transform: translateY(0);
     }
 
-    &.open, &.open:hover {
+    &.open,
+    &.open:hover {
         border-color: var(--button-highlight-border);
         background: var(--button-highlight-background);
     }
