@@ -490,3 +490,32 @@ export async function essayCorrection(
         data: { requirement, essay },
     }));
 }
+
+export async function recognizeSection(
+    quizId: number,
+    sectionIndex: number,
+    images: string[],
+): Promise<any>
+{
+    return checkResponse(sendRequest({
+        target: Target.BACKEND,
+        url: '/ai/recognizeSection',
+        method: 'POST',
+        data: { quizId, sectionIndex, images },
+    }));
+}
+
+export async function recognizeEssayAnswer(
+    quizId: number,
+    sectionIndex: number,
+    questionIndex: number,
+    images: string[],
+): Promise<string>
+{
+    return checkResponse(sendRequest({
+        target: Target.BACKEND,
+        url: '/ai/recognizeEssay',
+        method: 'POST',
+        data: { quizId, sectionIndex, questionIndex, images },
+    }));
+}

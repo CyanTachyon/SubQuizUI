@@ -1,9 +1,9 @@
 {
     "name": "subquiz",
     "private": true,
-    "version": "3.4.0.19",
-    "versionId": 30400019,
-    "minVersionId": 30400019,
+    "version": "3.4.1.1",
+    "versionId": 30401001,
+    "minVersionId": 30401001,
     "downloadUrl": "https://quiz.pkuschool.edu.cn/SubQuiz.apk",
     "aiDownloadUrl": "https://quiz.pkuschool.edu.cn/SubQuizAI.apk",
     "type": "module",

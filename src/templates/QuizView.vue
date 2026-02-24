@@ -17,16 +17,22 @@ import { ref } from "vue";
 import PinOutline from "vue-material-design-icons/PinOutline.vue";
 import PinOffOutline from "vue-material-design-icons/PinOffOutline.vue";
 import { dialog } from "../utils/dialog.tsx";
+import CameraIcon from "vue-material-design-icons/Camera.vue";
+import EyeOutline from "vue-material-design-icons/EyeOutline.vue";
+import EyeOffOutline from "vue-material-design-icons/EyeOffOutline.vue";
+import { pickImage } from "../utils/utils";
+import { recognizeSection, recognizeEssayAnswer } from "../networks/backend/ai.ts";
 import { ArrowLeftIcon } from "@heroicons/vue/16/solid";
 
 const router = useRouter();
 
-const { editable, ai, submit, onBack } = defineProps<{  
+const { editable, ai, submit, onBack, quizId } = defineProps<{  
     editable: boolean, 
     onBack?: () => void,
     ai?: boolean, 
     submit?: () => void;
     showAnswerStatus?: boolean;
+    quizId?: number;
 }>();
 
 const quiz = defineModel<Pick<Quiz<any, any, any>, 'sections' | 'correct'>>();
@@ -136,12 +142,153 @@ function gotoAI(sectionIndex: number)
 }
 
 const pin = ref<number[]>([]);
+const recognizing = ref<string | null>(null);
+const previewing = ref<Set<string>>(new Set());
 
 function togglePin(sectionIndex: number) 
 {
     const currentIndex = pin.value.indexOf(sectionIndex);
     if (currentIndex === -1) pin.value.push(sectionIndex);
     else pin.value.splice(currentIndex, 1);
+}
+
+async function pickMultipleImages(): Promise<string[]>
+{
+    const images: string[] = [];
+    // Pick the first image
+    const firstImg = await pickImage();
+    if (!firstImg) return images;
+    images.push(firstImg.data);
+
+    return new Promise<string[]>((resolve) =>
+    {
+        let closeFn: (() => void) | null = null;
+
+        function finish()
+        {
+            closeFn?.();
+            resolve(images);
+        }
+
+        function removeImage(index: number)
+        {
+            images.splice(index, 1);
+            if (images.length === 0)
+            {
+                finish();
+                return;
+            }
+            rerender();
+        }
+
+        async function addMore()
+        {
+            const img = await pickImage();
+            if (img)
+            {
+                images.push(img.data);
+                rerender();
+            }
+        }
+
+        function renderDialog()
+        {
+            return <div style="padding: 16px; max-width: 90vw; max-height: 80vh; display: flex; flex-direction: column; gap: 12px;">
+                <h3 style="margin: 0; text-align: center;">已选择 {images.length} 张图片</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; overflow-y: auto; max-height: 50vh;">
+                    {images.map((img, i) => (
+                        <div style="position: relative; width: 100px; height: 100px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color);">
+                            <img src={img} style="width: 100%; height: 100%; object-fit: cover;" />
+                            <div
+                                onClick={() => removeImage(i)}
+                                style="position: absolute; top: 2px; right: 2px; width: 22px; height: 22px; background: rgba(0,0,0,0.6); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;"
+                            >
+                                <CloseIcon style="color: white; width: 14px; height: 14px;" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: center;">
+                    <Button onClick={() => addMore()} style="min-width: max-content;">
+                        继续添加
+                    </Button>
+                    <Button onClick={() => finish()} style="min-width: max-content;">
+                        完成选择
+                    </Button>
+                </div>
+            </div>;
+        }
+
+        function rerender()
+        {
+            if (closeFn) closeFn();
+            closeFn = dialog(renderDialog(), () => finish());
+        }
+
+        rerender();
+    });
+}
+
+async function onRecognizeSection(sectionIndex: number)
+{
+    if (!quizId) return;
+    if (recognizing.value) useNotification().addError('已经有识别任务在进行中');
+    else useNotification().addInfo('正在识别，请稍候');
+    const images = await pickMultipleImages();
+    if (images.length === 0) return;
+    recognizing.value = `section-${sectionIndex}`;
+    try
+    {
+        const result = await recognizeSection(quizId, sectionIndex, images);
+        // result is the recognized section with userAnswer filled
+        const section = typeof result === 'string' ? JSON.parse(result) : result;
+        for (let i = 0; i < section.questions.length && i < quiz.value.sections[sectionIndex].questions.length; i++)
+        {
+            quiz.value.sections[sectionIndex].questions[i].userAnswer = section.questions[i].userAnswer;
+        }
+        useNotification().add({ message: '识别完成', type: 'success' });
+    }
+    catch (e: any)
+    {
+        useNotification().add({ message: `识别失败：${e.message || e}`, type: 'warning' });
+    }
+    finally
+    {
+        recognizing.value = null;
+    }
+}
+
+async function onRecognizeEssay(sectionIndex: number, questionIndex: number)
+{
+    if (!quizId) return;
+    if (recognizing.value) useNotification().addError('已经有识别任务在进行中');
+    else useNotification().addInfo('正在识别，请稍候');
+    const images = await pickMultipleImages();
+    if (images.length === 0) return;
+    recognizing.value = `essay-${sectionIndex}-${questionIndex}`;
+    try
+    {
+        const answer = await recognizeEssayAnswer(quizId, sectionIndex, questionIndex, images);
+        quiz.value.sections[sectionIndex].questions[questionIndex].userAnswer = answer;
+        useNotification().add({ message: '识别完成', type: 'success' });
+    }
+    catch (e: any)
+    {
+        useNotification().add({ message: `识别失败：${e.message || e}`, type: 'warning' });
+    }
+    finally
+    {
+        recognizing.value = null;
+    }
+}
+
+function togglePreview(sectionIndex: number, questionIndex: number, type: string)
+{
+    const key = `${type}-${sectionIndex}-${questionIndex}`;
+    const newSet = new Set(previewing.value);
+    if (newSet.has(key)) newSet.delete(key);
+    else newSet.add(key);
+    previewing.value = newSet;
 }
 
 function onShowAnswerStatus()
@@ -271,10 +418,31 @@ function onShowAnswerStatus()
                     </Button>
                 </div>
                 <div v-else-if="question.type === 'fill'">
-                    <Input :area="false" placeholder="请输入答案" type="text" :value="question.userAnswer" @input="fillAnswer(sectionIndex, questionIndex, $event.target.value)" class="fill-option-input" :disabled="!editable"/>
+                    <div v-if="previewing.has(`fill-${sectionIndex}-${questionIndex}`) && question.userAnswer" v-markdown="{ content: question.userAnswer, markdown: true }" class="fill-option-input" style="padding: 8px; border: 1px solid var(--border-color); border-radius: 8px; min-height: 36px;"/>
+                    <Input v-else :area="false" placeholder="请输入答案" type="text" :value="question.userAnswer" @input="fillAnswer(sectionIndex, questionIndex, $event.target.value)" class="fill-option-input" :disabled="!editable"/>
+                    <Button v-if="question.userAnswer" style="margin-top: 4px;" @click="togglePreview(sectionIndex, questionIndex, 'fill')" down>
+                        <EyeOutline v-if="!previewing.has(`fill-${sectionIndex}-${questionIndex}`)"/>
+                        <EyeOffOutline v-else/>
+                        {{ previewing.has(`fill-${sectionIndex}-${questionIndex}`) ? '编辑' : '预览' }}
+                    </Button>
                 </div>
                 <div v-else-if="question.type === 'essay'">
-                    <Input :area="true" placeholder="请输入答案" type="text" :value="question.userAnswer" @input="fillAnswer(sectionIndex, questionIndex, $event.target.value)" class="essay-option-input" :disabled="!editable"/>
+                    <div v-if="previewing.has(`essay-${sectionIndex}-${questionIndex}`) && question.userAnswer" v-markdown="{ content: question.userAnswer, markdown: true }" class="essay-option-input" style="padding: 8px; border: 1px solid var(--border-color); border-radius: 8px; min-height: 100px; overflow-y: auto;"/>
+                    <Input v-else :area="true" placeholder="请输入答案" type="text" :value="question.userAnswer" @input="fillAnswer(sectionIndex, questionIndex, $event.target.value)" class="essay-option-input" :disabled="!editable"/>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <Button v-if="question.userAnswer" @click="togglePreview(sectionIndex, questionIndex, 'essay')" down>
+                            <EyeOutline v-if="!previewing.has(`essay-${sectionIndex}-${questionIndex}`)"/>
+                            <EyeOffOutline v-else/>
+                            {{ previewing.has(`essay-${sectionIndex}-${questionIndex}`) ? '编辑' : '预览' }}
+                        </Button>
+                        <Button v-if="quizId && editable" @click="onRecognizeEssay(sectionIndex, questionIndex)" down :disabled="recognizing !== null">
+                            <CameraIcon/>
+                            {{ recognizing === `essay-${sectionIndex}-${questionIndex}` ? '识别中...' : '拍照识别' }}
+                        </Button>
+                    </div>
+                </div>
+                <div v-else>
+                    "ERROR: Unsupported question type"
                 </div>
                 <Text v-if="rightAnswer(sectionIndex, questionIndex) !== undefined" class="analysis" :class="rightAnswer(sectionIndex, questionIndex) ? 'right-answer' : 'wrong-answer'">
                     {{ 
@@ -300,6 +468,10 @@ function onShowAnswerStatus()
                 <br v-if="questionIndex < section.questions.length - 1"/>
             </div>
             <Button v-if="ai" class="ai" @click="gotoAI(sectionIndex)" down>AI</Button>
+            <Button v-if="quizId && editable" @click="onRecognizeSection(sectionIndex)" style="margin-left: auto;" :disabled="recognizing !== null">
+                <CameraIcon/>
+                {{ recognizing === `section-${sectionIndex}` ? '识别中...' : '拍照识别' }}
+            </Button>
         </div>
     </Card>
     <Button v-if="editable && submit" class="submit" @click="trySubmit" down>Submit</Button>
